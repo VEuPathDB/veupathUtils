@@ -4,19 +4,18 @@ Version: 0.0.0.9000
 Authors@R: 
     c(person(given = "Danielle",
            family = "Callan",
-           role = c("aut", "cre"),
+           role = c("aut"),
            email = "dcallan@upenn.edu"),
       person(given = "Ann",
            family = "Blevins",
-           role = "aut, "cre",
+           role = c("aut", "cre"),
            email = "annsize@upenn.edu"))
 Imports:
-    data.table
+    data.table,
+    stringi
 URL: https://github.com/VEuPathDB/veupathUtils
 BugReports: https://github.com/VEuPathDB/veupathUtils/issues
-Description: veupathUtils contains various R helper functions intended
-to be useful across a variety of projects, including the plot.data
-and microbiomeComputations packages.
+Description: veupathUtils contains various R helper functions intended to be useful across a variety of projects, including the plot.data and microbiomeComputations packages.
 License: Apache License (= 2.0)
 Encoding: UTF-8
 LazyData: true
