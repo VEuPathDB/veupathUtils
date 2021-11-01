@@ -1,5 +1,14 @@
 # Utils dump
 
+#' Try-error Test
+#'
+#' This function returns a logical value indicating if x is
+#' a try-error object.
+#' @param x an R object
+#' @return logical TRUE if x is a try-error object, FALSE otherwise
+#' @export
+is.error <- function(x) inherits(x, "try-error")
+
 
 #' Set object attributes from a list
 #'
@@ -32,7 +41,17 @@ setAttrFromList <- function(.dt, attr, removeExtraAttrs=T) {
   return(.dt)
 }
 
+#' @export
+removeAttr <- function(attrToRemove, .dt) {
+  data.table::setattr(.dt, attrToRemove, NULL)
+  return(NULL)
+}
 
+#' @export
+updateAttrById <- function(attrInd, attr, .dt) {
+  data.table::setattr(.dt, names(attr)[attrInd], attr[[attrInd]])
+  return(NULL)
+}
 
 #' Diagnositc Messages with Time of Occurance
 #'
