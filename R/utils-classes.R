@@ -58,12 +58,13 @@ is.error <- function(x) inherits(x, "try-error")
 #' This function sets the attributes of an object based on a given list
 #' @param .dt data.table
 #' @param attr named list of desired attributes to add to .dt
-#' @param removeExtraAttrs boolean indicating if attributes of .dt not included in attr should be removed.
+#' @param removeExtraAttrs boolean indicating if existing attributes of .dt not 
+#' included in attr should be removed.
 #' @export
 setAttrFromList <- function(.dt, attr, removeExtraAttrs=T) {
   
   
-  if (!is.data.table(.dt)) {
+  if (!data.table::is.data.table(.dt)) {
     stop(".dt must be of class data.table")
   }
   

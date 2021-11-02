@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils-string.R
 \name{strSplit}
 \alias{strSplit}
-\title{Efficient String Split}
+\title{Efficient Vectorized String Split}
 \usage{
 strSplit(str, pattern, ncol = 2, index = 1, fixed = TRUE)
 }

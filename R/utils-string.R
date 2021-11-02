@@ -4,13 +4,50 @@
 #' @param x character vector
 #' @return non-empty character vector or NULL
 #' @export
-emptyStringToNull <- function(x) {
+toStringOrNull <- function(x = NULL, na.rm = c(TRUE, FALSE)) {
   x <- unlist(x)
   if (is.null(x)) { return(NULL) }
-  if (length(x) == 0) { return(NULL) }
-  if (all(x == "")) { return(NULL) }
+  if (!length(x)) { return(NULL) }
+  
+  na.rm <- matchArg(na.rm)
+  if (!na.rm) { x[is.na(x)] <- "NA" }
 
-  return(as.character(x))
+  if (all(is.na(x))) { 
+    return(NULL) 
+  } else if (any(is.na(x))) {
+    x <- x[complete.cases(x)]
+  }
+
+  x <- as.character(x)
+  if (all(x == "")) { 
+    return(NULL) 
+  } else if (any(x == "")) {
+    x <- x[x != ""]
+  }
+
+  return(x)
+}
+
+# does this one need a collapse arg? maybe you want one point for each empty in a vector?
+#' @export
+toStringOrPoint <- function(x = ".", na.rm = c(TRUE, FALSE)) {
+  x <- unlist(x)
+  if (is.null(x)) { return(".") }
+  if (!length(x)) { return(".") }
+  
+  na.rm <- matchArg(na.rm)
+  if (!na.rm) { x[is.na(x)] <- "NA" }
+
+  if (all(is.na(x))) { 
+    return(NULL) 
+  } else if (any(is.na(x))) {
+    x <- x[complete.cases(x)]
+  }
+
+  x <- as.character(x)
+  if (all(x == "")) { return(".") }
+
+  return(x)
 }
 
 #' Trim White Space
@@ -21,7 +58,7 @@ emptyStringToNull <- function(x) {
 #' @export
 trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
-#' Efficient String Split
+#' Efficient Vectorized String Split
 #'
 #' This function efficiently splits strings by a vectorized approach.
 #' @param str Character vector or list of strings to split
@@ -33,5 +70,7 @@ trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 #' @return Character vector of substrings
 #' @export
 strSplit <- function(str, pattern, ncol = 2, index = 1, fixed = TRUE) {
+  # do we want an arg to not apply the index and return multiple cols? in a data.frame?
+  # should we return a list if we received one?
   matrix(unlist(strsplit(str, pattern, fixed = fixed)), ncol = ncol, byrow = TRUE)[,index]
 }

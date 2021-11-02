@@ -4,12 +4,12 @@
 \alias{getAggStr}
 \title{Make Aggregation Formulas}
 \usage{
-getAggStr(valueVars, groupingVars)
+getAggStr(LHS = NULL, RHS = NULL)
 }
 \arguments{
-\item{valueVars}{vector of variable/ column names to become the LHS}
+\item{LHS}{vector of variable/ column names to become the LHS}
 
-\item{groupingVars}{vector of variable/ column names to become the RHS}
+\item{RHS}{vector of variable/ column names to become the RHS}
 }
 \value{
 character string which can be used as input to \code{aggregate} with \code{as.formula}

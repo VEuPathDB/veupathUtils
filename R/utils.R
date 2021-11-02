@@ -2,14 +2,14 @@
 #' 
 #' This function is intended to help create formulas for input to
 #' base R's `aggregate` function. 
-#' @param valueVars vector of variable/ column names to become the LHS
-#' @param groupingVars vector of variable/ column names to become the RHS
+#' @param LHS vector of variable/ column names to become the LHS
+#' @param RHS vector of variable/ column names to become the RHS
 #' @return character string which can be used as input to `aggregate` with `as.formula`
 #' @export
-getAggStr <- function(valueVars, groupingVars) {
-  valueString <- emptyStringToPoint(paste(valueVars, collapse= " + "))
-  groupingString <- emptyStringToNull(paste(groupingVars, collapse=" + "))
-  aggStr <- paste(c(valueString, groupingString), collapse=" ~ ")
+getAggStr <- function(LHS = NULL, RHS = NULL) {
+  LHS <- toStringOrPoint(paste(c(LHS), collapse= " + "))
+  RHS <- toStringOrNull(paste(c(RHS), collapse=" + "))
+  aggStr <- paste(c(LHS, RHS), collapse=" ~ ")
 
   return(aggStr)
 }

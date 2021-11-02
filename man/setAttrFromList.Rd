@@ -11,7 +11,8 @@ setAttrFromList(.dt, attr, removeExtraAttrs = T)
 
 \item{attr}{named list of desired attributes to add to .dt}
 
-\item{removeExtraAttrs}{boolean indicating if attributes of .dt not included in attr should be removed.}
+\item{removeExtraAttrs}{boolean indicating if existing attributes of .dt not
+included in attr should be removed.}
 }
 \description{
 This function sets the attributes of an object based on a given list
