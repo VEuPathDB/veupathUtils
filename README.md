@@ -29,6 +29,8 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 Please make sure to update tests as appropriate.
 
+As a general policy, we're exporting every function that gets added here. So unless you have very good reason, export!
+
 ## License
 [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt)
 
