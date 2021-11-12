@@ -1,7 +1,6 @@
 # veupathUtils
 
-veupathUtils is an R package which provides helper functions for performing common analyses 
-in the VEuPathDB project.
+veupathUtils is an R package which provides helper functions for solving common problems in the VEuPathDB project.
 
 ## Installation
 
