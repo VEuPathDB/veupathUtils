@@ -1,3 +1,26 @@
+#' EDA Variable Column Names
+#' 
+#' This function provides EDA-compliant column names provided
+#' EDA-compliant VariableDetails.
+#' @param varDetailsList a named list containing at minimum 'variableId', 'entityId'
+#' @return character string representing the expected column name for that variable
+#' @export 
+toColNameOrNull <- function(varDetailsList) {
+  if (is.null(varDetailsList)) {
+    return(NULL)
+  }
+
+  if (is.null(varDetailsList$variableId)) {
+    return(NULL)
+  }
+
+  if (is.null(varDetailsList$entityId)) {
+    return(varDetailsList$variableId)
+  }
+
+  return(paste0(varDetailsList$entityId, ".", varDetailsList$variableId))
+}
+
 #' Make Aggregation Formulas
 #' 
 #' This function is intended to help create formulas for input to
