@@ -24,25 +24,24 @@ nonZeroRound <- function(x, digits) {
 
 #' Impute 0s for numeric columns
 #'
-#' This function replaces NAs in numeric columns of a data.table
-#' with a desired value.
+#' This function replaces NAs in numeric columns of a data.table with 0.
 #' @param dt data.table
-#' @param value Numeric value to use when replacing NAs. Default is 0.
 #' @param cols Vector of column names for which the NA replacement should occur.
-#' Defulat is all numeric columns.
+#' Default is all numeric columns.
 #' @return inputted data.table dt but with NAs replaced with desired value.
 #' @export
-setNaToValue <- function(dt, value = 0, cols = NULL) {
+setNaToZero <- function(dt, cols = NULL) {
 
   # if cols not set, use all numeric cols
   if (is.null(cols)) {
     cols <- colnames(dt)[sapply(dt, class) == "numeric"]
   }
+  
   # Ensure data.table
   if (!'data.table' %in% class(dt)) {
     data.table::setDT(dt)
   }
 
-  data.table::setnafill(dt, fill = value, cols = cols)
+  data.table::setnafill(dt, fill = 0, cols = cols)
 
 }
