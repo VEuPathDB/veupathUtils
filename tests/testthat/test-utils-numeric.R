@@ -23,13 +23,11 @@ test_that("setNaToZero replaces intended NAs", {
   expect_equal(sum(df[, c('Sepal.Length', 'Sepal.Width')] == 0), 2*nMissing)
 
   # With defualt. Should change only numeric columns
-  dt <- as.data.table(df)
+  dt <- data.table::as.data.table(df)
   setNaToZero(dt)
   expect_equal(class(dt), c('data.table','data.frame'))
   expect_equal(sum(is.na(dt)), nMissing)
   expect_equal(sum(dt[, c('Petal.Length', 'Petal.Width')] == 0), 2*nMissing)
-
-
 
 })
 
@@ -48,7 +46,7 @@ test_that("naToZero replaces intended NAs", {
   expect_equal(sum(df[, c('Sepal.Length', 'Sepal.Width')] == 0), 2*nMissing)
 
   # With defualt. Should change only numeric columns
-  dt <- as.data.table(df)
+  dt <- data.table::as.data.table(df)
   dt <- naToZero(dt)
   expect_equal(class(dt), c('data.table','data.frame'))
   expect_equal(sum(is.na(dt)), nMissing)

@@ -12,7 +12,8 @@ Authors@R:
            email = "annsize@upenn.edu"))
 Imports:
     data.table,
-    stringi
+    stringi,
+    purrr
 URL: https://github.com/VEuPathDB/veupathUtils
 BugReports: https://github.com/VEuPathDB/veupathUtils/issues
 Description: veupathUtils contains various R helper functions intended to be useful across a variety of projects, including the plot.data and microbiomeComputations packages.
