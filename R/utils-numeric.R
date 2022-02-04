@@ -32,10 +32,15 @@ nonZeroRound <- function(x, digits) {
 #' @export
 setNaToZero <- function(df, cols = NULL) {
 
-  # if cols not set, use all numeric cols
+
   if (is.null(cols)) {
+    # if cols not set, use all numeric cols
     cols <- names(df)[purrr::map_lgl(df, is.numeric)]
+  } else {
+    # Validate that all specified columns are numeric
+    if (!all(purrr::map_lgl(df[cols], is.numeric))) stop('All columns must be numeric')
   }
+
   data.table::setnafill(df, fill = 0, cols = cols)
 }
 
@@ -60,7 +65,11 @@ naToZero.list <- function(x, cols = NULL) {
   # if cols not set, use all numeric cols
   if (is.null(cols)) {
     cols <- names(x)[purrr::map_lgl(x, is.numeric)]
+  } else {
+    # Validate that all specified columns are numeric
+    if (!all(purrr::map_lgl(x[cols], is.numeric))) stop('All columns must be numeric')
   }
+
   x[cols] <- lapply(x[cols], function(y) {y[is.na(y)] <- 0; return(y)})
   return(x)
 }
@@ -72,7 +81,11 @@ naToZero.data.frame <- function(x, cols = NULL) {
   # if cols not set, use all numeric cols
   if (is.null(cols)) {
     cols <- names(x)[purrr::map_lgl(x, is.numeric)]
+  } else {
+    # Validate that all specified columns are numeric
+    if (!all(purrr::map_lgl(x[cols], is.numeric))) stop('All columns must be numeric')
   }
+
   x[cols][is.na(x[cols])] <- 0
   return(x)
 }

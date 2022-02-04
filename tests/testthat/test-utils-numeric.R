@@ -22,7 +22,10 @@ test_that("setNaToZero replaces intended NAs", {
   expect_equal(sum(is.na(df)), 3*nMissing)
   expect_equal(sum(df[, c('Sepal.Length', 'Sepal.Width')] == 0), 2*nMissing)
 
-  # With defualt. Should change only numeric columns
+  # Err if given a non-numeric column
+  expect_error(naToZero(df, cols = c("Sepal.Length", "Sepal.Width", "Species")))
+
+  # With defualt cols and data.table. Should change only numeric columns
   dt <- data.table::as.data.table(df)
   setNaToZero(dt)
   expect_equal(class(dt), c('data.table','data.frame'))
@@ -45,7 +48,7 @@ test_that("naToZero replaces intended NAs", {
   expect_equal(sum(is.na(df)), 3*nMissing)
   expect_equal(sum(df[, c('Sepal.Length', 'Sepal.Width')] == 0), 2*nMissing)
 
-  # With defualt. Should change only numeric columns
+  # With defualt cols and data.table input. Should change only numeric columns
   dt <- data.table::as.data.table(df)
   dt <- naToZero(dt)
   expect_equal(class(dt), c('data.table','data.frame'))
@@ -59,6 +62,10 @@ test_that("naToZero replaces intended NAs", {
   expect_equal(class(lst), 'list')
   expect_equal(sum(unlist(lapply(lst, function(x) {sum(is.na(x))}))), nMissing)
   expect_equal(sum(unlist(lapply(lst[c('Petal.Length', 'Petal.Width')], function(x) {sum(x==0)}))), 2*nMissing)
+
+  # Err if given a non-numeric column
+  expect_error(naToZero(lst, cols = c("Sepal.Length", "Sepal.Width", "Species")))
+
 
   # Vector
   vec <- c(1,2,3,NA)
