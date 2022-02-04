@@ -1,4 +1,4 @@
-context("stringUtils")
+## Tests for string utils functions
 
 test_that("toStringOrNull has sane behavior", {
   expect_equal(toStringOrNull(NULL), NULL)

@@ -21,27 +21,67 @@ nonZeroRound <- function(x, digits) {
   } 
 }
 
-
-#' Impute 0s for numeric columns
+#' Replace numeric NAs with 0 - update by reference
 #'
-#' This function replaces NAs in numeric columns of a data.table with 0.
-#' @param dt data.table
-#' @param cols Vector of column names for which the NA replacement should occur.
+#' This function replaces NAs in numeric columns with 0.
+#' @param x data.table, data.frame, or list
+#' @param cols vector of column names for which the NA replacement should occur.
 #' Default is all numeric columns.
-#' @return inputted data.table dt but with NAs replaced with desired value.
+#' @return x with desired NAs replaced with 0.
+#' @importFrom purrr map_lgl
 #' @export
-setNaToZero <- function(dt, cols = NULL) {
+setNaToZero <- function(df, cols = NULL) {
 
   # if cols not set, use all numeric cols
   if (is.null(cols)) {
-    cols <- colnames(dt)[sapply(dt, class) == "numeric"]
+    cols <- names(df)[purrr::map_lgl(df, is.numeric)]
   }
-  
-  # Ensure data.table
-  if (!'data.table' %in% class(dt)) {
-    data.table::setDT(dt)
+  data.table::setnafill(df, fill = 0, cols = cols)
+}
+
+
+#' Replace numeric NAs with 0
+#'
+#' This function replaces numeric NAs with 0.
+#' @param x list, data.frame, array, or vector
+#' @param cols Optional. When appropriate, vector of column names 
+#' for which the NA replacement should occur.
+#' Default is all numeric columns.
+#' @return x with desired NAs replaced with 0.
+#' @export
+naToZero <- function(x, ...) {
+  UseMethod("naToZero")
+}
+
+#' @importFrom purrr map_lgl
+#' @export
+naToZero.list <- function(x, cols = NULL) {
+
+  # if cols not set, use all numeric cols
+  if (is.null(cols)) {
+    cols <- names(x)[purrr::map_lgl(x, is.numeric)]
   }
+  x[cols] <- lapply(x[cols], function(y) {y[is.na(y)] <- 0; return(y)})
+  return(x)
+}
 
-  data.table::setnafill(dt, fill = 0, cols = cols)
+#' @importFrom purrr map_lgl
+#' @export
+naToZero.data.frame <- function(x, cols = NULL) {
 
+  # if cols not set, use all numeric cols
+  if (is.null(cols)) {
+    cols <- names(x)[purrr::map_lgl(x, is.numeric)]
+  }
+  x[cols][is.na(x[cols])] <- 0
+  return(x)
+}
+
+
+#' @export
+naToZero.default <- function(x) {
+
+  numericEntries <- purrr::map_lgl(x, is.numeric)
+  x[numericEntries][is.na(x[numericEntries])] <- 0
+  return(x)
 }

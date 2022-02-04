@@ -2,19 +2,19 @@
 % Please edit documentation in R/utils-numeric.R
 \name{setNaToZero}
 \alias{setNaToZero}
-\title{Impute 0s for numeric columns}
+\title{Replace numeric NAs with 0 - update by reference}
 \usage{
-setNaToZero(dt, cols = NULL)
+setNaToZero(df, cols = NULL)
 }
 \arguments{
-\item{dt}{data.table}
-
-\item{cols}{Vector of column names for which the NA replacement should occur.
+\item{cols}{vector of column names for which the NA replacement should occur.
 Default is all numeric columns.}
+
+\item{x}{data.table, data.frame, or list}
 }
 \value{
-inputted data.table dt but with NAs replaced with desired value.
+x with desired NAs replaced with 0.
 }
 \description{
-This function replaces NAs in numeric columns of a data.table with 0.
+This function replaces NAs in numeric columns with 0.
 }

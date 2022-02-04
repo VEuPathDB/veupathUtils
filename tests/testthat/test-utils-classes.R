@@ -1,4 +1,4 @@
-context("classUtils")
+## Tests for class utils functions
 
 test_that("is.POSIXct has sane results", {
   expect_equal(is.POSIXct('a'), FALSE)
