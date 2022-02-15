@@ -28,18 +28,12 @@ nonZeroRound <- function(x, digits) {
 #' @param cols vector of column names for which the NA replacement should occur.
 #' Default is all numeric columns.
 #' @return x with desired NAs replaced with 0.
-#' @importFrom purrr map_lgl
 #' @export
 setNaToZero <- function(df, cols = NULL) {
 
-
-  if (is.null(cols)) {
-    # if cols not set, use all numeric cols
-    cols <- names(df)[purrr::map_lgl(df, is.numeric)]
-  } else {
-    # Validate that all specified columns are numeric
-    if (!all(purrr::map_lgl(df[cols], is.numeric))) stop('All columns must be numeric')
-  }
+  # if cols not set, use all numeric cols
+  if (is.null(cols)) cols <- findNumericCols(df)
+  cols <- validateNumericCols(df, cols)
 
   data.table::setnafill(df, fill = 0, cols = cols)
 }
@@ -52,7 +46,7 @@ setNaToZero <- function(df, cols = NULL) {
 #' @param cols Optional. When appropriate, vector of column names 
 #' for which the NA replacement should occur.
 #' Default is all numeric columns.
-#' @return x with desired NAs replaced with 0.
+#' @return object the same type as x, where desired NAs are replaced with 0.
 #' @export
 naToZero <- function(x, ...) {
   UseMethod("naToZero")
@@ -63,28 +57,19 @@ naToZero <- function(x, ...) {
 naToZero.list <- function(x, cols = NULL) {
 
   # if cols not set, use all numeric cols
-  if (is.null(cols)) {
-    cols <- names(x)[purrr::map_lgl(x, is.numeric)]
-  } else {
-    # Validate that all specified columns are numeric
-    if (!all(purrr::map_lgl(x[cols], is.numeric))) stop('All columns must be numeric')
-  }
+  if (is.null(cols)) cols <- findNumericCols(x)
+  cols <- validateNumericCols(x, cols)
 
   x[cols] <- lapply(x[cols], function(y) {y[is.na(y)] <- 0; return(y)})
   return(x)
 }
 
-#' @importFrom purrr map_lgl
 #' @export
 naToZero.data.frame <- function(x, cols = NULL) {
 
   # if cols not set, use all numeric cols
-  if (is.null(cols)) {
-    cols <- names(x)[purrr::map_lgl(x, is.numeric)]
-  } else {
-    # Validate that all specified columns are numeric
-    if (!all(purrr::map_lgl(x[cols], is.numeric))) stop('All columns must be numeric')
-  }
+  if (is.null(cols)) cols <- findNumericCols(x)
+  cols <- validateNumericCols(x, cols)
 
   x[cols][is.na(x[cols])] <- 0
   return(x)
@@ -97,4 +82,30 @@ naToZero.default <- function(x) {
   numericEntries <- purrr::map_lgl(x, is.numeric)
   x[numericEntries][is.na(x[numericEntries])] <- 0
   return(x)
+}
+
+
+#' Find numeric columns
+#'
+#' This function finds all numeric columns in a list
+#' @param x list, data.frame, array, or vector
+#' @return vector of numeric column names in x
+#' @importFrom purrr map_lgl
+findNumericCols <- function(x) {
+  numericCols <- names(x)[purrr::map_lgl(x, is.numeric)]
+  return(numericCols)
+}
+
+
+#' Validate numeric columns
+#' 
+#' Given a vector of column names, this function ensures all
+#' referenced columns are numeric
+#' @param x list, data.frame, array, or vector
+#' @param cols vector of column names
+#' @return given column names
+#' @importFrom purrr map_lgl
+validateNumericCols <- function(x, cols) {
+  if (!all(purrr::map_lgl(x[cols], is.numeric))) stop('validateNumericCols failed: All columns must be numeric')
+  return(cols)
 }

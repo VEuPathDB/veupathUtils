@@ -14,7 +14,7 @@ for which the NA replacement should occur.
 Default is all numeric columns.}
 }
 \value{
-x with desired NAs replaced with 0.
+object the same type as x, where desired NAs are replaced with 0.
 }
 \description{
 This function replaces numeric NAs with 0.
