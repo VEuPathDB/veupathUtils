@@ -4,7 +4,7 @@
 \alias{validateNumericCols}
 \title{Validate numeric columns}
 \usage{
-validateNumericCols(x, cols)
+validateNumericCols(x, cols, ...)
 }
 \arguments{
 \item{x}{list, data.frame, array, or vector}

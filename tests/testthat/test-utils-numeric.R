@@ -78,6 +78,7 @@ test_that("naToZero replaces intended NAs", {
   mat <- matrix(rnorm(36), nrow=6)
   mat[sample(1:36, size=nMissing, replace=F)] <- NA
   mat <- naToZero(mat)
+  expect_equal(class(mat), c('matrix', 'array'))
   expect_true(any(!is.na(mat)))
   expect_equal(sum(mat == 0), nMissing)
 
@@ -86,5 +87,45 @@ test_that("naToZero replaces intended NAs", {
   vec <- naToZero(vec)
   expect_equal(class(vec), 'character')
   expect_equal(vec, c('1','2','3',NA))
+
+})
+
+
+test_that("finding and validating numeric columns works", {
+
+  df <- iris
+
+  # With specified columns
+  numericCols <- findNumericCols(df)
+  expect_equal(numericCols, c('Sepal.Length', 'Sepal.Width', 'Petal.Length', 'Petal.Width'))
+
+  # In a data.table
+  dt <- data.table::as.data.table(df)
+  numericCols <- findNumericCols(dt)
+  expect_equal(numericCols, c('Sepal.Length', 'Sepal.Width', 'Petal.Length', 'Petal.Width'))
+  
+  validatedCols <- validateNumericCols(dt, c('Sepal.Length', 'Sepal.Width'))
+  expect_equal(validatedCols, c('Sepal.Length', 'Sepal.Width'))
+
+  # In a list
+  lst <- as.list(iris)
+  numericCols <- findNumericCols(lst)
+  expect_equal(numericCols, c('Sepal.Length', 'Sepal.Width', 'Petal.Length', 'Petal.Width'))
+
+  validatedCols <- validateNumericCols(lst, c('Sepal.Length', 'Sepal.Width'))
+  expect_equal(validatedCols, c('Sepal.Length', 'Sepal.Width'))
+
+  # If no numeric cols
+  lst_string <- lapply(iris, function(x) {x <- as.character(x); return(x)})
+  numericCols <- findNumericCols(lst_string)
+  expect_equal(numericCols, NULL)
+
+  validatedCols <- validateNumericCols(lst_string, NULL)
+  expect_equal(validatedCols, NULL)
+
+  # validateNumericCols should err if given non-numeric column names
+  expect_error(validateNumericCols(dt, c('Sepal.Length', 'Species')))
+  expect_error(validateNumericCols(lst, c('Sepal.Length', 'Species')))
+  
 
 })

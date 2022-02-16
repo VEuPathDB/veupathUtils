@@ -33,7 +33,7 @@ setNaToZero <- function(df, cols = NULL) {
 
   # if cols not set, use all numeric cols
   if (is.null(cols)) cols <- findNumericCols(df)
-  cols <- validateNumericCols(df, cols)
+  cols <- validateNumericCols(df, cols=cols)
 
   data.table::setnafill(df, fill = 0, cols = cols)
 }
@@ -52,15 +52,14 @@ naToZero <- function(x, ...) {
   UseMethod("naToZero")
 }
 
-#' @importFrom purrr map_lgl
 #' @export
-naToZero.list <- function(x, cols = NULL) {
+naToZero.data.table <- function(x, cols = NULL) {
 
   # if cols not set, use all numeric cols
   if (is.null(cols)) cols <- findNumericCols(x)
   cols <- validateNumericCols(x, cols)
 
-  x[cols] <- lapply(x[cols], function(y) {y[is.na(y)] <- 0; return(y)})
+  x[, cols] <- x[, ..cols][, lapply(.SD, function(y){y[is.na(y)] <- 0; y})]
   return(x)
 }
 
@@ -75,10 +74,19 @@ naToZero.data.frame <- function(x, cols = NULL) {
   return(x)
 }
 
+#' @export
+naToZero.list <- function(x, cols = NULL) {
+
+  # if cols not set, use all numeric cols
+  if (is.null(cols)) cols <- findNumericCols(x)
+  cols <- validateNumericCols(x, cols)
+
+  x[cols] <- lapply(x[cols], function(y) {y[is.na(y)] <- 0; return(y)})
+  return(x)
+}
 
 #' @export
 naToZero.default <- function(x) {
-
   numericEntries <- purrr::map_lgl(x, is.numeric)
   x[numericEntries][is.na(x[numericEntries])] <- 0
   return(x)
@@ -93,6 +101,10 @@ naToZero.default <- function(x) {
 #' @importFrom purrr map_lgl
 findNumericCols <- function(x) {
   numericCols <- names(x)[purrr::map_lgl(x, is.numeric)]
+  
+  # If no numeric cols, return NULL
+  if (!length(numericCols)) return(NULL)
+
   return(numericCols)
 }
 
@@ -105,7 +117,24 @@ findNumericCols <- function(x) {
 #' @param cols vector of column names
 #' @return given column names
 #' @importFrom purrr map_lgl
-validateNumericCols <- function(x, cols) {
+#' @import data.table
+#' @export
+validateNumericCols <- function(x, cols, ...) {
+  UseMethod("validateNumericCols")
+}
+
+#' @importFrom purrr map_lgl
+#' @export
+validateNumericCols.data.table <- function(x, cols) {
+  if (is.null(cols)) warning("validateNumericCols warning: no numeric columns given")
+  if (!all(purrr::map_lgl(x[, ..cols], is.numeric))) stop('validateNumericCols failed: All columns must be numeric')
+  return(cols)
+}
+
+#' @importFrom purrr map_lgl
+#' @export
+validateNumericCols.default <- function(x, cols) {
+  if (is.null(cols)) warning("validateNumericCols warning: no numeric columns given")
   if (!all(purrr::map_lgl(x[cols], is.numeric))) stop('validateNumericCols failed: All columns must be numeric')
   return(cols)
 }
