@@ -10,7 +10,7 @@ findNumericCols(x)
 \item{x}{list, data.frame, array, or vector}
 }
 \value{
-vector of numeric column names in x
+vector of numeric column names in x. If no numeric columns found, returns NULL
 }
 \description{
 This function finds all numeric columns in a list

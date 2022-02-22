@@ -97,7 +97,7 @@ naToZero.default <- function(x) {
 #'
 #' This function finds all numeric columns in a list
 #' @param x list, data.frame, array, or vector
-#' @return vector of numeric column names in x
+#' @return vector of numeric column names in x. If no numeric columns found, returns NULL
 #' @importFrom purrr map_lgl
 findNumericCols <- function(x) {
   numericCols <- names(x)[purrr::map_lgl(x, is.numeric)]
@@ -111,10 +111,10 @@ findNumericCols <- function(x) {
 
 #' Validate numeric columns
 #' 
-#' Given a vector of column names, this function ensures all
+#' Given a vector of column names or indices, this function ensures all
 #' referenced columns are numeric
-#' @param x list, data.frame, array, or vector
-#' @param cols vector of column names
+#' @param x list, data.frame, array, data.table
+#' @param cols vector of column names or column indices. NAs will be removed.
 #' @return given column names
 #' @importFrom purrr map_lgl
 #' @import data.table
@@ -126,15 +126,42 @@ validateNumericCols <- function(x, cols, ...) {
 #' @importFrom purrr map_lgl
 #' @export
 validateNumericCols.data.table <- function(x, cols) {
-  if (is.null(cols)) warning("validateNumericCols warning: no numeric columns given")
+  if (any(is.na(cols))) {cols <- cols[!is.na(cols)]; warning("validateNumericCols warning: NAs in cols removed")}
+  if (!length(cols)) {warning("validateNumericCols warning: no numeric columns given"); return(cols)}
+  if (is.character(cols)) {
+    if (!all(cols %in% names(x))) stop('validateNumericCols failed: Column name not found in the input')
+  } else {
+    if (max(cols) > ncol(x) | min(cols) < 1) stop('validateNumericCols failed: column index does not represent a valid column')
+  }
   if (!all(purrr::map_lgl(x[, ..cols], is.numeric))) stop('validateNumericCols failed: All columns must be numeric')
   return(cols)
 }
 
 #' @importFrom purrr map_lgl
 #' @export
+validateNumericCols.list <- function(x, cols) {
+  if (any(is.na(cols))) {cols <- cols[!is.na(cols)]; warning("validateNumericCols warning: NAs in cols removed")}
+  if (!length(cols)) {warning("validateNumericCols warning: no numeric columns given"); return(cols)}
+  if (is.character(cols)) {
+    if (!all(cols %in% names(x))) stop('validateNumericCols failed: Column name not found in the input')
+  } else {
+    if (max(cols) > length(names(x)) | min(cols) < 1) stop('validateNumericCols failed: column index does not represent a valid column')
+  }
+  if (!all(purrr::map_lgl(x[cols], is.numeric))) stop('validateNumericCols failed: All columns must be numeric')
+  return(cols)
+}
+
+
+#' @importFrom purrr map_lgl
+#' @export
 validateNumericCols.default <- function(x, cols) {
-  if (is.null(cols)) warning("validateNumericCols warning: no numeric columns given")
+  if (any(is.na(cols))) {cols <- cols[!is.na(cols)]; warning("validateNumericCols warning: NAs in cols removed")}
+  if (!length(cols)) {warning("validateNumericCols warning: no numeric columns given"); return(cols)}
+  if (is.character(cols)) {
+    if (!all(cols %in% names(x))) stop('validateNumericCols failed: Column name not found in the input')
+  } else {
+    if (max(cols) > ncol(x) | min(cols) < 1) stop('validateNumericCols failed: column index does not represent a valid column')
+  }
   if (!all(purrr::map_lgl(x[cols], is.numeric))) stop('validateNumericCols failed: All columns must be numeric')
   return(cols)
 }

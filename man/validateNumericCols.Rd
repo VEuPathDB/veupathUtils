@@ -7,14 +7,14 @@
 validateNumericCols(x, cols, ...)
 }
 \arguments{
-\item{x}{list, data.frame, array, or vector}
+\item{x}{list, data.frame, array, data.table}
 
-\item{cols}{vector of column names}
+\item{cols}{vector of column names or column indices. NAs will be removed.}
 }
 \value{
 given column names
 }
 \description{
-Given a vector of column names, this function ensures all
+Given a vector of column names or indices, this function ensures all
 referenced columns are numeric
 }

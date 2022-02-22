@@ -107,6 +107,9 @@ test_that("finding and validating numeric columns works", {
   validatedCols <- validateNumericCols(dt, c('Sepal.Length', 'Sepal.Width'))
   expect_equal(validatedCols, c('Sepal.Length', 'Sepal.Width'))
 
+  validatedCols <- validateNumericCols(dt, c(1, 2, 3))
+  expect_equal(validatedCols, c(1, 2, 3))
+
   # In a list
   lst <- as.list(iris)
   numericCols <- findNumericCols(lst)
@@ -115,17 +118,46 @@ test_that("finding and validating numeric columns works", {
   validatedCols <- validateNumericCols(lst, c('Sepal.Length', 'Sepal.Width'))
   expect_equal(validatedCols, c('Sepal.Length', 'Sepal.Width'))
 
+  validatedCols <- validateNumericCols(lst, c(2, 3, 4))
+  expect_equal(validatedCols, c(2, 3, 4))
+
   # If no numeric cols
+  dt_string <- dt[, lapply(.SD, as.character)]
+  numericCols <- findNumericCols(dt_string)
+  expect_equal(numericCols, NULL)
+
   lst_string <- lapply(iris, function(x) {x <- as.character(x); return(x)})
   numericCols <- findNumericCols(lst_string)
   expect_equal(numericCols, NULL)
 
-  validatedCols <- validateNumericCols(lst_string, NULL)
-  expect_equal(validatedCols, NULL)
-
   # validateNumericCols should err if given non-numeric column names
   expect_error(validateNumericCols(dt, c('Sepal.Length', 'Species')))
   expect_error(validateNumericCols(lst, c('Sepal.Length', 'Species')))
-  
+
+  # err if column names do not exist
+  expect_error(validateNumericCols(dt, c('a', 'Species')))
+  expect_error(validateNumericCols(lst, c('a', 'Species')))
+
+  # err if indices too large
+  expect_error(validateNumericCols(dt, c(1, 2, 100)))
+  expect_error(validateNumericCols(lst, c(1, 2, 100)))
+
+  # err if indices too small
+  expect_error(validateNumericCols(dt, c(-1, 2, 100)))
+  expect_error(validateNumericCols(lst, c(-1, 2, 100)))
+
+  # return NULL for NULL input
+  validatedCols <- validateNumericCols(dt, NULL)
+  expect_equal(validatedCols, NULL)
+
+  validatedCols <- validateNumericCols(lst, NULL)
+  expect_equal(validatedCols, NULL)
+
+  # remove NAs in cols arg
+  validatedCols <- validateNumericCols(dt, c(1, NA, 4))
+  expect_equal(validatedCols, c(1, 4))
+
+  validatedCols <- validateNumericCols(lst, c(1, NA, 4))
+  expect_equal(validatedCols, c(1, 4))
 
 })
