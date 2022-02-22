@@ -1,4 +1,4 @@
-context("genericUtils")
+## Tests for generic utils functions
 
 test_that("getAggStr returns sane results", {
   expect_equal(getAggStr(c('a','b'),c(1,2,3)), "a + b ~ 1 + 2 + 3")
