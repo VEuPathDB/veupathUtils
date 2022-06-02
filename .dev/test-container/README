@@ -1,0 +1,19 @@
+### Do all the following in THIS directory
+
+# Build or update the image (uses ./Dockerfile)
+
+docker build -t testing-r-env .
+
+# Run the tests
+
+docker run -v $PWD/../../../:/home/dev -it testing-r-env Rscript .dev/runTests.R
+
+# Start interactive R session
+docker run -v $PWD/../../../:/home/dev -it testing-r-env R
+
+
+# Happy developing! See gettingStarted.R for some examples
+
+
+
+
