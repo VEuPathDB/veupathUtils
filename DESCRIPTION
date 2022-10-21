@@ -10,8 +10,10 @@ Authors@R:
            family = "Blevins",
            role = c("aut", "cre"),
            email = "annsize@upenn.edu"))
+biocViews: 
 Imports:
     data.table,
+    S4Vectors,
     stringi,
     purrr
 URL: https://github.com/VEuPathDB/veupathUtils
