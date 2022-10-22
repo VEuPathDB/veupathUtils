@@ -12,7 +12,7 @@ check_variable_class <- function(object) {
     errors <- character()
     variable_class <- object@value
     if (!variable_class %in% variable_classes) {
-      msg <- paste("Variable class must be one of", variable_classes)
+      msg <- paste("Variable class must be one of", paste(variable_classes, collapse = ", "))
       errors <- c(errors, msg)
     }
 
@@ -29,7 +29,7 @@ check_data_type <- function(object) {
     }
 
     if (suppressWarnings(!data_type %in% data_types)) {
-      msg <- paste("Data type must be one of", data_types)
+      msg <- paste("Data type must be one of", paste(data_types, collapse = ", "))
       errors <- c(errors, msg)
     }
 
@@ -46,7 +46,7 @@ check_data_shape <- function(object) {
     }
 
     if (suppressWarnings(!data_shape %in% data_shapes)) {
-      msg <- paste("Data shape must be one of", data_shapes)
+      msg <- paste("Data shape must be one of", paste(data_shapes, collapse = ", "))
       errors <- c(errors, msg)
     }
 
@@ -55,7 +55,7 @@ check_data_shape <- function(object) {
 
 setClass("VariableClass", representation(
     value = 'character'
-), prototype = (
+), prototype = prototype(
     value = NA_character_
 ), validity = check_variable_class)
 
@@ -63,7 +63,7 @@ setClass("VariableClass", representation(
 setClass("VariableSpec", representation(
     variableId = "character",
     entityId = "character"
-), prototype(
+), prototype = prototype(
     variableId = NA_character_,
     entityId = NA_character_
 ))
@@ -76,13 +76,13 @@ setClass("VariableSpecList",
 
 setClass("DataType", representation(
     value = 'character'
-), prototype = (
+), prototype = prototype(
     value = NA_character_
 ), validity = check_data_type)
 
 setClass("DataShape", representation(
     value = 'character'
-), prototype = (
+), prototype = prototype(
     value = NA_character_
 ), validity = check_data_shape)
 
@@ -105,7 +105,7 @@ check_variable_metadata <- function(object) {
     }
 
     # need display ranges, vocab etc for derived and computed vars
-    if (any(c('derived', 'computed') %in% class)) {
+    if (any(c('derived', 'computed') %in% variable_class)) {
       if (!length(object@displayName)) errors <- c(errors, "Display name must be non-empty for derived or computed variables.")
 
       # display range min/max must be numeric for numeric types, string for dates, NULL else
@@ -141,17 +141,11 @@ setClass("VariableMetadata", representation(
     dataShape = 'DataShape',
     vocabulary = 'character',
     members = 'VariableSpecList'
-), prototype(
+), prototype = prototype(
     displayName = NA_character_,
     displayRangeMin = NA_real_,
     displayRangeMax = NA_real_,
     vocabulary = NA_character_
-), contains = c(
-    'VariableClass',
-    'VariableSpec',
-    'VariableSpecList',
-    'DataType',
-    'DataShape'
 ), validity = check_variable_metadata)
 
 # do we need this, or just make a list of the other obj
