@@ -2,7 +2,7 @@
 test_that("VariableMetadata validation works", {
     #support multiple variable classes IFF one of them is 'collection'
     vm <- new("VariableMetadata",
-                 variableClass = new("VariableClass", value = c("computed", "collection"),
+                 variableClass = new("VariableClass", value = c("computed", "collection")),
                  variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def'),
                  displayName = 'Im a computed variable',
                  dataType = new("DataType", value = 'STRING'),
@@ -13,10 +13,10 @@ test_that("VariableMetadata validation works", {
                     new("VariableSpec", variableId = 'c', entityId = 'd')
                  ))
             )
-    expect_equal(vm@variableClass, c('computed', 'collection'))
+    expect_equal(vm@variableClass@value, c('computed', 'collection'))
 
     expect_error(new("VariableMetadata",
-                 variableClass = new("VariableClass", value = c("computed", "derived"),
+                 variableClass = new("VariableClass", value = c("computed", "derived")),
                  variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def'),
                  displayName = 'Im a computed variable',
                  dataType = new("DataType", value = 'STRING'),
@@ -54,8 +54,8 @@ test_that("VariableMetadata validation works", {
                  variableClass = new("VariableClass", value = "computed"),
                  variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def'),
                  displayName = 'Im a computed variable',
-                 displayRangeMin = as.Date('1-1-22'),
-                 displayRangeMax = as.Date('12-31-22'),
+                 displayRangeMin = as.Date('2022-1-1'),
+                 displayRangeMax = as.Date('2022-12-31'),
                  dataType = new("DataType", value = 'STRING'),
                  dataShape = new("DataShape", value = 'CATEGORICAL'),
                  vocabulary = c('a', 'b', 'c')
@@ -66,14 +66,14 @@ test_that("VariableMetadata validation works", {
                  variableClass = new("VariableClass", value = "computed"),
                  variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def'),
                  displayName = 'Im a computed variable',
-                 displayRangeMin = as.Date('1-1-22'),
-                 displayRangeMax = as.Date('12-31-22'),
+                 displayRangeMin = '2022-1-1',
+                 displayRangeMax = '2022-12-31',
                  dataType = new("DataType", value = 'DATE'),
                  dataShape = new("DataShape", value = 'CONTINUOUS')
             )
-    expect_equal(vm@dataType, 'DATE')
-    expect_equal(lubridate::is.Date(displayRangeMin), TRUE)
-    expect_equal(lubridate::is.Date(displayRangeMax), TRUE)
+    expect_equal(vm@dataType@value, 'DATE')
+    expect_equal(is.character(vm@displayRangeMin), TRUE)
+    expect_equal(is.character(vm@displayRangeMax), TRUE)
 
     vm <- new("VariableMetadata",
                  variableClass = new("VariableClass", value = "computed"),
@@ -84,9 +84,9 @@ test_that("VariableMetadata validation works", {
                  dataType = new("DataType", value = 'NUMBER'),
                  dataShape = new("DataShape", value = 'CONTINUOUS')
             )
-    expect_equal(vm@dataType, 'DATE')
-    expect_equal(is.numeric(displayRangeMin), TRUE)
-    expect_equal(is.numeric(displayRangeMax), TRUE)
+    expect_equal(vm@dataType@value, 'NUMBER')
+    expect_equal(is.numeric(vm@displayRangeMin), TRUE)
+    expect_equal(is.numeric(vm@displayRangeMax), TRUE)
 
     #non native vars have display ranges etc
     expect_error(new("VariableMetadata",

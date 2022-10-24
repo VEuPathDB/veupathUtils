@@ -14,6 +14,17 @@ check_variable_class <- function(object) {
       errors <- c(errors, msg)
     }
 
+    # this bit here makes me think collection is better as a separate slot
+    if (length(variable_class) > 2) {
+      msg <- "A variable cannot have more than two classes."
+      errors <- c(errors, msg)
+    } else {
+      if (length(variable_class) == 2 && !'collection' %in% variable_class) {
+        msg <- "Variables with multiple classes must have 'collection' as one of them."
+        errors <- c(errors, msg)
+      }
+    }
+
     return(if (length(errors) == 0) TRUE else errors)
 }
 
@@ -171,21 +182,23 @@ check_variable_metadata <- function(object) {
 
     # need display ranges, vocab etc for derived and computed vars
     if (any(c('derived', 'computed') %in% variable_class)) {
-      if (!length(object@displayName)) errors <- c(errors, "Display name must be non-empty for derived or computed variables.")
+      if (is.na(object@displayName)) errors <- c(errors, "Display name must be non-empty for derived or computed variables.")
 
       # display range min/max must be numeric for numeric types, string for dates, NULL else
-      if (!length(min) && data_type != "STRING") {
+      if (is.na(min) && data_type != "STRING") {
         errors <- c(errors, "Display range min must be non-empty for derived or computed variables.")
       } else {
         if (data_type == "NUMBER" && !is.numeric(min)) errors <- c(errors, "Display range min must be numeric for data type 'NUMBER'.")
         if (data_type == "DATE" && !is.character(min)) errors <- c(errors, "Display range min must be of type character for data type 'DATE'.")
+        if (data_type == "STRING" && !is.na(min)) errors <- c(errors, "Display range min must be NA for data type 'STRING'")
       }
 
-      if (!length(max) && data_type != "STRING") {
+      if (is.na(max) && data_type != "STRING") {
         errors <- c(errors, "Display range max must be non-empty for derived or computed variables.")
       } else {
         if (data_type == "NUMBER" && !is.numeric(max)) errors <- c(errors, "Display range max must be numeric for data type 'NUMBER'.")
         if (data_type == "DATE" && !is.character(max)) errors <- c(errors, "Display range max must be of type character for data type 'DATE'.")
+        if (data_type == "STRING" && !is.na(max)) errors <- c(errors, "Display range max must be NA for data type 'STRING'")
       }
 
     }
@@ -229,12 +242,12 @@ setMethod("toJSON", signature("VariableMetadata"), function(object, named = c(TR
 
     if (!is.na(object@displayRangeMin)) {
       display_range_min_json <- jsonlite::toJSON(jsonlite::unbox(object@displayRangeMin))
-      tmp <- paste0(tmp, ',"displayName":', display_range_min_json)
+      tmp <- paste0(tmp, ',"displayRangeMin":', display_range_min_json)
     }
 
     if (!is.na(object@displayRangeMax)) {
       display_range_max_json <- jsonlite::toJSON(jsonlite::unbox(object@displayRangeMax))
-      tmp <- paste0(tmp, ',"displayName":', display_range_max_json)
+      tmp <- paste0(tmp, ',"displayRangeMax":', display_range_max_json)
     }
 
     if (!is.na(object@dataType@value)) {
