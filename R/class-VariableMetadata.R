@@ -9,7 +9,7 @@ data_shapes <- c('CONTINUOUS', 'CATEGORICAL', 'ORDINAL', 'BINARY')
 check_variable_class <- function(object) {
     errors <- character()
     variable_class <- object@value
-    if (!variable_class %in% variable_classes) {
+    if (!all(variable_class %in% variable_classes)) {
       msg <- paste("Variable class must be one of", paste(variable_classes, collapse = ", "))
       errors <- c(errors, msg)
     }
@@ -67,11 +67,11 @@ setGeneric("toJSON", function(object, named = c(TRUE, FALSE)) {
 
 setMethod("toJSON", signature("VariableClass"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 
-    tmp <- jsonlite::unbox(object@value)
+    tmp <- jsonlite::toJSON(object@value)
 
-    if (named) tmp <- list("variableClass" = tmp)
+    if (named) tmp <- paste0('{"variableClass":', tmp, '}')
     
-    return(jsonlite::toJSON(tmp))
+    return(tmp)
 })
 
 setClass("VariableSpec", representation(
@@ -247,7 +247,7 @@ setMethod("toJSON", signature("VariableMetadata"), function(object, named = c(TR
       tmp <- paste0(tmp, ',"dataShape":', data_shape_json)
     }
 
-    if (!!length(object@vocabulary)) {
+    if (!all(is.na(object@vocabulary))) {
       vocabulary_json <- jsonlite::toJSON(object@vocabulary)
       tmp <- paste0(tmp, ',"vocabulary":', vocabulary_json)
     }
