@@ -1,6 +1,5 @@
-# should collection be a separate thing? 
-# right now it should support class = c('computed', 'collection'), but is that good enough or a potential source of trouble?
-variable_classes <- c('native', 'derived', 'computed', 'collection')
+variable_classes <- c('native', 'derived', 'computed')
+plot_references <- c('xAxis', 'yAxis', 'zAxis', 'overlay', 'facet')
 data_types <- c('NUMBER', 'STRING', 'INTEGER', 'DATE', 'LONGITUDE')
 data_shapes <- c('CONTINUOUS', 'CATEGORICAL', 'ORDINAL', 'BINARY')
 
@@ -9,20 +8,32 @@ data_shapes <- c('CONTINUOUS', 'CATEGORICAL', 'ORDINAL', 'BINARY')
 check_variable_class <- function(object) {
     errors <- character()
     variable_class <- object@value
-    if (!all(variable_class %in% variable_classes)) {
+    
+    if (length(variable_class) != 1) {
+      msg <- "Variable class must have a single value."
+      errors <- c(errors, msg) 
+    }
+
+    if (suppressWarnings(!variable_class %in% variable_classes)) {
       msg <- paste("Variable class must be one of", paste(variable_classes, collapse = ", "))
       errors <- c(errors, msg)
     }
 
-    # this bit here makes me think collection is better as a separate slot
-    if (length(variable_class) > 2) {
-      msg <- "A variable cannot have more than two classes."
+    return(if (length(errors) == 0) TRUE else errors)
+}
+
+check_plot_reference <- function(object) {
+    errors <- character()
+    plot_reference <- object@value
+    
+    if (length(plot_reference) != 1) {
+      msg <- "Plot reference must have a single value."
+      errors <- c(errors, msg) 
+    }
+
+    if (suppressWarnings(!plot_reference %in% plot_references)) {
+      msg <- paste("Plot reference must be one of", paste(plot_references, collapse = ", "))
       errors <- c(errors, msg)
-    } else {
-      if (length(variable_class) == 2 && !'collection' %in% variable_class) {
-        msg <- "Variables with multiple classes must have 'collection' as one of them."
-        errors <- c(errors, msg)
-      }
     }
 
     return(if (length(errors) == 0) TRUE else errors)
@@ -103,6 +114,21 @@ setMethod("toJSON", signature("VariableSpec"), function(object, named = c(TRUE, 
     return(jsonlite::toJSON(tmp))
 })
 
+setClass("PlotReference", representation(
+  value = 'character'
+), prototype = prototype(
+  value = NA_character_
+), validity = check_plot_reference)
+
+setMethod("toJSON", signature("PlotReference"), function(object, named = c(TRUE, FALSE)) {
+    named <- veupathUtils::matchArg(named) 
+    tmp <- jsonlite::toJSON(object@value)
+
+    if (named) tmp <- paste0('{"plotReference":', tmp, '}')
+    
+    return(tmp)
+})
+
 #' @importFrom S4Vectors SimpleList
 setClass("VariableSpecList", 
   contains = "SimpleList", 
@@ -168,6 +194,7 @@ check_variable_metadata <- function(object) {
     max <- object@displayRangeMax
     variable_spec <- object@variableSpec
     variable_class <- object@variableClass@value
+    plot_reference <- object@plotReference@value
 
     errors <- character()
     # class, varId and entityId must be non-empty
@@ -179,6 +206,8 @@ check_variable_metadata <- function(object) {
         if (!length(variable_spec@variableId)) errors <- c(errors, "Variable Id must be non-empty.")
         if (!length(variable_spec@entityId)) errors <- c(errors, "Entity Id must be non-empty.")
     }
+
+    if (!length(plot_reference)) errors <- c(errors, "Plot reference must be non-empty.")
 
     # need display ranges, vocab etc for derived and computed vars
     if (any(c('derived', 'computed') %in% variable_class)) {
@@ -212,18 +241,23 @@ check_variable_metadata <- function(object) {
 setClass("VariableMetadata", representation(
     variableClass = 'VariableClass',
     variableSpec = 'VariableSpec',
+    plotReference = 'PlotReference',
     displayName = 'character',
     displayRangeMin = 'ANY',
     displayRangeMax = 'ANY',
     dataType = 'DataType',
     dataShape = 'DataShape',
     vocabulary = 'character',
+    isCollection = 'logical',
+    imputeZero = 'logical',
     members = 'VariableSpecList'
 ), prototype = prototype(
     displayName = NA_character_,
     displayRangeMin = NA_real_,
     displayRangeMax = NA_real_,
-    vocabulary = NA_character_
+    vocabulary = NA_character_,
+    isCollection = FALSE,
+    imputeZero = FALSE
 ), validity = check_variable_metadata)
 
 setMethod("toJSON", signature("VariableMetadata"), function(object, named = c(TRUE, FALSE)) {
@@ -232,8 +266,9 @@ setMethod("toJSON", signature("VariableMetadata"), function(object, named = c(TR
 
     variable_class_json <- veupathUtils::toJSON(object@variableClass, named = FALSE)
     variable_spec_json <- veupathUtils::toJSON(object@variableSpec, named = FALSE)
+    plot_reference_json <- veupathUtils::toJSON(object@plotReference, named = FALSE)
 
-    tmp <- paste0('"variableClass":', variable_class_json, ',"variableSpec":', variable_spec_json)
+    tmp <- paste0('"variableClass":', variable_class_json, ',"variableSpec":', variable_spec_json, ',"plotReference":', plot_reference_json)
 
     if (!is.na(object@displayName)) {
       display_name_json <- jsonlite::toJSON(jsonlite::unbox(object@displayName))
@@ -241,12 +276,12 @@ setMethod("toJSON", signature("VariableMetadata"), function(object, named = c(TR
     }
 
     if (!is.na(object@displayRangeMin)) {
-      display_range_min_json <- jsonlite::toJSON(jsonlite::unbox(object@displayRangeMin))
+      display_range_min_json <- jsonlite::toJSON(jsonlite::unbox(as.character(object@displayRangeMin)))
       tmp <- paste0(tmp, ',"displayRangeMin":', display_range_min_json)
     }
 
     if (!is.na(object@displayRangeMax)) {
-      display_range_max_json <- jsonlite::toJSON(jsonlite::unbox(object@displayRangeMax))
+      display_range_max_json <- jsonlite::toJSON(jsonlite::unbox(as.character(object@displayRangeMax)))
       tmp <- paste0(tmp, ',"displayRangeMax":', display_range_max_json)
     }
 
@@ -264,6 +299,9 @@ setMethod("toJSON", signature("VariableMetadata"), function(object, named = c(TR
       vocabulary_json <- jsonlite::toJSON(object@vocabulary)
       tmp <- paste0(tmp, ',"vocabulary":', vocabulary_json)
     }
+
+    tmp <- paste0(tmp, ',"isCollection":', jsonlite::toJSON(jsonlite::unbox(object@isCollection)))
+    tmp <- paste0(tmp, ',"imputeZero":', jsonlite::toJSON(jsonlite::unbox(object@imputeZero)))
     
     if (!!length(object@members)) {
       members_json <- veupathUtils::toJSON(object@members, named = FALSE)
