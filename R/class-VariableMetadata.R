@@ -197,7 +197,8 @@ check_variable_metadata <- function(object) {
     plot_reference <- object@plotReference@value
 
     errors <- character()
-    # class, varId and entityId must be non-empty
+    # class, plotRef, varId and entityId must be non-empty
+    # TODO not sure this check is working
     if (!length(variable_class)) errors <- c(errors, "Variable class must be non-empty.")
     
     if (!length(variable_spec)) {

@@ -1,20 +1,6 @@
 #maybe break this into multiple tests? its getting long..
 test_that("VariableMetadata validation works", {
-    #support multiple variable classes IFF one of them is 'collection'
-    vm <- new("VariableMetadata",
-                 variableClass = new("VariableClass", value = c("computed", "collection")),
-                 variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def'),
-                 displayName = 'Im a computed variable',
-                 dataType = new("DataType", value = 'STRING'),
-                 dataShape = new("DataShape", value = 'CATEGORICAL'),
-                 vocabulary = c('a', 'b', 'c'),
-                 members = new("VariableSpecList", S4Vectors::SimpleList(
-                    new("VariableSpec", variableId = 'a', entityId = 'b'),
-                    new("VariableSpec", variableId = 'c', entityId = 'd')
-                 ))
-            )
-    expect_equal(vm@variableClass@value, c('computed', 'collection'))
-
+    #only a single class is allowed
     expect_error(new("VariableMetadata",
                  variableClass = new("VariableClass", value = c("computed", "derived")),
                  variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def'),
@@ -150,15 +136,6 @@ test_that("VariableMetadata validation works", {
     )
 
     expect_error(new("VariableMetadata",
-                 variableClass = new("VariableClass", value = c("computed", "collection")),
-                 variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def'),
-                 displayName = 'Im a collection variable',
-                 dataType = new("DataType", value = 'NUMBER'),
-                 dataShape = new("DataShape", value = 'CONTINUOUS')
-            )
-    )
-
-    expect_error(new("VariableMetadata",
                  variableClass = new("VariableClass", value = c("derived")),
                  variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def'),
                  displayName = 'Im a collection variable',
@@ -194,13 +171,15 @@ test_that("VariableMetadata validation works", {
 
 test_that("toJSON result is properly formatted", {
     vm <- new("VariableMetadata",
-                 variableClass = new("VariableClass", value = c("computed", "collection")),
+                 variableClass = new("VariableClass", value = c("computed")),
                  variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def'),
                  displayName = 'Im a computed variable',
                  displayRangeMin = 1,
                  displayRangeMax = 10,
                  dataType = new("DataType", value = 'NUMBER'),
                  dataShape = new("DataShape", value = 'CONTINUOUS'),
+                 isCollection = TRUE,
+                 imputeZero = TRUE,
                  members = new("VariableSpecList", S4Vectors::SimpleList(
                     new("VariableSpec", variableId = 'a', entityId = 'b'),
                     new("VariableSpec", variableId = 'c', entityId = 'd')
@@ -210,12 +189,15 @@ test_that("toJSON result is properly formatted", {
     vmlist <- jsonlite::fromJSON(vmjson)
 
     expect_equal(names(vmlist), 'variableMetadata')
-    expect_equal(names(vmlist$variableMetadata), c('variableClass', 'variableSpec', 'displayName', 'displayRangeMin', 'displayRangeMax', 'dataType', 'dataShape', 'members'))
-    expect_equal(vmlist$variableMetadata$variableClass, c('computed', 'collection'))
+    expect_equal(names(vmlist$variableMetadata), c('variableClass', 'variableSpec', 'plotReference', 'displayName', 'displayRangeMin', 'displayRangeMax', 'dataType', 'dataShape', 'isCollection', 'imputeZero', 'members'))
+    expect_equal(vmlist$variableMetadata$variableClass, c('computed'))
     expect_equal(names(vmlist$variableMetadata$variableSpec), c('variableId', 'entityId'))
-    #should display ranges always be strings as json??
+    expect_equal(class(vmlist$variableMetadata$displayRangeMin), 'character')
+    expect_equal(class(vmlist$variableMetadata$displayRangeMin), 'character')
     expect_equal(is.character(vmlist$variableMetadata$dataType), TRUE)
     expect_equal(is.character(vmlist$variableMetadata$dataShape), TRUE)
+    expect_equal(vmlist$variableMetadata$imputeZero, TRUE)
+    expect_equal(vmlist$variableMetadata$isCollection, TRUE)
     expect_equal(length(vmlist$variableMetadata$members), 2)
     #this becomes data frame w 2 rows
     expect_equal(names(vmlist$variableMetadata$members), c('variableId', 'entityId'))
@@ -232,11 +214,12 @@ test_that("toJSON result is properly formatted", {
     vmlist <- jsonlite::fromJSON(vmjson)
 
     expect_equal(names(vmlist), 'variableMetadata')
-    expect_equal(names(vmlist$variableMetadata), c('variableClass', 'variableSpec', 'displayName', 'dataType', 'dataShape', 'vocabulary'))
+    expect_equal(names(vmlist$variableMetadata), c('variableClass', 'variableSpec', 'plotReference', 'displayName', 'dataType', 'dataShape', 'vocabulary', 'isCollection', 'imputeZero'))
     expect_equal(vmlist$variableMetadata$variableClass, c('computed'))
     expect_equal(names(vmlist$variableMetadata$variableSpec), c('variableId', 'entityId'))
-    #should display ranges always be strings as json??
     expect_equal(is.character(vmlist$variableMetadata$dataType), TRUE)
     expect_equal(is.character(vmlist$variableMetadata$dataShape), TRUE)
+    expect_equal(vmlist$variableMetadata$isCollection, FALSE)
+    expect_equal(vmlist$variableMetadata$isCollection, FALSE)
     expect_equal(length(vmlist$variableMetadata$vocabulary), 2)
 })
