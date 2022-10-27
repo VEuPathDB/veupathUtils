@@ -137,6 +137,87 @@ setMethod("toJSON", signature("VariableMetadataList"), function(object, named = 
     return(tmp)
 })
 
+# TODO make sure the following methods have tests
+
+#' EDA Variable Metadata matching a Collection
+#' 
+#' This function returns a VariableMetadata object provided
+#' an EDA-compliant VariableMetadataList object.
+#' @param variables a VariableMetadataList of variables to search
+#' @return VariableMetadata object where isCollection is TRUE
+#' @export
+setGeneric("findCollectionVariableMetadata", 
+  function(variables) standardGeneric("findCollectionVariableMetadata"),
+  signature = "variables"
+)
+
+#' @export
+setMethod("findCollectionVariableMetadata", signature("VariableMetadataList"), function(variables) {
+  index <- which(purrr::map(as.list(variables), function(x) {x@isCollection}) %in% TRUE)
+
+  return(variables[index])
+})
+
+#' EDA Variable Metadata matching a PlotReference
+#' 
+#' This function returns a VariableMetadata object provided
+#' an EDA-compliant VariableMetadataList object.
+#' @param variables a VariableMetadataList of variables to search
+#' @param plotRef a string representing the PlotReference to look for
+#' @return VariableMetadata object matching the provided plot reference
+#' @export
+setGeneric("findVariableMetadataFromPlotRef", 
+  function(variables, plotRef) standardGeneric("findVariableMetadataFromPlotRef"),
+  signature = "variables"
+)
+
+#' @export
+setMethod("findVariableMetadataFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
+  index <- which(purrr::map(as.list(variables), function(x) {if (x@plotReference@value == plotRef) {return(TRUE)}}) %in% TRUE)
+
+  return(variables[index])
+})
+
+#' EDA Variable Spec matching a PlotReference
+#' 
+#' This function returns a VariableSpec object provided
+#' an EDA-compliant VariableMetadataList object.
+#' @param variables a VariableMetadataList of variables to search
+#' @param plotRef a string representing the PlotReference to look for
+#' @return VariableMetadata object matching the provided plot reference
+#' @export
+setGeneric("findVariableSpecFromPlotRef", 
+  function(variables, plotRef) standardGeneric("findVariableSpecFromPlotRef"),
+  signature = "variables"
+)
+
+#' @export
+setMethod("findVariableSpecFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
+  index <- which(purrr::map(as.list(variables), function(x) {if (x@plotReference@value == plotRef) {return(TRUE)}}) %in% TRUE)
+
+  return(variables[index]@variableSpec)
+})
+
+#' EDA Variable index matching a PlotReference
+#' 
+#' This function returns a list index provided
+#' an EDA-compliant VariableMetadataList object.
+#' @param variables a VariableMetadataList of variables to search
+#' @param plotRef a string representing the PlotReference to look for
+#' @return numeric vector of indices matching the provided plot reference
+#' @export
+setGeneric("findIndexFromPlotRef", 
+  function(variables, plotRef) standardGeneric("findIndexFromPlotRef"),
+  signature = "variables"
+)
+
+#' @export
+setMethod("findIndexFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
+  index <- which(purrr::map(as.list(variables), function(x) {if (x@plotReference@value == plotRef) {return(TRUE)}}) %in% TRUE)
+
+  return(index)
+})
+
 #' EDA Variable Column Names matching a PlotReference
 #' 
 #' This function provides EDA-compliant column names provided
@@ -174,9 +255,9 @@ setGeneric("findDataTypesFromPlotRef",
 setMethod("findDataTypesFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
   if (is.null(variables)) return(NULL)
 
-  dataTypes <- purrr::map(variables, function(x) { if(x@plotReference@value == plotRef) { return(x@dataType@value) } })
+  dataTypes <- purrr::map(as.list(variables), function(x) { if(x@plotReference@value == plotRef) { return(x@dataType@value) } })
 
-  return(veupathUtils::toStringOrNull(dataTypes))
+  return(veupathUtils::toStringOrNull(unlist(dataTypes)))
 })
 
 #' EDA Variable Data Shapes matching a PlotReference
@@ -196,9 +277,9 @@ setGeneric("findDataShapesFromPlotRef",
 setMethod("findDataShapesFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
   if (is.null(variables)) return(NULL)
 
-  dataTypes <- purrr::map(variables, function(x) { if(x@plotReference@value == plotRef) { return(x@dataShape@value) } })
+  dataShapes <- purrr::map(as.list(variables), function(x) { if(x@plotReference@value == plotRef) { return(x@dataShape@value) } })
 
-  return(veupathUtils::toStringOrNull(dataTypes))
+  return(veupathUtils::toStringOrNull(unlist(dataShapes)))
 })
 
 #' EDA Variable Column Name of a VariableSpec
@@ -243,10 +324,8 @@ setGeneric("findColNamesByPredicate",
 
 #' @export
 setMethod("findColNamesByPredicate", signature("VariableMetadataList"), function(variables, predicateFunction) {
-  if(is.null(variables)) return(NULL)
-
   # For each variable in the variable list, return the column name if the predicate is true for that variable
-  colNames <- purrr::map(variables, function(x) {if (identical(predicateFunction(x), TRUE)) {return(veupathUtils::getColName(x@variableSpec))}})
+  colNames <- purrr::map(as.list(variables), function(x) {if (identical(predicateFunction(x), TRUE)) {return(veupathUtils::getColName(x@variableSpec))}})
   colNames <- unlist(colNames)
 
   return (colNames)
