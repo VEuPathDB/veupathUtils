@@ -169,6 +169,25 @@ test_that("VariableMetadata validation works", {
     )
 })
 
+test_that("getColName returns column names or NULL", {
+  variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def')
+  expect_equal(getColName(variableSpec), 'def.abc')
+
+  variableSpec = new("VariableSpec", variableId = '', entityId = 'def')
+  expect_error(getColName(variableSpec))
+
+  variableSpec = new("VariableSpec", variableId = 'abc', entityId = '')
+  expect_equal(getColName(variableSpec), 'abc')
+
+  variableSpec = new("VariableSpec", variableId = NA_character_, entityId = 'def')
+  expect_error(getColName(variableSpec))
+
+  variableSpec = new("VariableSpec", variableId = 'abc', entityId = NA_character_)
+  expect_equal(getColName(variableSpec), 'abc')
+
+  expect_equal(getColName(NULL), NULL)
+})
+
 test_that("toJSON result is properly formatted", {
     vm <- new("VariableMetadata",
                  variableClass = new("VariableClass", value = c("computed")),
@@ -182,7 +201,7 @@ test_that("toJSON result is properly formatted", {
                  imputeZero = TRUE,
                  members = new("VariableSpecList", S4Vectors::SimpleList(
                     new("VariableSpec", variableId = 'a', entityId = 'b'),
-                    new("VariableSpec", variableId = 'c', entityId = 'd')
+                    new("VariableSpec", variableId = 'c', entityId = 'b')
                  ))
             )
     vmjson <- veupathUtils::toJSON(vm)

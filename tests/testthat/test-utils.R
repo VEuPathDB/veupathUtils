@@ -8,20 +8,6 @@ test_that("getAggStr returns sane results", {
   expect_equal(getAggStr('a','b'), "a ~ b")
 })
 
-test_that("toColNameOrNull returns column names or NULL", {
-  varDetailsList <- list('variableId' = 'varId', 'entityId' = 'entity')
-  expect_equal(toColNameOrNull(varDetailsList), 'entity.varId')
-
-  varDetailsList <- list('variableId' = 'varId')
-  expect_equal(toColNameOrNull(varDetailsList), 'varId')
-
-  varDetailsList <- list('entityId' = 'entity')
-  expect_equal(toColNameOrNull(varDetailsList), NULL)
-
-  # any other odd conditions to test here? empty char strings? NAs?
-  expect_equal(toColNameOrNull(NULL), NULL)
-})
-
 # type conversion here behaves as expected once you think about it
 # but we may want to revisit it, bc its not necessarily intuitive
 # may serve as a source of bugs for the uncautious

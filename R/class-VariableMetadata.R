@@ -164,9 +164,9 @@ check_variable_metadata <- function(object) {
       if (!length(object@members)) {
         errors <- c(errors, "Members must be non-empty for collection variables.")
       } else {
-        memberEntityIds <- unlist(lapply(as.list(object@members), function(x) {return(x@variableId)}))
+        memberEntityIds <- unlist(lapply(as.list(object@members), function(x) {return(x@entityId)}))
         memberColNames <- unlist(lapply(as.list(object@members), function(x) {return(veupathUtils::getColName(x))}))
-
+        
         # Require all members to have the same entity
         if (data.table::uniqueN(memberEntityIds) > 1) {
           errors <- c(errors, "All members in a collection must have the same entity id.")
