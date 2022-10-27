@@ -1,3 +1,5 @@
+# TODO roxygen documentation
+
 variable_classes <- c('native', 'derived', 'computed')
 plot_references <- c('xAxis', 'yAxis', 'zAxis', 'overlay', 'facet')
 data_types <- c('NUMBER', 'STRING', 'INTEGER', 'DATE', 'LONGITUDE')
@@ -79,23 +81,6 @@ setClass("VariableClass", representation(
     value = NA_character_
 ), validity = check_variable_class)
 
-# should probably go through slots, make a list of contents
-# call toJSON on each item of the list somehow? or parse the contents to a list same as the parent? (relevant for S4 children)
-# for now just never use the generic, its a placeholder
-setGeneric("toJSON", function(object, named = c(TRUE, FALSE)) {
-    named <- veupathUtils::matchArg(named) 
-    return(jsonlite::toJSON(object))
-})
-
-setMethod("toJSON", signature("VariableClass"), function(object, named = c(TRUE, FALSE)) {
-    named <- veupathUtils::matchArg(named) 
-    tmp <- jsonlite::toJSON(object@value)
-
-    if (named) tmp <- paste0('{"variableClass":', tmp, '}')
-    
-    return(tmp)
-})
-
 setClass("VariableSpec", representation(
     variableId = "character",
     entityId = "character"
@@ -104,30 +89,12 @@ setClass("VariableSpec", representation(
     entityId = NA_character_
 ))
 
-setMethod("toJSON", signature("VariableSpec"), function(object, named = c(TRUE, FALSE)) {
-    named <- veupathUtils::matchArg(named) 
-    tmp <- list("variableId" = jsonlite::unbox(object@variableId),
-                "entityId" = jsonlite::unbox(object@entityId))
-
-    if (named) tmp <- list("variableSpec" = tmp)
-
-    return(jsonlite::toJSON(tmp))
-})
-
 setClass("PlotReference", representation(
   value = 'character'
 ), prototype = prototype(
   value = NA_character_
 ), validity = check_plot_reference)
 
-setMethod("toJSON", signature("PlotReference"), function(object, named = c(TRUE, FALSE)) {
-    named <- veupathUtils::matchArg(named) 
-    tmp <- jsonlite::toJSON(object@value)
-
-    if (named) tmp <- paste0('{"plotReference":', tmp, '}')
-    
-    return(tmp)
-})
 
 #' @importFrom S4Vectors SimpleList
 setClass("VariableSpecList", 
@@ -135,58 +102,17 @@ setClass("VariableSpecList",
   prototype = prototype(elementType = "VariableSpec")
 )
 
-# helper S4Vectors SimpleList toJSON
-# no easy option to be named here really i guess
-S4SimpleListToJSON <- function(S4SimpleList) {
-    if (!inherits(S4SimpleList, 'SimpleList')) stop("S4SimpleListToJSON only accepts an S4Vectors::SimpleList as input.", class(S4SimpleList), "was provided.")
-
-    tmp <- as.list(S4SimpleList)
-    tmp <- lapply(tmp, veupathUtils::toJSON, FALSE)
-    tmp <- paste(tmp, collapse = ",")
-    tmp <- paste0('[', tmp, ']')
-
-    return(tmp)
-}
-
-
-setMethod("toJSON", signature("VariableSpecList"), function(object, named = c(TRUE, FALSE)) {
-    named <- veupathUtils::matchArg(named) 
-    tmp <- S4SimpleListToJSON(object)
-
-    if (named) tmp <- paste0('{"variableSpecs":', tmp, "}")
-
-    return(tmp)
-})
-
 setClass("DataType", representation(
     value = 'character'
 ), prototype = prototype(
     value = NA_character_
 ), validity = check_data_type)
 
-setMethod("toJSON", signature("DataType"), function(object, named = c(TRUE, FALSE)) {
-    named <- veupathUtils::matchArg(named) 
-    tmp <- jsonlite::unbox(object@value)
-
-    if (named) tmp <- list("dataType" = tmp)
-    
-    return(jsonlite::toJSON(tmp))
-})
-
 setClass("DataShape", representation(
     value = 'character'
 ), prototype = prototype(
     value = NA_character_
 ), validity = check_data_shape)
-
-setMethod("toJSON", signature("DataShape"), function(object, named = c(TRUE, FALSE)) {
-    named <- veupathUtils::matchArg(named) 
-    tmp <- jsonlite::unbox(object@value)
-
-    if (named) tmp <- list("dataShape" = tmp)
-    
-    return(jsonlite::toJSON(tmp))
-})
 
 check_variable_metadata <- function(object) {
     data_type <- object@dataType@value
@@ -234,7 +160,24 @@ check_variable_metadata <- function(object) {
     }
 
     # need members only for collections
-    if ('collection' %in% variable_class && !length(object@members)) errors <- c(errors, "Members must be non-empty for collection variables.")
+    if (object@isCollection) {
+      if (!length(object@members)) {
+        errors <- c(errors, "Members must be non-empty for collection variables.")
+      } else {
+        memberEntityIds <- unlist(lapply(as.list(object@members), function(x) {return(x@variableId)}))
+        memberColNames <- unlist(lapply(as.list(object@members), function(x) {return(veupathUtils::getColName(x))}))
+
+        # Require all members to have the same entity
+        if (data.table::uniqueN(memberEntityIds) > 1) {
+          errors <- c(errors, "All members in a collection must have the same entity id.")
+        }
+
+        # Ensure no two variables are the same
+        if (any(duplicated(memberColNames))) {
+          errors <- c(errors, "All members in a collection must be unique.")
+        }
+      }
+    }
 
     return(if (length(errors) == 0) TRUE else errors)
 }
@@ -261,71 +204,7 @@ setClass("VariableMetadata", representation(
     imputeZero = FALSE
 ), validity = check_variable_metadata)
 
-setMethod("toJSON", signature("VariableMetadata"), function(object, named = c(TRUE, FALSE)) {
-    named <- veupathUtils::matchArg(named)    
-    tmp <- character()
-
-    variable_class_json <- veupathUtils::toJSON(object@variableClass, named = FALSE)
-    variable_spec_json <- veupathUtils::toJSON(object@variableSpec, named = FALSE)
-    plot_reference_json <- veupathUtils::toJSON(object@plotReference, named = FALSE)
-
-    tmp <- paste0('"variableClass":', variable_class_json, ',"variableSpec":', variable_spec_json, ',"plotReference":', plot_reference_json)
-
-    if (!is.na(object@displayName)) {
-      display_name_json <- jsonlite::toJSON(jsonlite::unbox(object@displayName))
-      tmp <- paste0(tmp, ',"displayName":', display_name_json)
-    }
-
-    if (!is.na(object@displayRangeMin)) {
-      display_range_min_json <- jsonlite::toJSON(jsonlite::unbox(as.character(object@displayRangeMin)))
-      tmp <- paste0(tmp, ',"displayRangeMin":', display_range_min_json)
-    }
-
-    if (!is.na(object@displayRangeMax)) {
-      display_range_max_json <- jsonlite::toJSON(jsonlite::unbox(as.character(object@displayRangeMax)))
-      tmp <- paste0(tmp, ',"displayRangeMax":', display_range_max_json)
-    }
-
-    if (!is.na(object@dataType@value)) {
-      data_type_json <- veupathUtils::toJSON(object@dataType, named = FALSE)
-      tmp <- paste0(tmp, ',"dataType":', data_type_json)
-    }
-    
-    if (!is.na(object@dataType@value)) {
-      data_shape_json <- veupathUtils::toJSON(object@dataShape, named = FALSE)
-      tmp <- paste0(tmp, ',"dataShape":', data_shape_json)
-    }
-
-    if (!all(is.na(object@vocabulary))) {
-      vocabulary_json <- jsonlite::toJSON(object@vocabulary)
-      tmp <- paste0(tmp, ',"vocabulary":', vocabulary_json)
-    }
-
-    tmp <- paste0(tmp, ',"isCollection":', jsonlite::toJSON(jsonlite::unbox(object@isCollection)))
-    tmp <- paste0(tmp, ',"imputeZero":', jsonlite::toJSON(jsonlite::unbox(object@imputeZero)))
-    
-    if (!!length(object@members)) {
-      members_json <- veupathUtils::toJSON(object@members, named = FALSE)
-      tmp <- paste0(tmp, ',"members":', members_json)
-    }
-    
-    tmp <- paste0("{", tmp, "}")
-    if (named) tmp <- paste0('{"variableMetadata":', tmp, '}')
-
-    return(tmp)
-})
-
-# mostly for convenience writing json
 setClass("VariableMetadataList",
   contains = "SimpleList",
   prototype = prototype(elementType = "VariableMetadata")
 )
-
-setMethod("toJSON", signature("VariableMetadataList"), function(object, named = c(TRUE, FALSE)) {
-    named <- veupathUtils::matchArg(named) 
-    tmp <- S4SimpleListToJSON(object)
-
-    if (named) tmp <- paste0('{"variables":', tmp, "}")
-
-    return(tmp)
-})
