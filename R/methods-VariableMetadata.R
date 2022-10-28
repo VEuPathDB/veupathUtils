@@ -154,8 +154,9 @@ setGeneric("findCollectionVariableMetadata",
 #' @export
 setMethod("findCollectionVariableMetadata", signature("VariableMetadataList"), function(variables) {
   index <- which(purrr::map(as.list(variables), function(x) {x@isCollection}) %in% TRUE)
+  if (!length(index)) return(NULL)
 
-  return(variables[index])
+  return(variables[[index]])
 })
 
 #' EDA Variable Metadata matching a PlotReference
@@ -174,8 +175,9 @@ setGeneric("findVariableMetadataFromPlotRef",
 #' @export
 setMethod("findVariableMetadataFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
   index <- which(purrr::map(as.list(variables), function(x) {if (x@plotReference@value == plotRef) {return(TRUE)}}) %in% TRUE)
+  if (!length(index)) return(NULL)
 
-  return(variables[index])
+  return(variables[[index]])
 })
 
 #' EDA Variable Spec matching a PlotReference
@@ -194,8 +196,9 @@ setGeneric("findVariableSpecFromPlotRef",
 #' @export
 setMethod("findVariableSpecFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
   index <- which(purrr::map(as.list(variables), function(x) {if (x@plotReference@value == plotRef) {return(TRUE)}}) %in% TRUE)
+  if (!length(index)) return(NULL)
 
-  return(variables[index]@variableSpec)
+  return(variables[[index]]@variableSpec)
 })
 
 #' EDA Variable index matching a PlotReference
@@ -214,6 +217,7 @@ setGeneric("findIndexFromPlotRef",
 #' @export
 setMethod("findIndexFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
   index <- which(purrr::map(as.list(variables), function(x) {if (x@plotReference@value == plotRef) {return(TRUE)}}) %in% TRUE)
+  if (!length(index)) return(NULL)
 
   return(index)
 })
@@ -233,7 +237,12 @@ setGeneric("findColNamesFromPlotRef",
 
 #' @export
 setMethod("findColNamesFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
-  colNames <- veupathUtils::findColNamesByPredicate(variables, function(x) {if (x@plotReference@value == plotRef) TRUE})
+  colNames <- veupathUtils::findColNamesByPredicate(variables, function(x) {if (x@plotReference@value == plotRef && !x@isCollection) TRUE})
+  if (!length(colNames)) {
+    collectionVM <- veupathUtils::findCollectionVariableMetadata(variables)
+    if (!length(collectionVM)) return(NULL)
+    if (collectionVM@plotReference@value == plotRef) colNames <- unlist(lapply(as.list(collectionVM@members), veupathUtils::getColName))
+  }
 
   return(colNames)
 })

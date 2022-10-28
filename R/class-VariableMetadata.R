@@ -1,7 +1,8 @@
 # TODO roxygen documentation
 
 variable_classes <- c('native', 'derived', 'computed')
-plot_references <- c('xAxis', 'yAxis', 'zAxis', 'overlay', 'facet')
+#the other option is to just let this be any character vector so long as it has only a single value..
+plot_references <- c('xAxis', 'yAxis', 'zAxis', 'overlay', 'facet1', 'facet2', 'geo', 'latitude', 'longitude')
 data_types <- c('NUMBER', 'STRING', 'INTEGER', 'DATE', 'LONGITUDE')
 data_shapes <- c('CONTINUOUS', 'CATEGORICAL', 'ORDINAL', 'BINARY')
 
