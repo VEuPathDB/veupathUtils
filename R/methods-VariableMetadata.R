@@ -174,7 +174,7 @@ setGeneric("findVariableMetadataFromPlotRef",
 
 #' @export
 setMethod("findVariableMetadataFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
-  index <- which(purrr::map(as.list(variables), function(x) {if (x@plotReference@value == plotRef) {return(TRUE)}}) %in% TRUE)
+  index <- veupathUtils::findIndexFromPlotRef(variables, plotRef)
   if (!length(index)) return(NULL)
 
   return(variables[[index]])
@@ -195,7 +195,7 @@ setGeneric("findVariableSpecFromPlotRef",
 
 #' @export
 setMethod("findVariableSpecFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
-  index <- which(purrr::map(as.list(variables), function(x) {if (x@plotReference@value == plotRef) {return(TRUE)}}) %in% TRUE)
+  index <- veupathUtils::findIndexFromPlotRef(variables, plotRef)
   if (!length(index)) return(NULL)
 
   return(variables[[index]]@variableSpec)
