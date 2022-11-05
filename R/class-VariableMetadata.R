@@ -76,12 +76,14 @@ check_data_shape <- function(object) {
     return(if (length(errors) == 0) TRUE else errors)
 }
 
+#' @export
 setClass("VariableClass", representation(
     value = 'character'
 ), prototype = prototype(
     value = NA_character_
 ), validity = check_variable_class)
 
+#' @export
 setClass("VariableSpec", representation(
     variableId = "character",
     entityId = "character"
@@ -90,25 +92,28 @@ setClass("VariableSpec", representation(
     entityId = NA_character_
 ))
 
+#' @export
 setClass("PlotReference", representation(
   value = 'character'
 ), prototype = prototype(
   value = NA_character_
 ), validity = check_plot_reference)
 
-
 #' @importFrom S4Vectors SimpleList
+#' @export
 setClass("VariableSpecList", 
   contains = "SimpleList", 
   prototype = prototype(elementType = "VariableSpec")
 )
 
+#' @export
 setClass("DataType", representation(
     value = 'character'
 ), prototype = prototype(
     value = NA_character_
 ), validity = check_data_type)
 
+#' @export
 setClass("DataShape", representation(
     value = 'character'
 ), prototype = prototype(
@@ -183,6 +188,7 @@ check_variable_metadata <- function(object) {
     return(if (length(errors) == 0) TRUE else errors)
 }
 
+#' @export
 setClass("VariableMetadata", representation(
     variableClass = 'VariableClass',
     variableSpec = 'VariableSpec',
@@ -205,6 +211,7 @@ setClass("VariableMetadata", representation(
     imputeZero = FALSE
 ), validity = check_variable_metadata)
 
+#' @export
 setClass("VariableMetadataList",
   contains = "SimpleList",
   prototype = prototype(elementType = "VariableMetadata")
