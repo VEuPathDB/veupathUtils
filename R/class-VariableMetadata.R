@@ -77,14 +77,14 @@ check_data_shape <- function(object) {
 }
 
 #' @export
-setClass("VariableClass", representation(
+VariableClass <- setClass("VariableClass", representation(
     value = 'character'
 ), prototype = prototype(
     value = NA_character_
 ), validity = check_variable_class)
 
 #' @export
-setClass("VariableSpec", representation(
+VariableSpec <- setClass("VariableSpec", representation(
     variableId = "character",
     entityId = "character"
 ), prototype = prototype(
@@ -93,7 +93,7 @@ setClass("VariableSpec", representation(
 ))
 
 #' @export
-setClass("PlotReference", representation(
+PlotReference <- setClass("PlotReference", representation(
   value = 'character'
 ), prototype = prototype(
   value = NA_character_
@@ -101,20 +101,20 @@ setClass("PlotReference", representation(
 
 #' @importFrom S4Vectors SimpleList
 #' @export
-setClass("VariableSpecList", 
+VariableSpecList <- setClass("VariableSpecList", 
   contains = "SimpleList", 
   prototype = prototype(elementType = "VariableSpec")
 )
 
 #' @export
-setClass("DataType", representation(
+DataType <- setClass("DataType", representation(
     value = 'character'
 ), prototype = prototype(
     value = NA_character_
 ), validity = check_data_type)
 
 #' @export
-setClass("DataShape", representation(
+DataShape <- setClass("DataShape", representation(
     value = 'character'
 ), prototype = prototype(
     value = NA_character_
@@ -189,7 +189,7 @@ check_variable_metadata <- function(object) {
 }
 
 #' @export
-setClass("VariableMetadata", representation(
+VariableMetadata <- setClass("VariableMetadata", representation(
     variableClass = 'VariableClass',
     variableSpec = 'VariableSpec',
     plotReference = 'PlotReference',
@@ -212,7 +212,7 @@ setClass("VariableMetadata", representation(
 ), validity = check_variable_metadata)
 
 #' @export
-setClass("VariableMetadataList",
+VariableMetadataList <- setClass("VariableMetadataList",
   contains = "SimpleList",
   prototype = prototype(elementType = "VariableMetadata")
 )
