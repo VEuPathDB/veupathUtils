@@ -1,6 +1,6 @@
 Package: veupathUtils
 Title: General Helper Functions for VEuPathDB Projects
-Version: 1.0.1
+Version: 2.0.0
 Authors@R: 
     c(person(given = "Danielle",
            family = "Callan",
@@ -10,8 +10,10 @@ Authors@R:
            family = "Blevins",
            role = c("aut", "cre"),
            email = "annsize@upenn.edu"))
+biocViews: 
 Imports:
     data.table,
+    S4Vectors,
     stringi,
     purrr
 URL: https://github.com/VEuPathDB/veupathUtils
@@ -21,7 +23,7 @@ License: Apache License (= 2.0)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

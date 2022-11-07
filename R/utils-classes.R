@@ -1,3 +1,16 @@
+# helper S4Vectors SimpleList toJSON
+# no easy option to be named here really i guess
+S4SimpleListToJSON <- function(S4SimpleList) {
+    if (!inherits(S4SimpleList, 'SimpleList')) stop("S4SimpleListToJSON only accepts an S4Vectors::SimpleList as input.", class(S4SimpleList), "was provided.")
+
+    tmp <- as.list(S4SimpleList)
+    tmp <- lapply(tmp, veupathUtils::toJSON, FALSE)
+    tmp <- paste(tmp, collapse = ",")
+    tmp <- paste0('[', tmp, ']')
+
+    return(tmp)
+}
+
 #' POSIXct Test
 #'
 #' This function returns a logical value indicating if x is
