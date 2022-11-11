@@ -1,3 +1,5 @@
+# TODO tests for merge fxn
+
 #' Merge Variable*List objects
 #' 
 #' This function takes two VariableMetadataList or VariableSpecList objects and returns one.
@@ -12,12 +14,12 @@ setGeneric("merge",
 
 #'@export 
 setMethod("merge", signature("VariableMetadataList", "VariableMetadataList"), function(x,y) {
-  S4Vectors::SimpleList(as.list(x), as.list(y))
+  veupathUtils::VariableMetadataList(S4Vectors::SimpleList(c(as.list(x), as.list(y))))
 })
 
 #'@export 
 setMethod("merge", signature("VariableSpecList", "VariableSpecList"), function(x,y) {
-  S4Vectors::SimpleList(as.list(x), as.list(y))
+  veupathUtils::VariableMetadataList(S4Vectors::SimpleList(c(as.list(x), as.list(y))))
 })
 
 #' R object as JSON string
