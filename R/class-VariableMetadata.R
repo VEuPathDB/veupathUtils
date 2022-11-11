@@ -1,4 +1,5 @@
 # TODO roxygen documentation
+# TODO consider renaming to VariableMapping to be more in line w EdaCommon
 
 variable_classes <- c('native', 'derived', 'computed')
 #the other option is to just let this be any character vector so long as it has only a single value..

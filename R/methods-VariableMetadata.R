@@ -1,3 +1,25 @@
+#' Merge Variable*List objects
+#' 
+#' This function takes two VariableMetadataList or VariableSpecList objects and returns one.
+#' @param x Variable*List object
+#' @param y Variable*List object
+#' @return Variable*List object containing the entries from both inputs
+#' @export 
+setGeneric("merge",
+  function(x, y) standardGeneric("merge"),
+  signature = c("x", "y")
+)
+
+#'@export 
+setMethod("merge", signature("VariableMetadataList", "VariableMetadataList"), function(x,y) {
+  S4Vectors::SimpleList(as.list(x), as.list(y))
+})
+
+#'@export 
+setMethod("merge", signature("VariableSpecList", "VariableSpecList"), function(x,y) {
+  S4Vectors::SimpleList(as.list(x), as.list(y))
+})
+
 #' R object as JSON string
 #' 
 #' This function converts an R object to a JSON string.
