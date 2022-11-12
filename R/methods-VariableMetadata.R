@@ -79,7 +79,7 @@ setMethod("toJSON", signature("VariableSpecList"), function(object, named = c(TR
 #' @export
 setMethod("toJSON", signature("DataType"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 
-    tmp <- jsonlite::unbox(jsonlite::unbox(object@value))
+    tmp <- jsonlite::unbox(jsonlite::unbox(tolower(object@value)))
 
     if (named) tmp <- list("dataType" = tmp)
     
@@ -89,7 +89,7 @@ setMethod("toJSON", signature("DataType"), function(object, named = c(TRUE, FALS
 #' @export
 setMethod("toJSON", signature("DataShape"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 
-    tmp <- jsonlite::unbox(jsonlite::unbox(object@value))
+    tmp <- jsonlite::unbox(jsonlite::unbox(tolower(object@value)))
 
     if (named) tmp <- list("dataShape" = tmp)
     
