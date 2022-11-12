@@ -19,7 +19,7 @@ setMethod("merge", signature("VariableMetadataList", "VariableMetadataList"), fu
 
 #'@export 
 setMethod("merge", signature("VariableSpecList", "VariableSpecList"), function(x,y) {
-  veupathUtils::VariableMetadataList(S4Vectors::SimpleList(c(as.list(x), as.list(y))))
+  veupathUtils::VariableSpecList(S4Vectors::SimpleList(c(as.list(x), as.list(y))))
 })
 
 #' R object as JSON string
