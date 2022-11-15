@@ -1,3 +1,30 @@
+test_that("merge returns sane results", {
+    collectionVM <- new("VariableMetadata",
+                         variableClass = new("VariableClass", value = c("native")),
+                         variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def'),
+                         displayName = 'Im a collection variable',
+                         dataType = new("DataType", value = 'NUMBER'),
+                         dataShape = new("DataShape", value = 'CONTINUOUS'),
+                         isCollection = TRUE,
+                         members = new("VariableSpecList", S4Vectors::SimpleList(
+                           new("VariableSpec", variableId = 'a', entityId = 'b'),
+                           new("VariableSpec", variableId = 'c', entityId = 'b')
+                         ))
+                       )
+    cvmlist <- new("VariableMetadataList", S4Vectors::SimpleList(collectionVM))
+
+    vm <- new("VariableMetadata",
+                 variableClass = new("VariableClass", value = "native"),
+                 variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def'),
+                 dataType = new("DataType", value = 'NUMBER'),
+                 dataShape = new("DataShape", value = 'CONTINUOUS')
+            )
+    vmlist <- new("VariableMetadataList", S4Vectors::SimpleList(vm))
+
+    expect_equal(merge(cvmlist, vmlist), new("VariableMetadataList", S4Vectors::SimpleList(collectionVM, vm)))
+    expect_equal(merge(cvmlist, merge(vmlist, cvmlist)), new("VariableMetadataList", S4Vectors::SimpleList(collectionVM, vm, collectionVM)))
+})
+
 test_that("getColName returns column names or NULL", {
   variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def')
   expect_equal(getColName(variableSpec), 'def.abc')

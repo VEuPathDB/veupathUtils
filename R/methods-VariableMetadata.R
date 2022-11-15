@@ -1,3 +1,27 @@
+# TODO tests for merge fxn
+
+#' Merge Variable*List objects
+#' 
+#' This function takes two VariableMetadataList or VariableSpecList objects and returns one.
+#' @param x Variable*List object
+#' @param y Variable*List object
+#' @return Variable*List object containing the entries from both inputs
+#' @export 
+setGeneric("merge",
+  function(x, y) standardGeneric("merge"),
+  signature = c("x", "y")
+)
+
+#'@export 
+setMethod("merge", signature("VariableMetadataList", "VariableMetadataList"), function(x,y) {
+  veupathUtils::VariableMetadataList(S4Vectors::SimpleList(c(as.list(x), as.list(y))))
+})
+
+#'@export 
+setMethod("merge", signature("VariableSpecList", "VariableSpecList"), function(x,y) {
+  veupathUtils::VariableSpecList(S4Vectors::SimpleList(c(as.list(x), as.list(y))))
+})
+
 #' R object as JSON string
 #' 
 #' This function converts an R object to a JSON string.
@@ -55,7 +79,7 @@ setMethod("toJSON", signature("VariableSpecList"), function(object, named = c(TR
 #' @export
 setMethod("toJSON", signature("DataType"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 
-    tmp <- jsonlite::unbox(jsonlite::unbox(object@value))
+    tmp <- jsonlite::unbox(jsonlite::unbox(tolower(object@value)))
 
     if (named) tmp <- list("dataType" = tmp)
     
@@ -65,7 +89,7 @@ setMethod("toJSON", signature("DataType"), function(object, named = c(TRUE, FALS
 #' @export
 setMethod("toJSON", signature("DataShape"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 
-    tmp <- jsonlite::unbox(jsonlite::unbox(object@value))
+    tmp <- jsonlite::unbox(jsonlite::unbox(tolower(object@value)))
 
     if (named) tmp <- list("dataShape" = tmp)
     
