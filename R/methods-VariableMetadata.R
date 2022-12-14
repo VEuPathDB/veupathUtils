@@ -271,6 +271,30 @@ setMethod("findColNamesFromPlotRef", signature("VariableMetadataList"), function
   return(colNames)
 })
 
+#' All EDA Variable Column Names
+#' 
+#' This function provides EDA-compliant column names provided
+#' an EDA-compliant VariableMetadataList object.
+#' @param variables a VariableMetadataList of variables to search
+#' @return character vector of column names for all entries in the VariableMetadataList
+#' @export
+setGeneric("findAllColNames", 
+  function(variables) standardGeneric("findAllColNames"),
+  signature = "variables"
+)
+
+#' @export
+setMethod("findAllColNames", signature("VariableMetadataList"), function(variables) {
+  colNames <- veupathUtils::findColNamesByPredicate(variables, function(x) {if (!x@isCollection) TRUE})
+  if (!length(colNames)) {
+    collectionVM <- veupathUtils::findCollectionVariableMetadata(variables)
+    if (!length(collectionVM)) return(NULL)
+    colNames <- unlist(lapply(as.list(collectionVM@members), veupathUtils::getColName))
+  }
+
+  return(colNames)
+})
+
 #' EDA Variable Data Types matching a PlotReference
 #' 
 #' This function provides EDA-compliant data types provided
