@@ -84,3 +84,14 @@ matchArg <- function(arg, choices) {
 
   return (arg)
 }
+
+#' Set Row Order
+#' 
+#' setroworder reorders the rows of a data.table to the new order provided.
+#' @param a data.table
+#' @param neworder Character vector of the new column name ordering. 
+#' @export
+setroworder <- function(x, neworder) {
+    .Call(data.table:::Creorder, x, as.integer(neworder), PACKAGE = "data.table")
+    invisible(x)
+}

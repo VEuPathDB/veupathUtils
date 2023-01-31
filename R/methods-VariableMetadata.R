@@ -35,6 +35,66 @@ setGeneric("toJSON",
   signature = "object"
 )
 
+######################################################################################
+### These would ideally be in their own methods files but for some reason that didnt work
+
+#' @export
+setMethod("toJSON", signature("Range"), function(object, named = c(TRUE, FALSE)) {
+    named <- veupathUtils::matchArg(named) 
+
+    range_string <- paste0('(', object@minimum, ' - ', object@maximum, ')')
+    range_json <- jsonlite::toJSON(jsonlite::unbox(range_string))
+
+    if (named) {
+      range_json <- paste0('{"range":', range_json, "}")  
+    }
+    
+    return(range_json)
+})
+
+#' @export
+setMethod("toJSON", signature("Statistic"), function(object, named = c(TRUE, FALSE)) {
+    named <- veupathUtils::matchArg(named) 
+    
+    value_json <- jsonlite::toJSON(jsonlite::unbox(object@value))
+    tmp <- paste0('"value":', value_json)
+
+    ci_json <- veupathUtils::toJSON(object@confidenceInterval, FALSE)
+    tmp <- paste0(tmp, ',"confidenceInterval":', ci_json)
+
+    conf_level_json <- jsonlite::toJSON(jsonlite::unbox(object@confidenceLevel))
+    tmp <- paste0(tmp, ',"confidenceLevel":', conf_level_json)
+
+    pvalue_json <- jsonlite::toJSON(jsonlite::unbox(object@pvalue))
+    tmp <- paste0(tmp, ',"pvalue":', pvalue_json)
+
+    tmp <- paste0("{", tmp, "}")
+    if (named) {
+      tmp <- paste0('{"', object@name, '":', tmp, "}")  
+    }
+    
+    return(tmp)
+})
+
+#' @export
+setMethod("toJSON", signature("StatisticList"), function(object, named = c(TRUE, FALSE)) {
+    named <- veupathUtils::matchArg(named) 
+    tmp <- S4SimpleListToJSON(object, TRUE)
+
+    if (named) tmp <- paste0('{"statistics":', tmp, "}")
+
+    return(tmp)
+})
+
+# these let jsonlite::toJSON work by using the veupathUtils::toJSON methods for our custom S4 classes
+#' @export
+setMethod(getGeneric("asJSON", package = "jsonlite"), "Statistic", function(x, ...) veupathUtils::toJSON(x, FALSE))
+#' @export
+setMethod(getGeneric("asJSON", package = "jsonlite"), "StatisticList", function(x, ...) veupathUtils::toJSON(x, FALSE))
+
+
+##############################################################################################
+
 #' @export
 setMethod("toJSON", signature("VariableClass"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 
