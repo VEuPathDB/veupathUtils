@@ -87,10 +87,11 @@ setMethod("toJSON", signature("StatisticList"), function(object, named = c(TRUE,
 })
 
 # these let jsonlite::toJSON work by using the veupathUtils::toJSON methods for our custom S4 classes
+asJSONGeneric <- getGeneric("asJSON", package = "jsonlite")
 #' @export
-setMethod(getGeneric("asJSON", package = "jsonlite"), "Statistic", function(x, ...) veupathUtils::toJSON(x, FALSE))
+setMethod(asJSONGeneric, "Statistic", function(x, ...) veupathUtils::toJSON(x, FALSE))
 #' @export
-setMethod(getGeneric("asJSON", package = "jsonlite"), "StatisticList", function(x, ...) veupathUtils::toJSON(x, FALSE))
+setMethod(asJSONGeneric, "StatisticList", function(x, ...) veupathUtils::toJSON(x, FALSE))
 
 
 ##############################################################################################
