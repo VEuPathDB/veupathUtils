@@ -214,7 +214,7 @@ setMethod("toJSON", signature("VariableMetadata"), function(object, named = c(TR
 #' @export
 setMethod("toJSON", signature("VariableMetadataList"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 
-    tmp <- S4SimpleListToJSON(object)
+    tmp <- S4SimpleListToJSON(object, named)
 
     if (named) tmp <- paste0('{"variables":', tmp, "}")
 
