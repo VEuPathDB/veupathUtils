@@ -12,13 +12,6 @@ setGeneric("as.data.table",
   signature = "object"
 )
 
-getJsonAsObject <- function(object, named = c(TRUE, FALSE)) {
-  json <- veupathUtils::toJSON(object, named)
-  attr(json, "class") <- "json_string"
-  
-  return(json)
-}
-
 #' @export
 setMethod("as.data.table", signature("StatisticList"), function(object) {
     colNames <- unlist(lapply(as.list(object), function(x) {x@name}))
