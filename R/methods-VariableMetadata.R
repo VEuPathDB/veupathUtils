@@ -129,7 +129,7 @@ setMethod("toJSON", signature("PlotReference"), function(object, named = c(TRUE,
 #' @export
 setMethod("toJSON", signature("VariableSpecList"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 
-    tmp <- S4SimpleListToJSON(object)
+    tmp <- S4SimpleListToJSON(object, named)
 
     if (named) tmp <- paste0('{"variableSpecs":', tmp, "}")
 
