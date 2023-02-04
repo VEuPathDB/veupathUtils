@@ -1,15 +1,21 @@
-check_statistic_with_confidence <- function(object) {
+check_statistic <- function(object) {
     errors <- character()
+    name <- object@name
     value <- object@value
     pvalue <- object@pvalue
     ciMin <- object@confidenceInterval@minimum
     ciMax <- object@confidenceInterval@maximum
     ciLevel <- object@confidenceLevel
 
-    if (length(value) != 1) {
+    if (length(name) != 1  || is.na(name)) {
+        msg <- "The slot `name` must have a single value."
+        errors <- c(errors, msg)
+    }
+
+    if (length(value) != 1 || is.na(value)) {
         msg <- "The slot `value` must have a single value."
         errors <- c(errors, msg)
-    } else
+    }
 
     if (!is.na(pvalue)) {
       if (length(pvalue) != 1) {
@@ -41,8 +47,13 @@ check_statistic_with_confidence <- function(object) {
         }
       }
       
-      if (ciLevel < 0 || ciLevel > 1) {
-        msg <- "Provided confidence level is invalid."
+      if (!is.na(ciLevel)) {
+        if (ciLevel < 0 || ciLevel > 1) {
+          msg <- "Provided confidence level is invalid."
+          errors <- c(errors, msg)
+        }
+      } else {
+        msg <- "A confidence interval was provided without a confidence level."
         errors <- c(errors, msg)
       }
     }
@@ -57,11 +68,11 @@ check_statistic_with_confidence <- function(object) {
 #' A class to specify a named statistic, its value, confidence interval and p-value.
 #' This is primarily to help maintain consistency in meeting the EDA API.
 #' 
-#' @slot name A string specifying what statistics was calculated
+#' @slot name A string specifying what statistic was calculated
 #' @slot value A number
 #' @slot confidenceInterval An optional Range specifying minimum and maximum values for the confidence interval
 #' @slot confidenceLevel An optional decimal number indicating the degree of confidence represented by the confidence interval
-#' @slot pvalue A number
+#' @slot pvalue An optional number representing the p-value associated with the statistic
 #' 
 #' @name Statistic-class
 #' @rdname Statistic-class
@@ -73,8 +84,9 @@ Statistic <- setClass("Statistic", representation(
     confidenceLevel = 'numeric',
     pvalue = 'numeric'
 ), prototype = prototype(
-    confidenceLevel = NA_real_
-), validity = check_statistic_with_confidence)
+    confidenceLevel = NA_real_,
+    pvalue = NA_real_
+), validity = check_statistic)
 
 #' @export
 StatisticList <- setClass("StatisticList",
