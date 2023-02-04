@@ -172,7 +172,7 @@ test_that("findDataTypesFromPlotRef returns sane results", {
     expect_error(findDataTypesFromPlotRef(new("VariableSpecList")))    
 })
 
-test_that("toJSON result is properly formatted", {
+test_that("toJSON result is properly formatted for VariableMetadata", {
     vm <- new("VariableMetadata",
                  variableClass = new("VariableClass", value = c("computed")),
                  variableSpec = new("VariableSpec", variableId = 'abc', entityId = 'def'),
