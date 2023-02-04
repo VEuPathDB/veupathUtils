@@ -12,7 +12,7 @@ check_statistic <- function(object) {
         errors <- c(errors, msg)
     }
 
-    if (length(value) != 1 || is.na(value)) {
+    if (length(value) != 1) {
         msg <- "The slot `value` must have a single value."
         errors <- c(errors, msg)
     }

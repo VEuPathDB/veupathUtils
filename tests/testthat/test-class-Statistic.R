@@ -6,9 +6,6 @@ test_that("Statistic validation works", {
                      "name" = NA_character_,
                      "value" = 123))
     expect_error(new("Statistic",
-                     "name" = "foo",
-                     "value" = NA_real_))
-    expect_error(new("Statistic",
                      "name" = c("foo", "bar"),
                      "value" = 123))
     expect_error(new("Statistic",
