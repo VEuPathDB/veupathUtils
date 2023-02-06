@@ -16,7 +16,7 @@ test_that("Statistic validation works", {
                 "name" = "PI", 
                 "value" = 3.141592)
 
-    expect_equal(stat@pvalue, NA_real_)
+    expect_equal(stat@pvalue, NA_character_)
     expect_equal(stat@confidenceInterval@minimum, NA_real_)
     expect_equal(stat@confidenceLevel, NA_real_)
 
@@ -64,7 +64,8 @@ test_that("toJSON result is properly formatted for Statistic", {
                 "name" = "PI", 
                 "value" = 3.141592,
                 "confidenceInterval" = Range("minimum" = 0.001, "maximum" = 10),
-                "confidenceLevel" = .95)
+                "confidenceLevel" = .95,
+                "pvalue" = '<0.0001')
 
     statjson <- veupathUtils::toJSON(stat)
     statlist <- jsonlite::fromJSON(statjson)
@@ -77,7 +78,8 @@ test_that("toJSON result is properly formatted for Statistic", {
                 "name" = "PI2", 
                 "value" = 3.141592,
                 "confidenceInterval" = Range("minimum" = 1, "maximum" = 5),
-                "confidenceLevel" = .95)
+                "confidenceLevel" = .95,
+                "pvalue" = ".47")
     stats <- StatisticList(S4Vectors::SimpleList(stat, stat2))
 
     statsjson <- veupathUtils::toJSON(stats)
@@ -87,4 +89,5 @@ test_that("toJSON result is properly formatted for Statistic", {
     expect_equal(names(statslist$statistics), c('PI', 'PI2'))
     expect_equal(names(statslist$statistics$PI2), c('value', 'confidenceInterval', 'confidenceLevel', 'pvalue'))
     expect_equal(statslist$statistics$PI2$confidenceInterval, c(NA, '(1 - 5)'))
+    expect_equal(class(statslist$statistics$PI2$pvalue[2]), 'character')
 })

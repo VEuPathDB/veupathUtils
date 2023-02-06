@@ -56,13 +56,13 @@ setMethod("toJSON", signature("Range"), function(object, named = c(TRUE, FALSE))
 setMethod("toJSON", signature("Statistic"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 
     
-    value_json <- jsonlite::toJSON(jsonlite::unbox(object@value))
+    value_json <- jsonlite::toJSON(jsonlite::unbox(object@value), na = 'null')
     tmp <- paste0('"value":', value_json)
 
     ci_json <- veupathUtils::toJSON(object@confidenceInterval, FALSE)
     tmp <- paste0(tmp, ',"confidenceInterval":', ci_json)
 
-    conf_level_json <- jsonlite::toJSON(jsonlite::unbox(object@confidenceLevel))
+    conf_level_json <- jsonlite::toJSON(jsonlite::unbox(object@confidenceLevel), na = 'null')
     tmp <- paste0(tmp, ',"confidenceLevel":', conf_level_json)
 
     pvalue_json <- jsonlite::toJSON(jsonlite::unbox(object@pvalue))

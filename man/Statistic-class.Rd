@@ -20,6 +20,6 @@ This is primarily to help maintain consistency in meeting the EDA API.
 
 \item{\code{confidenceLevel}}{An optional decimal number indicating the degree of confidence represented by the confidence interval}
 
-\item{\code{pvalue}}{An optional number representing the p-value associated with the statistic}
+\item{\code{pvalue}}{An optional string representing the p-value associated with the statistic. The string should either be coercible to a number or be '<0.0001'.}
 }}
 

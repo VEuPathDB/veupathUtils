@@ -21,9 +21,17 @@ check_statistic <- function(object) {
       if (length(pvalue) != 1) {
         msg <- "The slot `pvalue` must have a single value."
         errors <- c(errors, msg)
-      } else if (pvalue < 0 || pvalue > 1) {
-        msg <- "Provided p-value is invalid."
-        errors <- c(errors, msg)
+      } else {
+        numericPVal <- suppressWarnings(as.numeric(pvalue))
+        if (is.na(numericPVal)) {
+          if (pvalue != '<0.0001') {
+            msg <- "Provided p-value is invalid. It must either be coercible to a number or be the string '<0.0001'."
+            errors <- c(errors, msg)
+          }
+        } else if (numericPVal < 0 || numericPVal > 1) {
+          msg <- "Provided p-value is invalid. It is not between 0 and 1."
+          errors <- c(errors, msg)
+        }
       }
     }  
 
@@ -72,7 +80,7 @@ check_statistic <- function(object) {
 #' @slot value A number
 #' @slot confidenceInterval An optional Range specifying minimum and maximum values for the confidence interval
 #' @slot confidenceLevel An optional decimal number indicating the degree of confidence represented by the confidence interval
-#' @slot pvalue An optional number representing the p-value associated with the statistic
+#' @slot pvalue An optional string representing the p-value associated with the statistic. The string should either be coercible to a number or be '<0.0001'.
 #' 
 #' @name Statistic-class
 #' @rdname Statistic-class
@@ -82,10 +90,10 @@ Statistic <- setClass("Statistic", representation(
     value = 'numeric',
     confidenceInterval = 'Range',
     confidenceLevel = 'numeric',
-    pvalue = 'numeric'
+    pvalue = 'character'
 ), prototype = prototype(
     confidenceLevel = NA_real_,
-    pvalue = NA_real_
+    pvalue = NA_character_
 ), validity = check_statistic)
 
 #' @export
