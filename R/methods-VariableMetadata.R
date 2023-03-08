@@ -42,12 +42,7 @@ setGeneric("toJSON",
 setMethod("toJSON", signature("Range"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 
 
-    if (all(is.na(c(object@minimum, object@maximum)))) {
-      range_string <- NA
-    } else {
-      range_string <- paste0('(', object@minimum, ' - ', object@maximum, ')')
-    }
-    
+    range_string <- paste0('(', object@minimum, ' - ', object@maximum, ')')
     range_json <- jsonlite::toJSON(jsonlite::unbox(range_string))
 
     if (named) {
