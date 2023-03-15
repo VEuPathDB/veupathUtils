@@ -10,16 +10,15 @@
 #' @param numBins A number indicating how many bins are desired
 #' @param getValue A boolean indicating whether to return the counts per bin
 #' @export 
-getBinRanges <- function(x, method = c('equalRanges', 'quantile', 'sd'), numBins = NULL, getValue = c(TRUE, FALSE)) {
+getBinRanges <- function(x, method = c('equalInterval', 'quantile', 'sd'), numBins = NULL, getValue = c(TRUE, FALSE)) {
   #validate inputs, if numBins is NULL set it
   #if method is sd, ignore numBins?
 
-  if (method == 'equalRanges') {
-    binEdges <- breaks(x, "width", numBins, NULL)
-  } else if (method == 'quantile') {
-    binEdges <- unname(quantile(x, probs=seq(0,1,(1/numBins))))
-  } else {
-    binEdges <- sd_breaks(x)
+  binEdges <- unname(breaks(x, method, numBins))
+  if (method == 'quantile' && anyDuplicated(binEdges)) {
+    ## TODO decide if we prefer this, or an error, for UX
+    warning("There is insufficient data to produce the requested number of bins. Returning as many bins as possible.")
+    binEdges <- unique(binEdges)
   }
 
   binStart <- formatC(binEdges[1:(length(binEdges)-1)])
@@ -39,26 +38,6 @@ getBinRanges <- function(x, method = c('equalRanges', 'quantile', 'sd'), numBins
                                                                        value = value[[x]]) })
 
   return(BinRangesList(S4Vectors::SimpleList(binRanges)))
-}
-
-
-## TODO work this into the breaks fxn in utils-cut??
-sd_breaks <- function(x) {
-  med <- median(x)
-  sd <- sd(x)
-  breaks <- c(min(x), med-(sd*2), med-sd, med, med+sd, med+(sd*2), max(x))
- 
-  valid <- all(unlist(lapply(2:length(breaks), FUN = function(x) {breaks[[x]] > breaks[[x-1]]})))
-  if (!valid) {
-    # add the first false bc the min is known to be valid, start testing after that point
-    invalid <- c(FALSE, unlist(lapply(2:length(breaks), FUN = function(x) {breaks[[x]] < breaks[[1]] || breaks[[x]] > breaks[[length(breaks)]]})))
-    breaks <- breaks[!invalid]
-  }
-
-  #on the off chance the min or max falls exactly on a sd break
-  breaks <- unique(breaks)
-
-  return(breaks)
 }
 
 #' Non-Zero Rounding
