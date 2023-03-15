@@ -38,6 +38,41 @@ setGeneric("toJSON",
 ######################################################################################
 ### These would ideally be in their own methods files but for some reason that didnt work
 
+#' @export 
+setMethod("toJSON", signature("BinRange"), function(object, named = c(TRUE, FALSE)) {
+    named <- veupathUtils::matchArg(named) 
+    
+    # possible well want to make these optional, rather than null
+    start_json <- jsonlite::toJSON(jsonlite::unbox(object@binStart), na = 'null')
+    tmp <- paste0('"binStart":', start_json)
+
+    end_json <- jsonlite::toJSON(jsonlite::unbox(object@binEnd), na = 'null')
+    tmp <- paste0('"binEnd":', end_json)
+
+    label_json <- jsonlite::toJSON(jsonlite::unbox(object@binLabel))
+    tmp <- paste0(tmp, ',"binLabel":', label_json)
+
+    value_json <- jsonlite::toJSON(jsonlite::unbox(object@value), na = 'null')
+    tmp <- paste0(tmp, ',"value":', value_json)
+
+    tmp <- paste0("{", tmp, "}")
+    if (named) {
+      tmp <- paste0('{"binRange":', tmp, "}")  
+    }
+    
+    return(tmp)
+})
+
+#' @export
+setMethod("toJSON", signature("BinRangeList"), function(object, named = c(TRUE, FALSE)) {
+    named <- veupathUtils::matchArg(named) 
+    tmp <- S4SimpleListToJSON(object, TRUE)
+
+    if (named) tmp <- paste0('{"binRanges":', tmp, "}")
+
+    return(tmp)
+})
+
 #' @export
 setMethod("toJSON", signature("Range"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 

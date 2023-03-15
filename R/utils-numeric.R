@@ -1,3 +1,66 @@
+## TODO think about the relationship between this and the plot.data bin fxns
+#' Find Bin Ranges
+#' 
+#' This function will find bin start, end and labels for a 
+#' continuous variable. Optionally, it can return a value/ count
+#' per bin. By default returns 10 bins for equalRanges and quantile
+#' methods and 6 for sd (standard deviations).
+#' @param x Numeric (or Date) vector to find bins for
+#' @param method A string indicating which method to use to find bins ('equalRanges', 'quantile', 'sd')
+#' @param numBins A number indicating how many bins are desired
+#' @param getValue A boolean indicating whether to return the counts per bin
+#' @export 
+getBinRanges <- function(x, method = c('equalRanges', 'quantile', 'sd'), numBins = NULL, getValue = c(TRUE, FALSE)) {
+  #validate inputs, if numBins is NULL set it
+  #if method is sd, ignore numBins?
+
+  if (method == 'equalRanges') {
+    binEdges <- breaks(x, "width", numBins, NULL)
+  } else if (method == 'quantile') {
+    binEdges <- unname(quantile(x, probs=seq(0,1,(1/numBins))))
+  } else {
+    binEdges <- sd_breaks(x)
+  }
+
+  binStart <- formatC(binEdges[1:(length(binEdges)-1)])
+  binEnd <- formatC(binEdges[2:length(binEdges)])
+  binLabel <- paste0("(",binStart,", ", binEnd, "]")
+  binLabel[[1]] <- gsub("(","[",binLabel[[1]], fixed=T)
+
+  if (getValue) {
+    value <- c(table(cut(x, binEdges, include.lowest=TRUE)))
+  } else {
+    value <- rep(NA_real_, length(binStart))
+  }
+  
+  binRanges <- lapply(1:length(binStart), FUN = function(x) { BinRange(binStart = binStart[[x]],
+                                                                       binEnd = binEnd[[x]],
+                                                                       binLabel = binLabel[[x]],
+                                                                       value = value[[x]]) })
+
+  return(BinRangesList(S4Vectors::SimpleList(binRanges)))
+}
+
+
+## TODO work this into the breaks fxn in utils-cut??
+sd_breaks <- function(x) {
+  med <- median(x)
+  sd <- sd(x)
+  breaks <- c(min(x), med-(sd*2), med-sd, med, med+sd, med+(sd*2), max(x))
+ 
+  valid <- all(unlist(lapply(2:length(breaks), FUN = function(x) {breaks[[x]] > breaks[[x-1]]})))
+  if (!valid) {
+    # add the first false bc the min is known to be valid, start testing after that point
+    invalid <- c(FALSE, unlist(lapply(2:length(breaks), FUN = function(x) {breaks[[x]] < breaks[[1]] || breaks[[x]] > breaks[[length(breaks)]]})))
+    breaks <- breaks[!invalid]
+  }
+
+  #on the off chance the min or max falls exactly on a sd break
+  breaks <- unique(breaks)
+
+  return(breaks)
+}
+
 #' Non-Zero Rounding
 #' 
 #' This function will recursively attempt to round a value to
