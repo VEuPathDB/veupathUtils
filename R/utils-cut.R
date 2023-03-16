@@ -216,9 +216,6 @@ breaks <- function(x, method = c('equalInterval', 'quantile', 'sd'), nbins = NUL
       invalid <- c(FALSE, unlist(lapply(2:length(brks), FUN = function(x) {brks[[x]] < brks[[1]] || brks[[x]] > brks[[length(brks)]]})))
       brks <- brks[!invalid]
     }
-
-    #on the off chance the min or max falls exactly on a sd break
-    brks <- unique(brks)
   }
 
   return(brks)
