@@ -3,21 +3,37 @@ check_bin_range <- function(object) {
     start <- object@binStart
     end <- object@binEnd
     label <- object@binLabel
+    value <- object@value
     
-    if (class(start) != class(end)) {
-       msg <- "Provided binStart and binEnd must be of the same base type (numeric, Date, Posix)."
-       errors <- c(errors, msg) 
+    if (sum(is.na(c(start, end))) == 1 || sum(c(!length(start), !length(end))) == 1) {
+      msg <- "Must provide either both binStart and binEnd or neither."
+      errors <- c(errors, msg) 
     }
 
-    if (!inherits(start, c('numeric', 'Date', 'Posix'))) {
-       msg <- "Provided binStart and binEnd must be numeric, Date, or Posix."
-       errors <- c(errors, msg) 
-    }
-
-    if (!length(label) || is.na(label)) {
-      msg <- "Must provide a binLabel."
+    if (any(c(length(start), length(end), length(label), length(value)) > 1)) {
+      msg <- "More than one value provided for one of binStart, binEnd, binLabel or value."
       errors <- c(errors, msg)
+    } else {
+      if (!any(is.na(c(start, end))) && any(is.na(suppressWarnings(as.numeric(c(start, end)))))) {
+        msg <- "Must provide binStart and binEnds which are coercible to numeric."
+        errors <- c(errors, msg)
+      } else {
+        if (!any(is.na(c(start, end))) && as.numeric(start) > as.numeric(end)) {
+          msg <- "Provided binStart is after BinEnd."
+          errors <- c(errors, msg)
+        }
+      }
+
+      if (!length(label) || is.na(label)) {
+        msg <- "Must provide a binLabel."
+        errors <- c(errors, msg)
+      }
     }
+
+    if (class(start) != class(end)) {
+      msg <- "Provided binStart and binEnd must be of the same base type (numeric, Date, Posix)."
+      errors <- c(errors, msg) 
+    }   
 
     return(if (length(errors) == 0) TRUE else errors)
 }
@@ -48,8 +64,64 @@ BinRange <- setClass("BinRange", representation(
     value = NA_real_
 ), validity = check_bin_range)
 
+check_bin_range_list <- function(object) {
+  errors <- character()
+  binStarts <- as.numeric(unlist(lapply(as.list(object), FUN = function(bin) {bin@binStart})))
+  binEnds <- as.numeric(unlist(lapply(as.list(object), FUN = function(bin) {bin@binEnd})))
+  binValues <- as.numeric(unlist(lapply(as.list(object), FUN = function(bin) {bin@value})))
+  
+  anyBinStart <- any(!is.na(binStarts))
+  anyBinEnd <- any(!is.na(binEnds))
+  allBinStart <- all(!is.na(binStarts))
+  allBinEnd <- all(!is.na(binEnds))
+
+  # if any have bin start, end then all have both
+  if ((anyBinStart || anyBinEnd) && !(allBinStart && allBinEnd)) {
+    msg <- "Some provided bin ranges include start or ends but not others."
+    errors <- c(errors, msg)
+  } else if (anyBinStart) {
+    # no dups
+    if (anyDuplicated(binStarts)) {
+      msg <- "Duplicate binStart values found."
+      errors <- c(errors, msg)
+    }
+
+    if (anyDuplicated(binEnds)) {
+      msg <- "Duplicate binEnd values found."
+      errors <- c(errors, msg)
+    }
+
+    # start always before end
+    if (any(binStarts > binEnds)) {
+      msg <- "At least one binStart is after its associated binEnd."
+      errors <- c(errors, msg)
+    }
+  
+    # no overlapping ranges
+    sortOrder <- order(binStarts)
+    binStarts <- binStarts[sortOrder]
+    binEnds <- binEnds[sortOrder]
+    binValues <- binValues[sortOrder]
+    if (any(binStarts[2:length(binStarts)] < binEnds[1:(length(binEnds)-1)], na.rm=TRUE)) {
+      msg <- "Some provided bin ranges overlap."
+      errors <- c(errors, msg) 
+    }
+  }
+
+  # if any have a value then all do
+  anyValues <- any(!is.na(binValues))
+  allValues <- all(!is.na(binValues))
+  if (anyValues && !allValues) {
+    msg <- "Some provided bin ranges include values but not others."
+    errors <- c(errors, msg)
+  }
+
+  return(if (length(errors) == 0) TRUE else errors)
+}
+
 #' @export
 BinRangeList <- setClass("BinRangeList",
   contains = "SimpleList",
-  prototype = prototype(elementType = "BinRange")
+  prototype = prototype(elementType = "BinRange"),
+  validity = check_bin_range_list
 )

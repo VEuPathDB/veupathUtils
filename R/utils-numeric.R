@@ -11,23 +11,44 @@
 #' @param getValue A boolean indicating whether to return the counts per bin
 #' @export 
 getBinRanges <- function(x, method = c('equalInterval', 'quantile', 'sd'), numBins = NULL, getValue = c(TRUE, FALSE)) {
-  #validate inputs, if numBins is NULL set it
-  #if method is sd, ignore numBins?
+  method <- veupathUtils::matchArg(method)
+  getValue <- veupathUtils::matchArg(getValue)
+  if (is.null(numBins)) numBins <- 10
+
+  isDate <- FALSE
+  if (class(x) == 'Date') {
+    x <- as.numeric(x)
+    isDate <- TRUE
+  }
 
   binEdges <- unname(breaks(x, method, numBins))
-  if (method == 'quantile' && anyDuplicated(binEdges)) {
-    ## TODO decide if we prefer this, or an error, for UX
+  if (anyDuplicated(binEdges)) {
     warning("There is insufficient data to produce the requested number of bins. Returning as many bins as possible.")
     binEdges <- unique(binEdges)
   }
 
-  binStart <- formatC(binEdges[1:(length(binEdges)-1)])
-  binEnd <- formatC(binEdges[2:length(binEdges)])
+  binStart <- binEdges[1:(length(binEdges)-1)]
+  binEnd <- binEdges[2:length(binEdges)]
+  if (isDate) {
+    binStart <- as.Date(binStart, origin = "1900-01-01") # this is the default origin
+    binEnd <- as.Date(binEnd, origin = "1900-01-01")
+  } else {
+    # do we want formatC here? itll give us strings, but theyll be pretty
+    # alternative is maybe to round to some number of digits or signifs
+    binStart <- formatC(binStart)
+    binEnd <- formatC(binEnd)
+  }
+  
+  if (length(binEdges) == 1) binEnd <- binEnd[[2]]  
   binLabel <- paste0("(",binStart,", ", binEnd, "]")
   binLabel[[1]] <- gsub("(","[",binLabel[[1]], fixed=T)
 
   if (getValue) {
-    value <- c(table(cut(x, binEdges, include.lowest=TRUE)))
+    if (length(binEdges) == 1) {
+      value <- 1
+    } else {
+      value <- c(table(cut(x, binEdges, include.lowest=TRUE)))
+    }
   } else {
     value <- rep(NA_real_, length(binStart))
   }
@@ -37,7 +58,7 @@ getBinRanges <- function(x, method = c('equalInterval', 'quantile', 'sd'), numBi
                                                                        binLabel = binLabel[[x]],
                                                                        value = value[[x]]) })
 
-  return(BinRangesList(S4Vectors::SimpleList(binRanges)))
+  return(BinRangeList(S4Vectors::SimpleList(binRanges)))
 }
 
 #' Non-Zero Rounding

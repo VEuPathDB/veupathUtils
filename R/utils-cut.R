@@ -185,8 +185,14 @@ find_origin <- function(x_range, width, boundary) {
 
 breaks <- function(x, method = c('equalInterval', 'quantile', 'sd'), nbins = NULL, binwidth = NULL) {
   method <- veupathUtils::matchArg(method)
-  if ((!is.null(nbins) && !is.null(binwidth)) || (is.null(nbins) && is.null(binwidth))) {
-    stop("Specify exactly one of n and width")
+  if (method != 'sd') {
+    if ((!is.null(nbins) && !is.null(binwidth)) || (is.null(nbins) && is.null(binwidth))) {
+      stop("Specify exactly one of n and width for methods `equalInterval` and `quantile`.")
+    }
+  } else {
+    if (!is.null(nbins) || !is.null(binwidth)) {
+       warning("`breaks` method `sd` does NOT currently support specifying `nbins` or `binwidth`.")
+    }
   }
 
   rng <- range(x, na.rm = TRUE, finite = TRUE)
@@ -205,10 +211,11 @@ breaks <- function(x, method = c('equalInterval', 'quantile', 'sd'), nbins = NUL
     }
     brks <- stats::quantile(x, probs, na.rm = TRUE)
   } else {
-    warning("`breaks` method `sd` does NOT currently support specifying `nbins` or `binwidth`.")
     med <- median(x)
     sd <- sd(x)
     brks <- c(min(x), med-(sd*2), med-sd, med, med+sd, med+(sd*2), max(x))
+    #very small data might not produce valid sd
+    brks <- brks[!is.na(brks)]
  
     valid <- all(unlist(lapply(2:length(brks), FUN = function(x) {brks[[x]] > brks[[x-1]]})))
     if (!valid) {
