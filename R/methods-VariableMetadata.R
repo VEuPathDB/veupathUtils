@@ -39,7 +39,7 @@ setGeneric("toJSON",
 ### These would ideally be in their own methods files but for some reason that didnt work
 
 #' @export 
-setMethod("toJSON", signature("BinRange"), function(object, named = c(TRUE, FALSE)) {
+setMethod("toJSON", signature("Bin"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 
     
     # possible well want to make these optional, rather than null
@@ -57,18 +57,18 @@ setMethod("toJSON", signature("BinRange"), function(object, named = c(TRUE, FALS
 
     tmp <- paste0("{", tmp, "}")
     if (named) {
-      tmp <- paste0('{"binRange":', tmp, "}")  
+      tmp <- paste0('{"bin":', tmp, "}")  
     }
     
     return(tmp)
 })
 
 #' @export
-setMethod("toJSON", signature("BinRangeList"), function(object, named = c(TRUE, FALSE)) {
+setMethod("toJSON", signature("BinList"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 
     tmp <- S4SimpleListToJSON(object, TRUE)
 
-    if (named) tmp <- paste0('{"binRanges":', tmp, "}")
+    if (named) tmp <- paste0('{"bins":', tmp, "}")
 
     return(tmp)
 })
