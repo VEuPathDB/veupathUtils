@@ -1,46 +1,50 @@
 ## Tests for numeric utils functions
 
-test_that("getBinRanges returns sane results", {
+test_that("getDiscretizedBins returns sane results", {
+  set.seed(1)
   x <- rnorm(100)
   
   # NULL numBins
-  expect_equal(length(getBinRanges(x, 'equalInterval')), 10)
-  expect_equal(length(getBinRanges(x, 'quantile')), 10)
-  expect_equal(length(getBinRanges(x, 'sd')), 6)
+  expect_equal(length(getDiscretizedBins(x, 'equalInterval')), 10)
+  expect_equal(length(getDiscretizedBins(x, 'quantile')), 10)
+  expect_equal(length(getDiscretizedBins(x, 'sd')), 6)
 
   # with and without values
-  bins <- getBinRanges(x, 'quantile', 10, FALSE)
+  bins <- getDiscretizedBins(x, 'quantile', 10, FALSE)
   expect_equal(all(is.na(unlist(lapply(bins, FUN = function(x) {x@value})))), TRUE)
-  bins <- getBinRanges(x, 'quantile', 10, TRUE)
+  bins <- getDiscretizedBins(x, 'quantile', 10, TRUE)
   expect_equal(any(is.na(unlist(lapply(bins, FUN = function(x) {x@value})))), FALSE)
 
   # non-numeric, NULL or NA for input
-  expect_error(getBinRanges(c('a','b','c')))
-  expect_error(getBinRanges(NA))
-  expect_error(getBinRanges(NULL))
-  expect_equal(length(getBinRanges(sample(seq(as.Date('1999/01/01'), as.Date('2000/01/01'), by="day"), 12))), 10)
-  expect_equal(length(getBinRanges(sample(seq(as.Date('1999/01/01'), as.Date('2000/01/01'), by="day"), 12), 'quantile')), 10)
-  expect_equal(length(getBinRanges(sample(seq(as.Date('1999/01/01'), as.Date('2000/01/01'), by="day"), 12), 'sd')), 4)
+  expect_error(getDiscretizedBins(c('a','b','c')))
+  expect_error(getDiscretizedBins(NA))
+  expect_error(getDiscretizedBins(NULL))
+
+  dates <- as.Date(c('1999-12-11','1999-06-14','1999-02-26','1999-05-24','1999-02-25','1999-09-06',
+                     '1999-07-24','1999-05-29','1999-01-03','1999-06-28','1999-02-13','1999-03-17'))
+  expect_equal(length(getDiscretizedBins(dates)), 10)
+  expect_equal(length(getDiscretizedBins(dates, 'quantile')), 10)
+  expect_equal(length(getDiscretizedBins(dates, 'sd')), 5)
 
   ## return as many bins as possible for these cases
   # almost no data
-  expect_equal(length(getBinRanges(1)), 1)
-  expect_equal(length(getBinRanges(1, 'quantile')), 1)
-  expect_equal(length(getBinRanges(1, 'sd')), 1)
+  expect_equal(length(getDiscretizedBins(1)), 1)
+  expect_equal(length(getDiscretizedBins(1, 'quantile')), 1)
+  expect_equal(length(getDiscretizedBins(1, 'sd')), 1)
   x <- rnorm(2)
-  expect_equal(length(getBinRanges(x)), 10)
-  expect_equal(sum(unlist(lapply(getBinRanges(x), FUN = function(x){0 != x@value}))), 2)
-  expect_equal(length(getBinRanges(x, 'quantile')), 10)
-  expect_equal(sum(unlist(lapply(getBinRanges(x, 'quantile'), FUN = function(x){0 != x@value}))), 2)
-  expect_equal(length(getBinRanges(x, 'sd')), 2)
+  expect_equal(length(getDiscretizedBins(x)), 10)
+  expect_equal(sum(unlist(lapply(getDiscretizedBins(x), FUN = function(x){0 != x@value}))), 2)
+  expect_equal(length(getDiscretizedBins(x, 'quantile')), 10)
+  expect_equal(sum(unlist(lapply(getDiscretizedBins(x, 'quantile'), FUN = function(x){0 != x@value}))), 2)
+  expect_equal(length(getDiscretizedBins(x, 'sd')), 2)
 
   # skewed data
   x <- rnbinom(100, 10, 0.5)
-  expect_equal(length(getBinRanges(x)), 10)
-  expect_equal(length(getBinRanges(x, 'equalInterval', 50)), 50)
-  expect_equal(length(getBinRanges(x, 'quantile')), 10)
-  expect_equal(length(getBinRanges(x, 'quantile', 50)) <= 50, TRUE)
-  expect_equal(length(getBinRanges(x, 'sd')) <= 6, TRUE)
+  expect_equal(length(getDiscretizedBins(x)), 10)
+  expect_equal(length(getDiscretizedBins(x, 'equalInterval', 50)), 50)
+  expect_equal(length(getDiscretizedBins(x, 'quantile')), 10)
+  expect_equal(length(getDiscretizedBins(x, 'quantile', 50)) <= 50, TRUE)
+  expect_equal(length(getDiscretizedBins(x, 'sd')) <= 6, TRUE)
 })
 
 test_that("nonZeroRound only returns 0 if it receives one", {
