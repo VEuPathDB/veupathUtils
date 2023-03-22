@@ -47,7 +47,7 @@ setMethod("toJSON", signature("BinRange"), function(object, named = c(TRUE, FALS
     tmp <- paste0('"binStart":', start_json)
 
     end_json <- jsonlite::toJSON(jsonlite::unbox(object@binEnd), na = 'null')
-    tmp <- paste0('"binEnd":', end_json)
+    tmp <- paste0(tmp, ',"binEnd":', end_json)
 
     label_json <- jsonlite::toJSON(jsonlite::unbox(object@binLabel))
     tmp <- paste0(tmp, ',"binLabel":', label_json)
