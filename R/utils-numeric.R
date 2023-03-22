@@ -1,5 +1,4 @@
-## TODO think about the relationship between this and the plot.data bin fxns
-#' Find Bin Ranges
+#' Find Bin Ranges for a Continuous Variable
 #' 
 #' This function will find bin start, end and labels for a 
 #' continuous variable. Optionally, it can return a value/ count
@@ -10,7 +9,7 @@
 #' @param numBins A number indicating how many bins are desired
 #' @param getValue A boolean indicating whether to return the counts per bin
 #' @export 
-getBinRanges <- function(x, method = c('equalInterval', 'quantile', 'sd'), numBins = NULL, getValue = c(TRUE, FALSE)) {
+getDiscretizedBins <- function(x, method = c('equalInterval', 'quantile', 'sd'), numBins = NULL, getValue = c(TRUE, FALSE)) {
   method <- veupathUtils::matchArg(method)
   getValue <- veupathUtils::matchArg(getValue)
   if (is.null(numBins)) numBins <- 10
@@ -27,38 +26,42 @@ getBinRanges <- function(x, method = c('equalInterval', 'quantile', 'sd'), numBi
     binEdges <- unique(binEdges)
   }
 
-  binStart <- binEdges[1:(length(binEdges)-1)]
-  binEnd <- binEdges[2:length(binEdges)]
   if (isDate) {
-    binStart <- as.Date(binStart, origin = "1900-01-01") # this is the default origin
-    binEnd <- as.Date(binEnd, origin = "1900-01-01")
-  } else {
-    # do we want formatC here? itll give us strings, but theyll be pretty
-    # alternative is maybe to round to some number of digits or signifs
-    binStart <- formatC(binStart)
-    binEnd <- formatC(binEnd)
+    binEdges <- as.Date(binEdges, origin = "1900-01-01") # this is the default origin
   }
-  
-  if (length(binEdges) == 1) binEnd <- binEnd[[2]]  
-  binLabel <- paste0("(",binStart,", ", binEnd, "]")
-  binLabel[[1]] <- gsub("(","[",binLabel[[1]], fixed=T)
+
+  binStarts <- binEdges[1:(length(binEdges)-1)]
+  binEnds <- binEdges[2:length(binEdges)]
+  if (length(binEdges) == 1) binEnds <- binEnds[[2]]
+
+  # only format human-friendly labels. binStarts and binEnds should provide exact values
+  # must also guarantee that the first binStart and last binEnd encompass the full data range even after formatting
+  formattedBinStarts <- formatC(binStarts)
+  # think the alternative is to write a recursive fxn to call formatC w more digits until we get a result we like. 
+  # that seems costly, so ill wait to do that until we see how much an issue this really is
+  if (as.numeric(formattedBinStarts[[1]]) > binStarts[[1]]) formattedBinStarts[[1]] <- as.character(binStarts[[1]])
+  formattedBinEnds <- formatC(binEnds)
+  if (as.numeric(formattedBinEnds[[1]]) < binEnds[[1]]) formattedBinEnds[[1]] <- as.character(binEnds[[1]])
+
+  binLabels <- paste0("(",formattedBinStarts,", ", formattedBinEnds, "]")
+  binLabels[[1]] <- gsub("(","[",binLabels[[1]], fixed=T)
 
   if (getValue) {
     if (length(binEdges) == 1) {
-      value <- 1
+      values <- 1
     } else {
-      value <- c(table(cut(x, binEdges, include.lowest=TRUE)))
+      values <- c(table(cut(x, binEdges, include.lowest=TRUE)))
     }
   } else {
-    value <- rep(NA_real_, length(binStart))
+    values <- rep(NA_real_, length(binStarts))
   }
   
-  binRanges <- lapply(1:length(binStart), FUN = function(x) { BinRange(binStart = binStart[[x]],
-                                                                       binEnd = binEnd[[x]],
-                                                                       binLabel = binLabel[[x]],
-                                                                       value = value[[x]]) })
+  bins <- lapply(1:length(binStarts), FUN = function(x) { Bin(binStart = binStarts[[x]],
+                                                              binEnd = binEnds[[x]],
+                                                              binLabel = binLabels[[x]],
+                                                              value = values[[x]]) })
 
-  return(BinRangeList(S4Vectors::SimpleList(binRanges)))
+  return(BinList(S4Vectors::SimpleList(bins)))
 }
 
 #' Non-Zero Rounding
