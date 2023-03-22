@@ -38,7 +38,7 @@ check_bin_range <- function(object) {
     return(if (length(errors) == 0) TRUE else errors)
 }
 
-#' Bin Range
+#' Bin
 #' 
 #' A class to define the start, end and label for a bin.
 #' Optionally, may include a value for that bin.
@@ -50,10 +50,10 @@ check_bin_range <- function(object) {
 #' @slot binLabel A string
 #' @slot value
 #' 
-#' @name BinRange-class
-#' @rdname BinRange-class
+#' @name Bin-class
+#' @rdname Bin-class
 #' @export 
-BinRange <- setClass("BinRange", representation(
+Bin <- setClass("Bin", representation(
     binStart = 'ANY',
     binEnd = 'ANY',
     binLabel = 'character',
@@ -77,7 +77,7 @@ check_bin_range_list <- function(object) {
 
   # if any have bin start, end then all have both
   if ((anyBinStart || anyBinEnd) && !(allBinStart && allBinEnd)) {
-    msg <- "Some provided bin ranges include start or ends but not others."
+    msg <- "Some provided bins include start or ends but not others."
     errors <- c(errors, msg)
   } else if (anyBinStart) {
     # no dups
@@ -103,7 +103,7 @@ check_bin_range_list <- function(object) {
     binEnds <- binEnds[sortOrder]
     binValues <- binValues[sortOrder]
     if (any(binStarts[2:length(binStarts)] < binEnds[1:(length(binEnds)-1)], na.rm=TRUE)) {
-      msg <- "Some provided bin ranges overlap."
+      msg <- "Some provided bins overlap."
       errors <- c(errors, msg) 
     }
   }
@@ -112,7 +112,7 @@ check_bin_range_list <- function(object) {
   anyValues <- any(!is.na(binValues))
   allValues <- all(!is.na(binValues))
   if (anyValues && !allValues) {
-    msg <- "Some provided bin ranges include values but not others."
+    msg <- "Some provided bins include values but not others."
     errors <- c(errors, msg)
   }
 
@@ -120,8 +120,8 @@ check_bin_range_list <- function(object) {
 }
 
 #' @export
-BinRangeList <- setClass("BinRangeList",
+BinList <- setClass("BinList",
   contains = "SimpleList",
-  prototype = prototype(elementType = "BinRange"),
+  prototype = prototype(elementType = "Bin"),
   validity = check_bin_range_list
 )
