@@ -1,3 +1,69 @@
+#' Find Bin Ranges for a Continuous Variable
+#' 
+#' This function will find bin start, end and labels for a 
+#' continuous variable. Optionally, it can return a value/ count
+#' per bin. By default returns 10 bins for equalRanges and quantile
+#' methods and 6 for sd (standard deviations).
+#' @param x Numeric (or Date) vector to find bins for
+#' @param method A string indicating which method to use to find bins ('equalRanges', 'quantile', 'sd')
+#' @param numBins A number indicating how many bins are desired
+#' @param getValue A boolean indicating whether to return the counts per bin
+#' @export 
+getDiscretizedBins <- function(x, method = c('equalInterval', 'quantile', 'sd'), numBins = NULL, getValue = c(TRUE, FALSE)) {
+  method <- veupathUtils::matchArg(method)
+  getValue <- veupathUtils::matchArg(getValue)
+  if (is.null(numBins)) numBins <- 10
+
+  isDate <- FALSE
+  if (class(x) == 'Date') {
+    x <- as.numeric(x)
+    isDate <- TRUE
+  }
+
+  binEdges <- unname(breaks(x, method, numBins))
+  if (anyDuplicated(binEdges)) {
+    warning("There is insufficient data to produce the requested number of bins. Returning as many bins as possible.")
+    binEdges <- unique(binEdges)
+  }
+
+  if (isDate) {
+    binEdges <- as.Date(binEdges, origin = "1900-01-01") # this is the default origin
+  }
+
+  binStarts <- binEdges[1:(length(binEdges)-1)]
+  binEnds <- binEdges[2:length(binEdges)]
+  if (length(binEdges) == 1) binEnds <- binEnds[[2]]
+
+  # only format human-friendly labels. binStarts and binEnds should provide exact values
+  # must also guarantee that the first binStart and last binEnd encompass the full data range even after formatting
+  formattedBinStarts <- formatC(binStarts)
+  # think the alternative is to write a recursive fxn to call formatC w more digits until we get a result we like. 
+  # that seems costly, so ill wait to do that until we see how much an issue this really is
+  if (as.numeric(formattedBinStarts[[1]]) > binStarts[[1]]) formattedBinStarts[[1]] <- as.character(binStarts[[1]])
+  formattedBinEnds <- formatC(binEnds)
+  if (as.numeric(formattedBinEnds[[1]]) < binEnds[[1]]) formattedBinEnds[[1]] <- as.character(binEnds[[1]])
+
+  binLabels <- paste0("(",formattedBinStarts,", ", formattedBinEnds, "]")
+  binLabels[[1]] <- gsub("(","[",binLabels[[1]], fixed=T)
+
+  if (getValue) {
+    if (length(binEdges) == 1) {
+      values <- 1
+    } else {
+      values <- c(table(cut(x, binEdges, include.lowest=TRUE)))
+    }
+  } else {
+    values <- rep(NA_real_, length(binStarts))
+  }
+  
+  bins <- lapply(1:length(binStarts), FUN = function(x) { Bin(binStart = binStarts[[x]],
+                                                              binEnd = binEnds[[x]],
+                                                              binLabel = binLabels[[x]],
+                                                              value = values[[x]]) })
+
+  return(BinList(S4Vectors::SimpleList(bins)))
+}
+
 #' Non-Zero Rounding
 #' 
 #' This function will recursively attempt to round a value to
@@ -164,4 +230,58 @@ validateNumericCols.default <- function(x, cols) {
   }
   if (!all(purrr::map_lgl(x[cols], is.numeric))) stop('validateNumericCols failed: All columns must be numeric')
   return(cols)
+}
+
+#
+# For any number, return an absolute delta (numeric) at the last
+# significant digit in the number, using the number of digits specified
+#
+# e.g. assuming 3 significant digits
+# 
+# 1.23 -> 0.01
+# 11.0 -> 0.1
+# 12.3 -> 0.1
+# 101000 -> 1000
+# 1.20e-05 -> 0.01e-05 == 1.0e-07
+# 0.0123e-05 -> 0.0001e-05 == 1.0e-09
+# -2.34e-02 -> 0.01e-02 == 1.0e-04
+# 
+signifDigitEpsilon <- function(x, digits) {
+
+  # '#' flag ensures trailing zeroes
+  # take abs() here because we don't care about sign
+  rounded <- formatC(abs(x), digits = digits, width = 1L, flag = '#')
+
+  # split into vector of single characters
+  characters <- strsplit(rounded, '')
+
+  result <- c()
+  seenSignificant <- FALSE
+  significantCount <- 0
+  # walk through string, looking for first non-zero, non decimal point character
+  for (c in unlist(characters)) {
+    if (!(c %in% c('0', '.'))) {
+      seenSignificant <- TRUE
+    }
+    if (c == '.') {
+      result <- c(result, c)
+    } else if (seenSignificant) {
+      significantCount <- significantCount + 1
+      if (significantCount < digits) {
+        result <- c(result, '0')
+      } else if (significantCount == digits) {
+        result <- c(result, '1')
+      } else {
+        # we're out of the significant digits
+        # we must be in the exponent part (if present) or in trailing zeroes (e.g. in 101000 example)
+        # so just copy it over
+        result <- c(result, c)
+      }
+    } else {
+      result <- c(result, '0')
+    }
+  }
+
+  # return joined result as a number
+  as.numeric(paste(result, collapse=""))
 }
