@@ -41,7 +41,7 @@ getDiscretizedBins <- function(x, method = c('equalInterval', 'quantile', 'sd'),
   # that seems costly, so ill wait to do that until we see how much an issue this really is
   if (as.numeric(formattedBinStarts[[1]]) > binStarts[[1]]) formattedBinStarts[[1]] <- as.character(binStarts[[1]])
   formattedBinEnds <- formatC(binEnds)
-  if (as.numeric(formattedBinEnds[[1]]) < binEnds[[1]]) formattedBinEnds[[1]] <- as.character(binEnds[[1]])
+  if (as.numeric(formattedBinEnds[[length(binEnds)]]) < binEnds[[length(binEnds)]]) formattedBinEnds[[length(binEnds)]] <- as.character(binEnds[[length(binEnds)]])
 
   binLabels <- paste0("(",formattedBinStarts,", ", formattedBinEnds, "]")
   binLabels[[1]] <- gsub("(","[",binLabels[[1]], fixed=T)
@@ -56,10 +56,10 @@ getDiscretizedBins <- function(x, method = c('equalInterval', 'quantile', 'sd'),
     values <- rep(NA_real_, length(binStarts))
   }
   
-  bins <- lapply(1:length(binStarts), FUN = function(x) { Bin(binStart = binStarts[[x]],
-                                                              binEnd = binEnds[[x]],
+  bins <- lapply(1:length(binStarts), FUN = function(x) { Bin(binStart = as.character(binStarts[[x]]),
+                                                              binEnd = as.character(binEnds[[x]]),
                                                               binLabel = binLabels[[x]],
-                                                              value = values[[x]]) })
+                                                              value = values[[x]])})
 
   return(BinList(S4Vectors::SimpleList(bins)))
 }
