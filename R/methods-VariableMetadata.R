@@ -66,7 +66,7 @@ setMethod("toJSON", signature("Bin"), function(object, named = c(TRUE, FALSE)) {
 #' @export
 setMethod("toJSON", signature("BinList"), function(object, named = c(TRUE, FALSE)) {
     named <- veupathUtils::matchArg(named) 
-    tmp <- S4SimpleListToJSON(object, TRUE)
+    tmp <- S4SimpleListToJSON(object, named)
 
     if (named) tmp <- paste0('{"bins":', tmp, "}")
 

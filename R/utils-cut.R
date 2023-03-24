@@ -211,8 +211,8 @@ breaks <- function(x, method = c('equalInterval', 'quantile', 'sd'), nbins = NUL
     }
     brks <- stats::quantile(x, probs, na.rm = TRUE)
   } else {
-    med <- median(x)
-    sd <- sd(x)
+    med <- median(x, na.rm = TRUE)
+    sd <- sd(x, na.rm = TRUE)
     brks <- c(min(x), med-(sd*2), med-sd, med, med+sd, med+(sd*2), max(x))
     #very small data might not produce valid sd
     brks <- brks[!is.na(brks)]
