@@ -52,8 +52,12 @@ setMethod("toJSON", signature("Bin"), function(object, named = c(TRUE, FALSE)) {
     label_json <- jsonlite::toJSON(jsonlite::unbox(object@binLabel))
     tmp <- paste0(tmp, ',"binLabel":', label_json)
 
-    value_json <- jsonlite::toJSON(jsonlite::unbox(object@value), na = 'null')
-    tmp <- paste0(tmp, ',"value":', value_json)
+    # its possible at some point wed like to introduce Bin and BinWithValue or something
+    # rather than treat value special here
+    if (!is.na(object@value)) {
+      value_json <- jsonlite::toJSON(jsonlite::unbox(object@value))
+      tmp <- paste0(tmp, ',"value":', value_json)
+    }
 
     tmp <- paste0("{", tmp, "}")
     if (named) {
