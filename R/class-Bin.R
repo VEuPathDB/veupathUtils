@@ -16,9 +16,6 @@ check_bin_range <- function(object) {
     } else {
       if (!any(is.na(c(start, end))) && any(is.na(suppressWarnings(as.numeric(c(start, end)))))) {
         msg <- "Must provide binStart and binEnds which are coercible to numeric."
-        print("The offending binStart and binEnd:")
-        print(start)
-        print(end)
         errors <- c(errors, msg)
       } else {
         if (!any(is.na(c(start, end))) && as.numeric(start) > as.numeric(end)) {
