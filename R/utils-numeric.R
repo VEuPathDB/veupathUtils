@@ -36,15 +36,25 @@ getDiscretizedBins <- function(x, method = c('equalInterval', 'quantile', 'sd'),
 
   # only format human-friendly labels. binStarts and binEnds should provide exact values
   # must also guarantee that the first binStart and last binEnd encompass the full data range even after formatting
-  formattedBinStarts <- formatC(binStarts)
+  if (isDate) {
+    # Dates are already human-friendly.
+    formattedBinStarts <- binStarts
+    formattedBinEnds <- binEnds
+  } else {
+    formattedBinStarts <- formatC(binStarts)
+    formattedBinEnds <- formatC(binEnds)
+  }
   # think the alternative is to write a recursive fxn to call formatC w more digits until we get a result we like. 
   # that seems costly, so ill wait to do that until we see how much an issue this really is
-  if (as.numeric(formattedBinStarts[[1]]) > binStarts[[1]]) formattedBinStarts[[1]] <- as.character(binStarts[[1]])
-  formattedBinEnds <- formatC(binEnds)
-  if (as.numeric(formattedBinEnds[[length(binEnds)]]) < binEnds[[length(binEnds)]]) formattedBinEnds[[length(binEnds)]] <- as.character(binEnds[[length(binEnds)]])
+  if (as.numeric(formattedBinStarts[[1]]) > as.numeric(binStarts[[1]])) formattedBinStarts[[1]] <- as.character(binStarts[[1]])
+  if (as.numeric(formattedBinEnds[[length(binEnds)]]) < as.numeric(binEnds[[length(binEnds)]])) formattedBinEnds[[length(binEnds)]] <- as.character(binEnds[[length(binEnds)]])
 
   binLabels <- paste0("(",formattedBinStarts,", ", formattedBinEnds, "]")
   binLabels[[1]] <- gsub("(","[",binLabels[[1]], fixed=T)
+
+  # if (isDate) {
+  #   formattedBinEnds <- as.Date(as.numeric(formattedBinEnds), origin = "1900-01-01")
+  # }
 
   if (getValue) {
     if (length(binEdges) == 1) {
@@ -56,8 +66,8 @@ getDiscretizedBins <- function(x, method = c('equalInterval', 'quantile', 'sd'),
     values <- rep(NA_real_, length(binStarts))
   }
   
-  bins <- lapply(1:length(binStarts), FUN = function(x) { Bin(binStart = as.character(binStarts[[x]]),
-                                                              binEnd = as.character(binEnds[[x]]),
+  bins <- lapply(1:length(binStarts), FUN = function(x) { Bin(binStart = binStarts[[x]],
+                                                              binEnd = binEnds[[x]],
                                                               binLabel = binLabels[[x]],
                                                               value = values[[x]])})
 
