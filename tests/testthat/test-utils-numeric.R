@@ -24,9 +24,14 @@ test_that("getDiscretizedBins returns sane results", {
                      '1999-07-24','1999-05-29','1999-01-03','1999-06-28','1999-02-13','1999-03-17'))
 
   dateBins <- getDiscretizedBins(dates)
+  # Test that the bin labels match the bin starts and ends, as well as that the
+  # dates of bins make sense
   expect_equal(length(dateBins), 10)
   expect_equal(strsplit(dateBins[[1]]@binLabel, ', ')[[1]][1], paste0("[",dateBins[[1]]@binStart))
   expect_equal(strsplit(dateBins[[1]]@binLabel, ', ')[[1]][2], paste0(dateBins[[1]]@binEnd, "]"))
+  expect_equal(dateBins[[1]]@binStart, min(dates))
+  expect_equal(dateBins[[10]]@binEnd, max(dates))
+
   expect_equal(length(getDiscretizedBins(dates, 'quantile')), 10)
   expect_equal(length(getDiscretizedBins(dates, 'sd')), 5)
 
@@ -39,9 +44,14 @@ test_that("getDiscretizedBins returns sane results", {
               "1969-06-23T00:00:00", "1969-06-24T00:00:00"))
 
   dateBins <- getDiscretizedBins(dates)
+  # Test that the bin labels match the bin starts and ends, as well as that the
+  # dates of bins make sense
   expect_equal(length(dateBins), 10)
   expect_equal(strsplit(dateBins[[1]]@binLabel, ', ')[[1]][1], paste0("[",dateBins[[1]]@binStart))
   expect_equal(strsplit(dateBins[[1]]@binLabel, ', ')[[1]][2], paste0(dateBins[[1]]@binEnd, "]"))
+  expect_equal(dateBins[[1]]@binStart, min(dates))
+  expect_equal(dateBins[[10]]@binEnd, max(dates))
+
   expect_equal(length(getDiscretizedBins(dates, 'quantile')), 10)
   expect_equal(length(getDiscretizedBins(dates, 'sd')), 4)
 

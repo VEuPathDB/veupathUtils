@@ -27,7 +27,7 @@ getDiscretizedBins <- function(x, method = c('equalInterval', 'quantile', 'sd'),
   }
 
   if (isDate) {
-    binEdges <- as.Date(binEdges, origin = "1900-01-01") # this is the default origin
+    binEdges <- as.Date(binEdges, origin = "1970-01-01")
   }
 
   binStarts <- binEdges[1:(length(binEdges)-1)]
@@ -51,10 +51,6 @@ getDiscretizedBins <- function(x, method = c('equalInterval', 'quantile', 'sd'),
 
   binLabels <- paste0("(",formattedBinStarts,", ", formattedBinEnds, "]")
   binLabels[[1]] <- gsub("(","[",binLabels[[1]], fixed=T)
-
-  # if (isDate) {
-  #   formattedBinEnds <- as.Date(as.numeric(formattedBinEnds), origin = "1900-01-01")
-  # }
 
   if (getValue) {
     if (length(binEdges) == 1) {
