@@ -27,7 +27,7 @@ getDiscretizedBins <- function(x, method = c('equalInterval', 'quantile', 'sd'),
   }
 
   if (isDate) {
-    binEdges <- as.Date(binEdges, origin = "1970-01-01")
+    binEdges <- as.Date(binEdges, origin = "1970-01-01")  # Origin matches as.numeric default origin
   }
 
   binStarts <- binEdges[1:(length(binEdges)-1)]
