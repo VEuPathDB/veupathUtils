@@ -27,7 +27,7 @@ getDiscretizedBins <- function(x, method = c('equalInterval', 'quantile', 'sd'),
   }
 
   if (isDate) {
-    binEdges <- as.Date(binEdges, origin = "1900-01-01") # this is the default origin
+    binEdges <- as.Date(binEdges, origin = "1970-01-01")  # Origin matches as.numeric default origin
   }
 
   binStarts <- binEdges[1:(length(binEdges)-1)]
@@ -36,12 +36,18 @@ getDiscretizedBins <- function(x, method = c('equalInterval', 'quantile', 'sd'),
 
   # only format human-friendly labels. binStarts and binEnds should provide exact values
   # must also guarantee that the first binStart and last binEnd encompass the full data range even after formatting
-  formattedBinStarts <- formatC(binStarts)
+  if (isDate) {
+    # Dates are already human-friendly.
+    formattedBinStarts <- binStarts
+    formattedBinEnds <- binEnds
+  } else {
+    formattedBinStarts <- formatC(binStarts)
+    formattedBinEnds <- formatC(binEnds)
+  }
   # think the alternative is to write a recursive fxn to call formatC w more digits until we get a result we like. 
   # that seems costly, so ill wait to do that until we see how much an issue this really is
-  if (as.numeric(formattedBinStarts[[1]]) > binStarts[[1]]) formattedBinStarts[[1]] <- as.character(binStarts[[1]])
-  formattedBinEnds <- formatC(binEnds)
-  if (as.numeric(formattedBinEnds[[length(binEnds)]]) < binEnds[[length(binEnds)]]) formattedBinEnds[[length(binEnds)]] <- as.character(binEnds[[length(binEnds)]])
+  if (as.numeric(formattedBinStarts[[1]]) > as.numeric(binStarts[[1]])) formattedBinStarts[[1]] <- as.character(binStarts[[1]])
+  if (as.numeric(formattedBinEnds[[length(binEnds)]]) < as.numeric(binEnds[[length(binEnds)]])) formattedBinEnds[[length(binEnds)]] <- as.character(binEnds[[length(binEnds)]])
 
   binLabels <- paste0("(",formattedBinStarts,", ", formattedBinEnds, "]")
   binLabels[[1]] <- gsub("(","[",binLabels[[1]], fixed=T)
@@ -56,10 +62,21 @@ getDiscretizedBins <- function(x, method = c('equalInterval', 'quantile', 'sd'),
     values <- rep(NA_real_, length(binStarts))
   }
   
-  bins <- lapply(1:length(binStarts), FUN = function(x) { Bin(binStart = as.character(binStarts[[x]]),
+  # For numeric vars, coerce bin starts and ends to character so as to not lose any precision.
+  # It's possible we wouldnt lose precision regardless, but that's something we can look into in the future.
+  # We don't want to do this for dates, because then we loose the date being a date
+  if (isDate) {
+    bins <- lapply(1:length(binStarts), FUN = function(x) { Bin(binStart = binStarts[[x]],
+                                                              binEnd = binEnds[[x]],
+                                                              binLabel = binLabels[[x]],
+                                                              value = values[[x]])})
+
+  } else {
+    bins <- lapply(1:length(binStarts), FUN = function(x) { Bin(binStart = as.character(binStarts[[x]]),
                                                               binEnd = as.character(binEnds[[x]]),
                                                               binLabel = binLabels[[x]],
                                                               value = values[[x]])})
+  }
 
   return(BinList(S4Vectors::SimpleList(bins)))
 }

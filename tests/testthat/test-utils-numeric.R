@@ -22,9 +22,38 @@ test_that("getDiscretizedBins returns sane results", {
 
   dates <- as.Date(c('1999-12-11','1999-06-14','1999-02-26','1999-05-24','1999-02-25','1999-09-06',
                      '1999-07-24','1999-05-29','1999-01-03','1999-06-28','1999-02-13','1999-03-17'))
-  expect_equal(length(getDiscretizedBins(dates)), 10)
+
+  dateBins <- getDiscretizedBins(dates)
+  # Test that the bin labels match the bin starts and ends, as well as that the
+  # dates of bins make sense
+  expect_equal(length(dateBins), 10)
+  expect_equal(strsplit(dateBins[[1]]@binLabel, ', ')[[1]][1], paste0("[",dateBins[[1]]@binStart))
+  expect_equal(strsplit(dateBins[[1]]@binLabel, ', ')[[1]][2], paste0(dateBins[[1]]@binEnd, "]"))
+  expect_equal(dateBins[[1]]@binStart, min(dates))
+  expect_equal(dateBins[[10]]@binEnd, max(dates))
+
   expect_equal(length(getDiscretizedBins(dates, 'quantile')), 10)
   expect_equal(length(getDiscretizedBins(dates, 'sd')), 5)
+
+  ## different types of dates... 
+  dates <- as.Date(c("1969-06-05T00:00:00", "1969-06-06T00:00:00", "1969-06-07T00:00:00","1969-06-08T00:00:00", "1969-06-09T00:00:00", "1969-06-10T00:00:00",
+              "1969-06-11T00:00:00", "1969-06-12T00:00:00", "1969-06-13T00:00:00",
+              "1969-06-14T00:00:00", "1969-06-15T00:00:00", "1969-06-16T00:00:00",
+              "1969-06-17T00:00:00", "1969-06-18T00:00:00", "1969-06-19T00:00:00",
+              "1969-06-20T00:00:00", "1969-06-21T00:00:00", "1969-06-22T00:00:00",
+              "1969-06-23T00:00:00", "1969-06-24T00:00:00"))
+
+  dateBins <- getDiscretizedBins(dates)
+  # Test that the bin labels match the bin starts and ends, as well as that the
+  # dates of bins make sense
+  expect_equal(length(dateBins), 10)
+  expect_equal(strsplit(dateBins[[1]]@binLabel, ', ')[[1]][1], paste0("[",dateBins[[1]]@binStart))
+  expect_equal(strsplit(dateBins[[1]]@binLabel, ', ')[[1]][2], paste0(dateBins[[1]]@binEnd, "]"))
+  expect_equal(dateBins[[1]]@binStart, min(dates))
+  expect_equal(dateBins[[10]]@binEnd, max(dates))
+
+  expect_equal(length(getDiscretizedBins(dates, 'quantile')), 10)
+  expect_equal(length(getDiscretizedBins(dates, 'sd')), 4)
 
   ## return as many bins as possible for these cases
   # almost no data
