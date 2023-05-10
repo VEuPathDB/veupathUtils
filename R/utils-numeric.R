@@ -62,10 +62,21 @@ getDiscretizedBins <- function(x, method = c('equalInterval', 'quantile', 'sd'),
     values <- rep(NA_real_, length(binStarts))
   }
   
-  bins <- lapply(1:length(binStarts), FUN = function(x) { Bin(binStart = binStarts[[x]],
+  # For numeric vars, coerce bin starts and ends to character so as to not lose any precision.
+  # It's possible we wouldnt lose precision regardless, but that's something we can look into in the future.
+  # We don't want to do this for dates, because then we loose the date being a date
+  if (isDate) {
+    bins <- lapply(1:length(binStarts), FUN = function(x) { Bin(binStart = binStarts[[x]],
                                                               binEnd = binEnds[[x]],
                                                               binLabel = binLabels[[x]],
                                                               value = values[[x]])})
+
+  } else {
+    bins <- lapply(1:length(binStarts), FUN = function(x) { Bin(binStart = as.character(binStarts[[x]]),
+                                                              binEnd = as.character(binEnds[[x]]),
+                                                              binLabel = binLabels[[x]],
+                                                              value = values[[x]])})
+  }
 
   return(BinList(S4Vectors::SimpleList(bins)))
 }
