@@ -249,3 +249,39 @@ test_that("signifDigitEpsilon returns appropriate results", {
   expect_equal(signifDigitEpsilon(1234567, 7), 1)
   expect_equal(signifDigitEpsilon(-1234567, 7), 1)
 })
+
+
+test_that("dropZeroColumns drops columns that are 0s", {
+  df <- iris
+  df <- df[, findNumericCols(df)]
+  df$Sepal.Length = 0
+  df$Sepal.Width = c(0, NA)
+
+  # Test that dropZeroColumns works for data.frames
+  cleanedData <- dropZeroColumns(df)
+  expect_equal(droppedColumns, c('Sepal.Length', 'Sepal.Width'))
+  expect_equal(names(cleanedData$data), c('Petal.Length', 'Petal.Width'))
+
+  cleanedData <- dropZeroColumns(df, ignoreNA = FALSE)
+  expect_equal(droppedColumns, c('Sepal.Length'))
+  expect_equal(names(cleanedData$data), c('Petal.Length', 'Petal.Width', 'Sepal.Width'))
+
+  # Test for data.tables
+  cleanedData <- dropZeroColumns(as.data.table(df))
+  expect_equal(droppedColumns, c('Sepal.Length', 'Sepal.Width'))
+  expect_equal(names(cleanedData$data), c('Petal.Length', 'Petal.Width'))
+
+  cleanedData <- dropZeroColumns(as.data.table(df), ignoreNA = FALSE)
+  expect_equal(droppedColumns, c('Sepal.Length'))
+  expect_equal(names(cleanedData$data), c('Petal.Length', 'Petal.Width', 'Sepal.Width'))
+
+  # Test for lists
+  cleanedData <- dropZeroColumns(as.list(df))
+  expect_equal(droppedColumns, c('Sepal.Length', 'Sepal.Width'))
+  expect_equal(names(cleanedData$data), c('Petal.Length', 'Petal.Width'))
+
+  cleanedData <- dropZeroColumns(as.list(df), ignoreNA = FALSE)
+  expect_equal(droppedColumns, c('Sepal.Length'))
+  expect_equal(names(cleanedData$data), c('Petal.Length', 'Petal.Width', 'Sepal.Width'))
+
+})

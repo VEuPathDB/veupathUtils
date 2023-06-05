@@ -176,6 +176,79 @@ naToZero.default <- function(x) {
 }
 
 
+#' Drop columns containing all 0s
+#'
+#' This function drops all columns that have only 0 values. 
+#' @param x data.table, data.frame, or list
+#' @param ignoreNA boolean indicating if NA values should be ignored when determining all unique values in a column.
+#' Default is TRUE, which means a column that contains only 0 and NA values will be dropped. If FALSE, a column that contains 0s and
+#' NAs will not be dropped.
+#' @return cleanedData. A list that includes 1. "data" the cleaned data, and 2. "droppedColumns" names of the 
+#' columns that have been removed.
+#' @export
+dropZeroColumns <- function(x, ignoreNA) {
+  UseMethod("naToZero")
+}
+
+#' @export
+dropZeroColumns.data.table <- function(x, ignoreNA = TRUE) {
+  
+  # For each column, assign TRUE if all values are 0 (or possibly NA), and FALSE otherwise
+  if (ignoreNA) {
+    columnsToDropBool <- x[lapply(.SD, function(col) {unique(col) %in% c(0, NA)})]
+  } else {
+    columnsToDropBool <- x[lapply(.SD, function(col) {unique(col) == 0})]
+  }
+
+  # Determine columns to drop
+  columnsToDrop <- names(columnsToDropBool)[which(!!columnsToDropBool[1, ])]
+
+  # Create cleanedData result list
+  cleanedData <- list(data = x[, -..columnsToDrop],
+                      droppedColumns = columnsToDrop)
+
+  return(cleanedData)
+}
+
+#' @export 
+dropZeroColumns.data.frame <- function(x, ignoreNA = TRUE) {
+  # For each column, assign TRUE if all values are 0 (or possibly NA), and FALSE otherwise
+  if (ignoreNA) {
+    columnsToDropBool <- unlist(lapply(x, function(col) {identical(unique(col) %in% c(NA, 0))}))
+  } else {
+    columnsToDropBool <- unlist(lapply(x, function(col) {identical(unique(col), c(0))}))
+  }
+
+  # Determine columns to drop
+  columnsToDrop <- names(columnsToDropBool)[!!columnsToDropBool]
+
+  # Create cleanedData result list
+  cleanedData <- list(data = x[, !names(x) %in% columnsToDrop],
+                      droppedColumns = columnsToDrop)
+
+  return(cleanedData)
+}
+
+#' @export 
+dropZeroColumns.list <- function(x, ignoreNA = TRUE) {
+  # For each column, assign TRUE if all values are 0 (or possibly NA), and FALSE otherwise
+  if (ignoreNA) {
+    columnsToDropBool <- unlist(lapply(x, function(col) {identical(unique(col), c(0))}))
+  } else {
+    columnsToDropBool <- unlist(lapply(x, function(col) {identical(unique(col), c(NA, 0))}))
+  }
+
+  # Determine columns to drop
+  columnsToDrop <- names(columnsToDropBool)[!!columnsToDropBool]
+
+  # Create cleanedData result list
+  cleanedData <- list(data = x[!names(x) %in% columnsToDrop],
+                      droppedColumns = columnsToDrop)
+
+  return(cleanedData)
+}
+
+
 #' Find numeric columns
 #'
 #' This function finds all numeric columns in a list
