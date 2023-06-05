@@ -256,32 +256,35 @@ test_that("dropZeroColumns drops columns that are 0s", {
   df <- df[, findNumericCols(df)]
   df$Sepal.Length = 0
   df$Sepal.Width = c(0, NA)
+  print(names(df))
 
   # Test that dropZeroColumns works for data.frames
   cleanedData <- dropZeroColumns(df)
-  expect_equal(droppedColumns, c('Sepal.Length', 'Sepal.Width'))
+  expect_equal(cleanedData$droppedColumns, c('Sepal.Length', 'Sepal.Width'))
   expect_equal(names(cleanedData$data), c('Petal.Length', 'Petal.Width'))
 
   cleanedData <- dropZeroColumns(df, ignoreNA = FALSE)
-  expect_equal(droppedColumns, c('Sepal.Length'))
-  expect_equal(names(cleanedData$data), c('Petal.Length', 'Petal.Width', 'Sepal.Width'))
+  expect_equal(cleanedData$droppedColumns, c('Sepal.Length'))
+  expect_equal(names(cleanedData$data), c('Sepal.Width', 'Petal.Length', 'Petal.Width'))
 
   # Test for data.tables
-  cleanedData <- dropZeroColumns(as.data.table(df))
-  expect_equal(droppedColumns, c('Sepal.Length', 'Sepal.Width'))
+  dt <- data.table::setDT(df)
+  cleanedData <- dropZeroColumns(dt)
+  expect_equal(cleanedData$droppedColumns, c('Sepal.Length', 'Sepal.Width'))
   expect_equal(names(cleanedData$data), c('Petal.Length', 'Petal.Width'))
 
-  cleanedData <- dropZeroColumns(as.data.table(df), ignoreNA = FALSE)
-  expect_equal(droppedColumns, c('Sepal.Length'))
-  expect_equal(names(cleanedData$data), c('Petal.Length', 'Petal.Width', 'Sepal.Width'))
+  cleanedData <- dropZeroColumns(dt, ignoreNA = FALSE)
+  expect_equal(cleanedData$droppedColumns, c('Sepal.Length'))
+  expect_equal(names(cleanedData$data),c('Sepal.Width', 'Petal.Length', 'Petal.Width'))
 
   # Test for lists
-  cleanedData <- dropZeroColumns(as.list(df))
-  expect_equal(droppedColumns, c('Sepal.Length', 'Sepal.Width'))
+  lst <- as.list(df)
+  cleanedData <- dropZeroColumns(lst)
+  expect_equal(cleanedData$droppedColumns, c('Sepal.Length', 'Sepal.Width'))
   expect_equal(names(cleanedData$data), c('Petal.Length', 'Petal.Width'))
 
-  cleanedData <- dropZeroColumns(as.list(df), ignoreNA = FALSE)
-  expect_equal(droppedColumns, c('Sepal.Length'))
-  expect_equal(names(cleanedData$data), c('Petal.Length', 'Petal.Width', 'Sepal.Width'))
+  cleanedData <- dropZeroColumns(lst, ignoreNA = FALSE)
+  expect_equal(cleanedData$droppedColumns, c('Sepal.Length'))
+  expect_equal(names(cleanedData$data), c('Sepal.Width', 'Petal.Length', 'Petal.Width'))
 
 })

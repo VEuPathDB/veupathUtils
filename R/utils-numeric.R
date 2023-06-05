@@ -186,8 +186,8 @@ naToZero.default <- function(x) {
 #' @return cleanedData. A list that includes 1. "data" the cleaned data, and 2. "droppedColumns" names of the 
 #' columns that have been removed.
 #' @export
-dropZeroColumns <- function(x, ignoreNA) {
-  UseMethod("naToZero")
+dropZeroColumns <- function(x, ...) {
+  UseMethod("dropZeroColumns")
 }
 
 #' @export
@@ -195,9 +195,9 @@ dropZeroColumns.data.table <- function(x, ignoreNA = TRUE) {
   
   # For each column, assign TRUE if all values are 0 (or possibly NA), and FALSE otherwise
   if (ignoreNA) {
-    columnsToDropBool <- x[lapply(.SD, function(col) {unique(col) %in% c(0, NA)})]
+    columnsToDropBool <- x[, lapply(.SD, function(col) {identical(unique(col), c(0)) || identical(unique(col), c(0, NA))})]
   } else {
-    columnsToDropBool <- x[lapply(.SD, function(col) {unique(col) == 0})]
+    columnsToDropBool <- x[, lapply(.SD, function(col) {identical(unique(col), c(0))})]
   }
 
   # Determine columns to drop
@@ -214,7 +214,7 @@ dropZeroColumns.data.table <- function(x, ignoreNA = TRUE) {
 dropZeroColumns.data.frame <- function(x, ignoreNA = TRUE) {
   # For each column, assign TRUE if all values are 0 (or possibly NA), and FALSE otherwise
   if (ignoreNA) {
-    columnsToDropBool <- unlist(lapply(x, function(col) {identical(unique(col) %in% c(NA, 0))}))
+    columnsToDropBool <- unlist(lapply(x, function(col) {identical(unique(col), c(0)) || identical(unique(col), c(0, NA))}))
   } else {
     columnsToDropBool <- unlist(lapply(x, function(col) {identical(unique(col), c(0))}))
   }
@@ -233,9 +233,9 @@ dropZeroColumns.data.frame <- function(x, ignoreNA = TRUE) {
 dropZeroColumns.list <- function(x, ignoreNA = TRUE) {
   # For each column, assign TRUE if all values are 0 (or possibly NA), and FALSE otherwise
   if (ignoreNA) {
-    columnsToDropBool <- unlist(lapply(x, function(col) {identical(unique(col), c(0))}))
+    columnsToDropBool <- unlist(lapply(x, function(col) {identical(unique(col), c(0)) || identical(unique(col), c(0, NA))}))
   } else {
-    columnsToDropBool <- unlist(lapply(x, function(col) {identical(unique(col), c(NA, 0))}))
+    columnsToDropBool <- unlist(lapply(x, function(col) {identical(unique(col), c(0))}))
   }
 
   # Determine columns to drop
