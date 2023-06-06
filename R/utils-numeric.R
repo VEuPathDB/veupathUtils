@@ -179,12 +179,13 @@ naToZero.default <- function(x) {
 #' Drop columns containing all 0s
 #'
 #' This function drops all columns that have only 0 values. 
-#' @param x data.table, data.frame, or list
+#' @param x data.table, data.frame, list, or array
 #' @param ignoreNA boolean indicating if NA values should be ignored when determining all unique values in a column.
 #' Default is TRUE, which means a column that contains only 0 and NA values will be dropped. If FALSE, a column that contains 0s and
 #' NAs will not be dropped.
-#' @return cleanedData. A list that includes 1. "data" the cleaned data, and 2. "droppedColumns" names of the 
-#' columns that have been removed.
+#' @return cleanedData. A list that includes 1. "data" the result of removing some number of columns from the input x, and 2. "droppedColumns" names of the 
+#' columns that have been removed if the input x was a data.table, data.frame, or list. Otherwise "droppedColumns" contains
+#' the indicies of the input x that have been removed.
 #' @export
 dropZeroColumns <- function(x, ...) {
   UseMethod("dropZeroColumns")
@@ -244,6 +245,30 @@ dropZeroColumns.list <- function(x, ignoreNA = TRUE) {
   # Create cleanedData result list
   cleanedData <- list(data = x[!names(x) %in% columnsToDrop],
                       droppedColumns = columnsToDrop)
+
+  return(cleanedData)
+}
+
+#' @export 
+dropZeroColumns.default <- function(x, ignoreNA = TRUE) {
+  # For each column, assign TRUE if all values are 0 (or possibly NA), and FALSE otherwise
+  if (ignoreNA) {
+    columnsToDropBool <- apply(x, 2, function(col) {identical(unique(col), c(0)) || identical(unique(col), c(0, NA))})
+  } else {
+    columnsToDropBool <- apply(x, 2, function(col) {identical(unique(col), c(0))})
+  }
+
+  # Determine columns to drop
+  columnsToDrop <- which(columnsToDropBool)
+
+  # Create cleanedData result list
+  if (length(columnsToDrop) == 0) {
+    cleanedData <- list(data = x,
+                        droppedColumns = NULL)
+  } else {
+    cleanedData <- list(data = x[, -columnsToDrop],
+                        droppedColumns = columnsToDrop)
+  }
 
   return(cleanedData)
 }

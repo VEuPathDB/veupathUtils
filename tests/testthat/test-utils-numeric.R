@@ -256,7 +256,6 @@ test_that("dropZeroColumns drops columns that are 0s", {
   df <- df[, findNumericCols(df)]
   df$Sepal.Length = 0
   df$Sepal.Width = c(0, NA)
-  print(names(df))
 
   # Test that dropZeroColumns works for data.frames
   cleanedData <- dropZeroColumns(df)
@@ -286,5 +285,38 @@ test_that("dropZeroColumns drops columns that are 0s", {
   cleanedData <- dropZeroColumns(lst, ignoreNA = FALSE)
   expect_equal(cleanedData$droppedColumns, c('Sepal.Length'))
   expect_equal(names(cleanedData$data), c('Sepal.Width', 'Petal.Length', 'Petal.Width'))
+
+  # Test for arrays
+  arr <- array(unlist(lst), c(150,4))
+  cleanedData <- dropZeroColumns(arr)
+  expect_equal(cleanedData$droppedColumns, c(1, 2))
+  expect_equal(dim(cleanedData$data), c(150, 2))
+
+  cleanedData <- dropZeroColumns(arr, ignoreNA = FALSE)
+  expect_equal(cleanedData$droppedColumns, 1)
+  expect_equal(dim(cleanedData$data), c(150, 3))
+
+  # Test that nothing happens if there are no all 0 columns
+  df <- iris
+  df <- df[, findNumericCols(df)]
+  cleanedData <- dropZeroColumns(df)
+  expect_equal(cleanedData$droppedColumns, character())
+  expect_equal(cleanedData$data, df)
+
+  dt <- data.table::setDT(df)
+  cleanedData <- dropZeroColumns(dt)
+  expect_equal(cleanedData$droppedColumns, character())
+  expect_equal(cleanedData$data, dt)
+
+  lst <- as.list(df)
+  cleanedData <- dropZeroColumns(lst)
+  expect_equal(cleanedData$droppedColumns, character())
+  expect_equal(cleanedData$data, lst)
+
+  arr <- array(unlist(lst), c(150, 4))
+  cleanedData <- dropZeroColumns(arr)
+  expect_equal(cleanedData$droppedColumns, NULL)
+  expect_equal(cleanedData$data, arr)
+
 
 })

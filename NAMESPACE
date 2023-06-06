@@ -2,6 +2,7 @@
 
 S3method(dropZeroColumns,data.frame)
 S3method(dropZeroColumns,data.table)
+S3method(dropZeroColumns,default)
 S3method(dropZeroColumns,list)
 S3method(naToZero,data.frame)
 S3method(naToZero,data.table)

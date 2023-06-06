@@ -7,15 +7,16 @@
 dropZeroColumns(x, ...)
 }
 \arguments{
-\item{x}{data.table, data.frame, or list}
+\item{x}{data.table, data.frame, list, or array}
 
 \item{ignoreNA}{boolean indicating if NA values should be ignored when determining all unique values in a column.
 Default is TRUE, which means a column that contains only 0 and NA values will be dropped. If FALSE, a column that contains 0s and
 NAs will not be dropped.}
 }
 \value{
-cleanedData. A list that includes 1. "data" the cleaned data, and 2. "droppedColumns" names of the
-columns that have been removed.
+cleanedData. A list that includes 1. "data" the result of removing some number of columns from the input x, and 2. "droppedColumns" names of the
+columns that have been removed if the input x was a data.table, data.frame, or list. Otherwise "droppedColumns" contains
+the indicies of the input x that have been removed.
 }
 \description{
 This function drops all columns that have only 0 values.
