@@ -29,3 +29,20 @@ test_that("matchArg matches args, including booleans", {
   expect_equal(matchArg(NULL, c('a', 'b')), 'a')
   expect_equal(matchArg(c('a', 'b'), c('a', 'b')), 'a')
 })
+
+
+test_that("finding bin starts and ends works", {
+  binString <- "[1.2, 4000)"
+  expect_equal(findBinStart(binString), 1.2)
+  expect_equal(findBinEnd(binString), 4000)
+
+  binString <- "[-0.03, 002)"
+  expect_equal(findBinStart(binString), -0.03)
+  expect_equal(findBinEnd(binString), 2)
+})
+
+test_that("whichInBin correctly identifies values as in a bin", {
+  values <- c(0.1, 0.2, 0.6, 1, 200)
+  binString <- "[0.15, 10)"
+  expect_equal(whichInBin(values, binString), c(0, 1, 1, 1, 0))
+})

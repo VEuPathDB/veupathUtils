@@ -95,3 +95,73 @@ setroworder <- function(x, neworder) {
     .Call(data.table:::Creorder, x, as.integer(neworder), PACKAGE = "data.table")
     invisible(x)
 }
+
+
+#' Which values are In the Bin?
+#' 
+#' whichInBin finds array values that fall within a given bin
+#' @param values numeric vector
+#' @param binString a string that defines a numeric bin. For example '[1, 2)'
+#' @export
+whichInBin <- function(values, binString) {
+  binStart <- findBinStart(binString)
+  binEnd <- findBinEnd(binString)
+
+  inBin <- (values >= binStart) * (values < binEnd)
+  return(inBin)
+}
+
+
+#' Find Bin Start
+#' 
+#' findBinStart finds the start value of a given bin.
+#' @param x string that represents a bin. Ex: '[1, 2)'
+#' @param addTimeZone boolean determines if time zone should be added to dates. Default is FALSE.
+#' @export
+findBinStart <- function(x, addTimeZone = c(FALSE, TRUE)) {
+  addTimeZone <- veupathUtils::matchArg(addTimeZone)
+  if (!length(x)) {
+     return(character(0))
+  }
+
+  if (all(grepl(" - ",x))) {
+    x <- veupathUtils::strSplit(x, " - ")
+    if (addTimeZone) x <- paste0(x,'T00:00:00')
+  } else {
+    x <- gsub("\\(|\\[", "", veupathUtils::strSplit(as.character(x), ",\\s*", fixed = FALSE))
+  }
+
+  #try to infer type. may need more robust solution  
+  if (!any(is.na(as.numeric(x)))) {
+    x <- as.numeric(x)
+  }
+
+  return(x)
+}
+
+#' Find Bin End
+#' 
+#' findBinEnd finds the end value of a given bin.
+#' @param x string that represents a bin. Ex: '[1, 2)'
+#' @param addTimeZone boolean determines if time zone should be added to dates. Default is FALSE.
+#' @export
+findBinEnd <- function(x, addTimeZone = c(FALSE, TRUE)) {
+  addTimeZone <- veupathUtils::matchArg(addTimeZone)
+  if (!length(x)) {
+    return(character(0))
+  }
+
+  if (all(grepl(" - ",x))) {
+    x <- veupathUtils::strSplit(x, " - ", index = 2)
+    if (addTimeZone) x <- paste0(x,'T00:00:00')
+  } else {
+    x <- gsub("\\)|\\]", "", veupathUtils::strSplit(as.character(x), ",\\s*", index = 2, fixed = FALSE))
+  }
+
+  #try to infer type. may need more robust solution  
+  if (!any(is.na(as.numeric(x)))) {
+    x <- as.numeric(x)
+  }
+
+  return(x)
+}
