@@ -245,6 +245,13 @@ setMethod("toJSON", signature("VariableMetadata"), function(object, named = c(TR
     tmp <- paste0(tmp, ',"isCollection":', jsonlite::toJSON(jsonlite::unbox(object@isCollection)))
     tmp <- paste0(tmp, ',"imputeZero":', jsonlite::toJSON(jsonlite::unbox(object@imputeZero)))
     
+    if (!is.na(object@weightingVariableSpec@variableId)) {
+      weighting_variable_spec_json <- veupathUtils::toJSON(object@weightingVariableSpec, named = FALSE)
+      tmp <- paste0(tmp, ',"weightingVariableSpec":', weighting_variable_spec_json)
+    }
+
+    tmp <- paste0(tmp, ',"hasStudySpecificVocabulary":', jsonlite::toJSON(jsonlite::unbox(object@hasStudySpecificVocabulary)))
+
     if (!!length(object@members)) {
       members_json <- veupathUtils::toJSON(object@members, named = FALSE)
       tmp <- paste0(tmp, ',"members":', members_json)
@@ -286,6 +293,85 @@ setMethod("findCollectionVariableMetadata", signature("VariableMetadataList"), f
   if (!length(index)) return(NULL)
 
   return(variables[[index]])
+})
+
+#' EDA VariableMetadataList matching any weightingVariableSpec
+#' 
+#' This function returns a VariableMetadataList object provided
+#' an EDA-compliant VariableMetadataList object. The resulting object
+#' will be a subset of the original and include only those elements
+#' for which another variable has specified it as an annotated
+#' `weightingVariableSpec`.
+#' 
+#' @param variables a VariableMetadataList of variables to search
+#' @return VariableMetadataList object where variableSpec matches any elements specified weightingVariableSpec
+#' @export
+setGeneric("findWeightingVariablesMetadata", 
+  function(variables) standardGeneric("findWeightingVariablesMetadata"),
+  signature = "variables"
+)
+
+#' @export
+setMethod("findWeightingVariablesMetadata", signature("VariableMetadataList"), function(variables) {
+  weightingVarSpecs <- purrr::map(as.list(variables), function(x) {x@weightingVariableSpec@variableId})
+  varSpecIndex <- which(!is.na(weightingVarSpecs))
+  
+  if (!length(varSpecIndex)) {
+    return(NULL)
+  } else {
+    weightingVarSpecs <- weightingVarSpecs[[varSpecIndex]]
+  }
+
+  weightingVarIndex <- which(purrr::map(as.list(variables), function(x) {x@variableSpec}) %in% weightingVarSpecs)
+  if (!length(weightingVarIndex)) return(NULL)
+
+  return(variables[weightingVarIndex])
+})
+
+#' EDA Variable Metadata with a Study-dependent Vocabulary
+#' 
+#' This function returns a VariableMetadataList object provided
+#' an EDA-compliant VariableMetadataList object. The resulting object
+#' is a subset of the original and includes all elements where 
+#' `hasStudyDependentVocabulary` is TRUE.
+#' 
+#' @param variables a VariableMetadataList of variables to search
+#' @return VariableMetadataList object where hasStudyDependentVocabulary is TRUE
+#' @export
+setGeneric("findStudyDependentVocabularyVariableMetadata", 
+  function(variables) standardGeneric("findStudyDependentVocabularyVariableMetadata"),
+  signature = "variables"
+)
+
+#' @export
+setMethod("findStudyDependentVocabularyVariableMetadata", signature("VariableMetadataList"), function(variables) {
+  index <- which(purrr::map(as.list(variables), function(x) {x@hasStudyDependentVocabulary}) %in% TRUE)
+  if (!length(index)) return(NULL)
+
+  return(variables[index])
+})
+
+#' EDA Variable Metadata which needs weighting
+#' 
+#' This function returns a VariableMetadataList object provided
+#' an EDA-compliant VariableMetadataList object. The resulting object
+#' is a subset of the original and includes all elements where 
+#' `weightingVariableSpec` is not NULL/ NA.
+#' 
+#' @param variables a VariableMetadataList of variables to search
+#' @return VariableMetadataList object where weightingVariableSpec is not NULL/ NA
+#' @export
+setGeneric("findVariablesNeedingWeightingVariableMetadata", 
+  function(variables) standardGeneric("findVariablesNeedingWeightingVariableMetadata"),
+  signature = "variables"
+)
+
+#' @export
+setMethod("findVariablesNeedingWeightingVariableMetadata", signature("VariableMetadataList"), function(variables) {
+  index <- which(!is.na(purrr::map(as.list(variables), function(x) {x@weightingVariableSpec})))
+  if (!length(index)) return(NULL)
+
+  return(variables[index])
 })
 
 #' EDA Variable Metadata matching a PlotReference

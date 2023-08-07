@@ -84,6 +84,8 @@ VariableClass <- setClass("VariableClass", representation(
     value = NA_character_
 ), validity = check_variable_class)
 
+#' @name VariableSpec-class
+#' @rdname VariableSpec-class
 #' @export
 VariableSpec <- setClass("VariableSpec", representation(
     variableId = "character",
@@ -202,6 +204,8 @@ VariableMetadata <- setClass("VariableMetadata", representation(
     vocabulary = 'character',
     isCollection = 'logical',
     imputeZero = 'logical',
+    weightingVariableSpec = 'VariableSpec',
+    hasStudyDependentVocabulary = 'logical',
     members = 'VariableSpecList'
 ), prototype = prototype(
     displayName = NA_character_,
@@ -209,7 +213,8 @@ VariableMetadata <- setClass("VariableMetadata", representation(
     displayRangeMax = NA_real_,
     vocabulary = NA_character_,
     isCollection = FALSE,
-    imputeZero = FALSE
+    imputeZero = FALSE,
+    hasStudyDependentVocabulary = FALSE
 ), validity = check_variable_metadata)
 
 #' @export

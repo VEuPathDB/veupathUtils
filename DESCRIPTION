@@ -27,3 +27,18 @@ RoxygenNote: 7.2.3
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Collate: 
+    'class-Bin.R'
+    'class-VariableMetadata.R'
+    'class-Megastudy.R'
+    'class-Range.R'
+    'class-Statistic.R'
+    'methods-Megastudy.R'
+    'methods-Statistic.R'
+    'methods-VariableMetadata.R'
+    'utils-classes.R'
+    'utils-cut.R'
+    'utils-numeric.R'
+    'utils-string.R'
+    'utils.R'
+    'veupathUtils-package.R'
