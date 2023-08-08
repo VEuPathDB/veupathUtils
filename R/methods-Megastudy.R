@@ -34,20 +34,20 @@ setMethod('getVariableSpecAsString', signature('StudySpecificVocabulariesByVaria
 #' @param object veupathUtils::StudySpecificVocabulary
 #' @return character
 #' @export
-setGeneric("getStudyIdColName", 
-  function(object) standardGeneric("getStudyIdColName"),
+setGeneric("getStudyIdColumnName", 
+  function(object) standardGeneric("getStudyIdColumnName"),
   signature = "object"
 )
 
 #' @export
-setMethod('getStudyIdColName', signature('StudySpecificVocabulary'), function(object) {
-  return(object@studyIdColName)
+setMethod('getStudyIdColumnName', signature('StudySpecificVocabulary'), function(object) {
+  return(object@studyIdColumnName)
 })
 
 #' @export
-setMethod('getStudyIdColName', signature('StudySpecificVocabulariesByVariable'), function(object) {
+setMethod('getStudyIdColumnName', signature('StudySpecificVocabulariesByVariable'), function(object) {
   #since we validate theyre all the same, can just take the first
-  return(object[[1]]@studyIdColName)
+  return(object[[1]]@studyIdColumnName)
 })
 
 #' as.data.table

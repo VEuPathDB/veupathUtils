@@ -2,7 +2,7 @@ check_study_vocabulary <- function(object) {
   errors <- character()
 
   if (is.na(object@studyIdColumnName)) {
-    errors <- c(errors, "StudyIdColName is required but not provided.")
+    errors <- c(errors, "StudyIdColumnName is required but not provided.")
   }
 
   if (is.na(object@variableSpec@variableId)) {
@@ -28,8 +28,8 @@ StudySpecificVocabulary <- setClass("StudySpecificVocabulary", representation(
 check_study_vocabulary_list <- function(object) {
   errors <- character()
 
-  if (length(unique(unlist(lapply(as.list(object), getStudyIdColName)))) != 1) {
-    errors <- c(errors, "All studyIdColName's must be identical.")
+  if (length(unique(unlist(lapply(as.list(object), getStudyIdColumnName)))) != 1) {
+    errors <- c(errors, "All studyIdColumnName's must be identical.")
   }
 
   # check we have duplicate var specs
@@ -72,6 +72,9 @@ check_megastudy <- function(object) {
       msg <- paste("Not all ancestor ID columns are present in abundance data.frame")
       errors <- c(errors, msg)
     }
+  } else {
+    msg <- paste("Ancestor ID columns are required but not provided.")
+    errors <- c(errors, msg)
   }
 
   return(if (length(errors) == 0) TRUE else errors)
