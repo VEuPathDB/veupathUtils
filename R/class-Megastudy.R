@@ -92,5 +92,6 @@ check_megastudy <- function(object) {
 #' @export 
 Megastudy <- setClass("Megastudy", representation(
     data = 'data.table',
+    ancestorIdColumns = 'character',
     studySpecificVocabularies = 'StudySpecificVocabulariesByVariableList'
 ), validity = check_megastudy)

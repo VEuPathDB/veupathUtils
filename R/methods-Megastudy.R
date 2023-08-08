@@ -50,26 +50,29 @@ setMethod('getStudyIdColName', signature('StudySpecificVocabulariesByVariable'),
   return(object[[1]]@studyIdColName)
 })
 
-#' StudySpecifcVocabulary as data.table
+#' as.data.table
 #' 
-#' This function returns a data.table representation of StudySpecificVocabulary
+#' This function returns a data.table representation of 
+#' StudySpecificVocabulary or StudySpecificVocabularyByVariable
 #' 
 #' @return data.table
 #' @export 
-makeGeneric('as.data.table', as.data.table)
+setGeneric('as.data.table',
+  function(object) standardGeneric("as.data.table"),
+  signature("object")
+)
 
 #' @export
-setMethod('as.data.table'), signature('StudySpecificVocabulary', function(object) {
+setMethod('as.data.table', signature('StudySpecificVocabulary'), function(object) {
   .dt <- data.table('study'=object@study, 'variable'=object@vocabulary)
-  # TODO how to name the study col? do we need a studyId slot in this class?
-  names(.dt) <- c('study', getColName(object@variableSpec))
+  names(.dt) <- c(object@studyIdColName, getColName(object@variableSpec))
 
   return(.dt)
 })
 
 #' @export 
 setMethod('as.data.table', signature('StudySpecificVocabularyByVariable'), function(object) {
-  return(purrr::reduce(lapply(as.list(object), as.data.table), rbind))
+  return(purrr::reduce(lapply(as.list(object), veupathUtils::as.data.table), rbind))
 })
 
 #' Impute Zeroes (on tall data)
@@ -101,13 +104,17 @@ setMethod('imputeZeroes', signature('Megastudy', 'VariableMetadata'), function (
   if (length(vocabs) > 1) stop("Megastudy class does not yet support imputing zeroes when there is more than one study specific vocabulary present.")
   studyIdColName <- getStudyIdColName(vocabs[[1]])
   varSpecColName <- getVarSpecColName(vocabs[[1]])
+  ancestorIdColumns <- object@ancestorIdColumns
 
   # for upstream entities data
-  combinations.dt <- unique(.dt[, -c(get(weightingVarColName), get(varSpecColName)), with=F])
+  combinations.dt <- unique(.dt[, -c(get(weightingVarColName), get(varSpecColName)), with=FALSE])
   # for the var of interest data
-  vocabs.dt <- as.data.table(vocabs)
-  present.dt <- unique(.dt[, c(studyIdColName, varSpecColName), with=FALSE])
-  add.dt <- vocabs.dt[!present.dt, on=.(get(studyIdColName), get(varSpecColName))]
+  # TODO test this merge, similar to the below one
+  ancestors.dt <- unique(.dt[, c(ancestorIdColumns), with=FALSE])
+  vocabs.dt <- merge(ancestors.dt, as.data.table(vocabs), by=get(StudyIdColName))
+  present.dt <- unique(.dt[, c(ancestorIdColumns, studyIdColName, varSpecColName), with=FALSE])
+  # assume if a value was explicitly filtered against that its not in the vocab
+  add.dt <- vocabs.dt[!present.dt, on=.(ancestorIdColumns, get(studyIdColName), get(varSpecColName))]
   # make the dt to rbind to the original .dt
   # TODO make sure we dont need an arg to force the left side to keep all rows and the by key is correct, etc. this isnt tested yet.
   .dt2 <- merge(combinations.dt, add.dt, by=get(studyIdColName))
