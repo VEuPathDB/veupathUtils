@@ -117,7 +117,7 @@ setMethod('imputeZeroes', signature('Megastudy', 'VariableMetadata'), function (
   add.dt <- vocabs.dt[!present.dt, on=.(ancestorIdColumns, get(studyIdColName), get(varSpecColName))]
   # make the dt to rbind to the original .dt
   # TODO make sure we dont need an arg to force the left side to keep all rows and the by key is correct, etc. this isnt tested yet.
-  .dt2 <- merge(combinations.dt, add.dt, by=get(studyIdColName))
+  .dt2 <- merge(.dt, add.dt, by=get(studyIdColName))
   .dt2[[weightingVarColName]] <- 0
   # combine
   .dt <- rbind(.dt, .dt2)
