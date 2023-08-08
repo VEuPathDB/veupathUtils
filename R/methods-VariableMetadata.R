@@ -250,7 +250,7 @@ setMethod("toJSON", signature("VariableMetadata"), function(object, named = c(TR
       tmp <- paste0(tmp, ',"weightingVariableSpec":', weighting_variable_spec_json)
     }
 
-    tmp <- paste0(tmp, ',"hasStudySpecificVocabulary":', jsonlite::toJSON(jsonlite::unbox(object@hasStudySpecificVocabulary)))
+    tmp <- paste0(tmp, ',"hasStudyDependentVocabulary":', jsonlite::toJSON(jsonlite::unbox(object@hasStudyDependentVocabulary)))
 
     if (!!length(object@members)) {
       members_json <- veupathUtils::toJSON(object@members, named = FALSE)
