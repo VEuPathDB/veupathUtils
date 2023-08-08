@@ -57,22 +57,19 @@ setMethod('getStudyIdColName', signature('StudySpecificVocabulariesByVariable'),
 #' 
 #' @return data.table
 #' @export 
-setGeneric('as.data.table',
-  function(object) standardGeneric("as.data.table"),
-  signature("object")
-)
+as.data.table <- makeGeneric('as.data.table', data.table::as.data.table)
 
 #' @export
-setMethod('as.data.table', signature('StudySpecificVocabulary'), function(object) {
-  .dt <- data.table('study'=object@study, 'variable'=object@vocabulary)
-  names(.dt) <- c(object@studyIdColName, getColName(object@variableSpec))
+setMethod('as.data.table', signature('StudySpecificVocabulary'), function(x) {
+  .dt <- data.table::data.table('study'=x@study, 'variable'=x@vocabulary)
+  names(.dt) <- c(x@studyIdColName, getColName(x@variableSpec))
 
   return(.dt)
 })
 
 #' @export 
-setMethod('as.data.table', signature('StudySpecificVocabularyByVariable'), function(object) {
-  return(purrr::reduce(lapply(as.list(object), veupathUtils::as.data.table), rbind))
+setMethod('as.data.table', signature('StudySpecificVocabulariesByVariable'), function(x) {
+  return(purrr::reduce(lapply(as.list(x), veupathUtils::as.data.table), rbind))
 })
 
 #' Impute Zeroes (on tall data)
@@ -86,11 +83,11 @@ setMethod('as.data.table', signature('StudySpecificVocabularyByVariable'), funct
 #' @export
 setGeneric("imputeZeroes", 
   function(object, variables) standardGeneric("imputeZeroes"),
-  signature("object", "variables")
+  signature = c("object", "variables")
 )
 
 #' @export
-setMethod('imputeZeroes', signature('Megastudy', 'VariableMetadata'), function (object, variables) {
+setMethod('imputeZeroes', signature = c('Megastudy', 'VariableMetadata'), function (object, variables) {
  
   weightingVariablesMetadata <- findWeightingVariablesMetadata(variables)
   if (is.null(weightingVariablesMetadata)) return(object@data)
