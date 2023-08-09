@@ -54,10 +54,21 @@ StudySpecificVocabulariesByVariable <- setClass("StudySpecificVocabulariesByVari
   validity = check_study_vocabulary_list
 )
 
+check_multiple_study_vocabularies_on_same_entity <- function(object) {
+  errors <- character()
+
+  if (length(unique(unlist(lapply(as.list(object), getEntityId)))) != 1) {
+    errors <- c(errors, "All study vocabularies must belong to the same entity.")
+  }
+
+  return(if (length(errors) == 0) TRUE else errors)
+}
+
 #' @export
 StudySpecificVocabulariesByVariableList <- setClass("StudySpecificVocabulariesByVariableList",
   contains = "SimpleList",
-  prototype = prototype(elementType = "StudySpecificVocabulariesByVariable")
+  prototype = prototype(elementType = "StudySpecificVocabulariesByVariable"),
+  validity = check_multiple_study_vocabularies_on_same_entity
 )
 
 #this also sets us up for megastudy specific methods in plot.data if it turns out we need them

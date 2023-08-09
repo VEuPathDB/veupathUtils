@@ -1,7 +1,4 @@
-#this first isnt really specific to any class
-#just putting it here bc the megastudy introduced the need and i dont see an obviously better spot
-
-#' VariableSpec as String
+#' get a VariableSpec
 #' 
 #' This function returns a string representation of a VariableSpec. By
 #' default it assumes the VariableSpec is available in a slot called
@@ -10,21 +7,21 @@
 #' @param object An object containing a veupathUtils::VariableSpec
 #' @return character
 #' @export
-setGeneric("getVariableSpecAsString", 
-  function(object) standardGeneric("getVariableSpecAsString"),
+setGeneric("getVariableSpec", 
+  function(object) standardGeneric("getVariableSpec"),
   signature = "object"
 )
 
 #' @export
-setMethod('getVariableSpecAsString', signature('ANY'), function(object) {
+setMethod('getVariableSpec', signature('ANY'), function(object) {
   if (!'variableSpec' %in% slotNames(object)) stop("Specified object does not have a `variableSpec` slot.")
 
-  return(getColName(object@variableSpec))
+  return(object@variableSpec)
 })
 
 #' @export 
-setMethod('getVariableSpecAsString', signature('StudySpecificVocabulariesByVariable'), function(object) {
-  return(getVariableSpecAsString(object[[1]]))
+setMethod('getVariableSpec', signature('StudySpecificVocabulariesByVariable'), function(object) {
+  return(veupathUtils::getVariableSpec(object[[1]]))
 })
 
 #' StuydIdColName as String
@@ -50,6 +47,11 @@ setMethod('getStudyIdColumnName', signature('StudySpecificVocabulariesByVariable
   return(object[[1]]@studyIdColumnName)
 })
 
+#' @export 
+setMethod('getStudyIdColumnName', signature('StudySpecificVocabulariesByVariableList'), function(object) {
+  return(unlist(lapply(as.list(object), veupathUtils::getStudyIdColumnName)))
+})
+
 #' VarSpecColName as String
 #' 
 #' This function returns the variableSpec from an StudySpecificVocabulary
@@ -71,6 +73,33 @@ setMethod('getVariableSpecColumnName', signature('StudySpecificVocabulary'), fun
 setMethod('getVariableSpecColumnName', signature('StudySpecificVocabulariesByVariable'), function(object) {
   #since we validate theyre all the same, can just take the first
   return(veupathUtils::getColName(object[[1]]@variableSpec))
+})
+
+#' @export 
+setMethod('getVariableSpecColumnName', signature('StudySpecificVocabulariesByVariableList'), function(object) {
+  return(unlist(lapply(as.list(object), veupathUtils::getVariableSpecColumnName)))
+})
+
+#' @export
+setGeneric("getEntityId", 
+  function(object) standardGeneric("getEntityId"),
+  signature = "object"
+)
+
+#' @export
+setMethod('getEntityId', signature('VariableSpec'), function(object) {
+  return(object@entityId)
+})
+
+#' @export
+setMethod('getEntityId', signature('StudySpecificVocabulary'), function(object) {
+  return(veupathUtils::getEntityId(object@variableSpec))
+})
+
+#' @export
+setMethod('getEntityId', signature('StudySpecificVocabulariesByVariable'), function(object) {
+  #since we validate theyre all the same, can just take the first
+  return(veupathUtils::getEntityId(object[[1]]@variableSpec))
 })
 
 #' as.data.table
@@ -126,18 +155,32 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
 
   .dt <- object@data
   vocabs <- object@studySpecificVocabularies
+
   if (length(weightingVariablesMetadata) > 1) stop("Megastudy class does not yet support imputing zeroes when there is more than one weighting variable present.")
-  weightingVarColName <- getColName(weightingVariablesMetadata[[1]]@variableSpec)
-  # TODO expand this to allow more than one if theyre all in the same entity and have the same weighting var spec
-  # all vars on the entity of interest must have a special vocab
-  if (length(vocabs) > 1) stop("Megastudy class does not yet support imputing zeroes when there is more than one study specific vocabulary present.")
-  studyIdColName <- getStudyIdColumnName(vocabs[[1]])
-  varSpecColName <- getVariableSpecColumnName(vocabs[[1]])
+  if (length(vocabs) > 1) {
+    varSpecsWithStudyVocabs <- VariableSpecList(S4Vectors::SimpleList(lapply(as.list(vocabs), getVariableSpec)))
+    variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, varSpecsWithStudyVocabs)
+    weightingVarSpecsForStudyVocabVariables <- findWeightingVariableSpecs(variableMetadataForStudyVocabVariables)
+    weightingVarColName <- unlist(lapply(weightingVarSpecsForStudyVocabVariables, veupathUtils::getColName))
+    if (length(weightingVarColName) > 1) {
+      stop("All study vocabularies must belong to variables on the same entity using the same weighting variable.")
+    }
+  } else {
+    weightingVarColName <- veupathUtils::getColName(findVariableMetadataFromVariableSpec(variables, vocabs[[1]]@variableSpec)[[1]]@weightingVariableSpec)
+  }
+
+  studyIdColNames <- getStudyIdColumnName(vocabs)
+  varSpecColNames <- getVariableSpecColumnName(vocabs)
   allEntityIdColumns <- object@ancestorIdColumns
+  # this works bc we validate all vocabs must be on the same entity
   varSpecEntityIdColName <- findAncestorIdColumnNameForVariableSpec(vocabs[[1]]@variableSpec, ancestorIdColumns)
+  if (!all(unlist(getHasStudyDependentVocabulary(findVariableMetadataFromEntityId(variables, vocabs[[1]]@variableSpec@entityId))))) {
+    stop("Not all variables on the entity associated with the study vocabulary have study vocabularies.")
+  }
   upstreamEntityIdColNames <- ancestorIdColumns[!ancestorIdColumns %in% varSpecEntityIdColName]
 
   # for upstream entities data
+  # TODO make sure add.dt is done once for each vocab, and the list of data.tables merged together to include all combinations
   combinations.dt <- unique(.dt[, -c(weightingVarColName, varSpecColName), with=FALSE])
   # for the var of interest data
   ancestors.dt <- unique(.dt[, c(ancestorIdColumns), with=FALSE])
