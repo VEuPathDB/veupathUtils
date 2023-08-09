@@ -95,7 +95,13 @@ setMethod('as.data.table', signature('StudySpecificVocabulariesByVariable'), fun
   return(purrr::reduce(lapply(as.list(x), veupathUtils::as.data.table), rbind))
 })
 
-# TODO maybe call this getDTWithImputedZeroes?
+#should this be an s4 method?
+findAncestorIdForVariableSpec <- function(varSpec, ancestorIdColumns) {
+  if (!inherits(varSpec, 'VariableSpec')) stop("The first argument must be of the S4 class `VariableSpec`.")
+
+  return(ancestorIdColumns[grepl(varSpec@entityId, ancestorIdColumns)])
+}
+
 
 #' Impute Zeroes (on tall data)
 #' 
@@ -106,14 +112,14 @@ setMethod('as.data.table', signature('StudySpecificVocabulariesByVariable'), fun
 #' @return data.table
 #' @include class-VariableMetadata.R
 #' @export
-setGeneric("imputeZeroes", 
-  function(object, variables) standardGeneric("imputeZeroes"),
+setGeneric("getDTWithImputedZeroes", 
+  function(object, variables) standardGeneric("getDTWithImputedZeroes"),
   signature = c("object", "variables")
 )
 
 #' @importFrom digest digest
 #' @export
-setMethod('imputeZeroes', signature = c('Megastudy', 'VariableMetadataList'), function (object, variables) {
+setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadataList'), function (object, variables) {
  
   weightingVariablesMetadata <- findWeightingVariablesMetadata(variables)
   if (is.null(weightingVariablesMetadata)) return(object@data)
@@ -123,12 +129,12 @@ setMethod('imputeZeroes', signature = c('Megastudy', 'VariableMetadataList'), fu
   if (length(weightingVariablesMetadata) > 1) stop("Megastudy class does not yet support imputing zeroes when there is more than one weighting variable present.")
   weightingVarColName <- getColName(weightingVariablesMetadata[[1]]@variableSpec)
   # TODO expand this to allow more than one if theyre all in the same entity and have the same weighting var spec
+  # all vars on the entity of interest must have a special vocab
   if (length(vocabs) > 1) stop("Megastudy class does not yet support imputing zeroes when there is more than one study specific vocabulary present.")
   studyIdColName <- getStudyIdColumnName(vocabs[[1]])
   varSpecColName <- getVariableSpecColumnName(vocabs[[1]])
-  ancestorIdColumns <- object@ancestorIdColumns
-  # TODO fxn to find ancestor id for entity matching varspec, then remove that from ancestor ids
-  varSpecEntityIdColName <- findAncestorIdForVariableSpec(vocabs[[1]]@variableSpec)
+  allEntityIdColumns <- object@ancestorIdColumns
+  varSpecEntityIdColName <- findAncestorIdColumnNameForVariableSpec(vocabs[[1]]@variableSpec, ancestorIdColumns)
   upstreamEntityIdColNames <- ancestorIdColumns[!ancestorIdColumns %in% varSpecEntityIdColName]
 
   # for upstream entities data
@@ -142,13 +148,8 @@ setMethod('imputeZeroes', signature = c('Megastudy', 'VariableMetadataList'), fu
   add.dt <- merge(add.dt, combinations.dt, by=upstreamEntityIdColNames)
   add.dt[[weightingVarColName]] <- 0
   #make impossibly unique ids
-  add.dt[[varSpecEntityIdColName]] <- apply(add.dt[, c(ancestorIdColumns[!ancestorIdColumns %in% varSpecEntityIdColName], varSpecColName), with=FALSE], 1, digest::digest, algo='md5')
-  # make the dt to rbind to the original .dt
-  # TODO make sure cols are ordered the same?
-  # TODO what about sample.sex/ other vars on the entity of interest? what value do they get NA?
-  .dt2 <- rbind(.dt, add.dt)
-  # combine
-  .dt <- rbind(.dt, .dt2)
+  add.dt[[varSpecEntityIdColName]] <- apply(add.dt[, c(upstreamEntityIdColNames, varSpecColName), with=FALSE], 1, digest::digest, algo='md5')
+  .dt <- rbind(.dt, add.dt)
 
   return(.dt)
 })

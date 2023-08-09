@@ -313,21 +313,29 @@ setGeneric("findWeightingVariablesMetadata",
 
 #' @export
 setMethod("findWeightingVariablesMetadata", signature("VariableMetadataList"), function(variables) {
-  weightingVarSpecs <- purrr::map(as.list(variables), function(x) {x@weightingVariableSpec@variableId})
-  varSpecIndex <- which(!is.na(weightingVarSpecs))
-  
-  # TODO make it so this can handle multiple weighting vars
-  if (!length(varSpecIndex)) {
-    return(NULL)
-  } else {
-    weightingVarSpecs <- variables[[varSpecIndex]]@weightingVariableSpec
-    weightingVarSpecs <- unlist(lapply(list(weightingVarSpecs), veupathUtils::getColName))
-  }
+  weightingVarSpecs <- veupathUtils::findWeightingVariableSpecs(variables)
+  weightingVarSpecsColumnNames <- unlist(lapply(weightingVarSpecs, veupathUtils::getColName))
 
-  weightingVarIndex <- which(purrr::map(as.list(variables), function(x) {veupathUtils::getColName(x@variableSpec)}) %in% weightingVarSpecs)
+  weightingVarIndex <- which(purrr::map(as.list(variables), function(x) {veupathUtils::getColName(x@variableSpec)}) %in% weightingVarSpecsColumnNames)
   if (!length(weightingVarIndex)) return(NULL)
 
-  return(variables[[weightingVarIndex]])
+  return(variables[weightingVarIndex])
+})
+
+#' @export
+setGeneric("findWeightingVariableSpecs", 
+  function(object) standardGeneric("findWeightingVariableSpecs"),
+  signature = "object"
+)
+
+#' @export
+setMethod("findWeightingVariableSpecs", signature("VariableMetadata"), function(object) {
+  return(object@weightingVariableSpec)
+})
+
+#' @export 
+setMethod("findWeightingVariableSpecs", signature("VariableMetadataList"), function(object) {
+  return(lapply(as.list(object), veupathUtils::findWeightingVariableSpecs))
 })
 
 #' EDA Variable Metadata with a Study-dependent Vocabulary
