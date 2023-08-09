@@ -316,16 +316,18 @@ setMethod("findWeightingVariablesMetadata", signature("VariableMetadataList"), f
   weightingVarSpecs <- purrr::map(as.list(variables), function(x) {x@weightingVariableSpec@variableId})
   varSpecIndex <- which(!is.na(weightingVarSpecs))
   
+  # TODO make it so this can handle multiple weighting vars
   if (!length(varSpecIndex)) {
     return(NULL)
   } else {
-    weightingVarSpecs <- weightingVarSpecs[[varSpecIndex]]
+    weightingVarSpecs <- variables[[varSpecIndex]]@weightingVariableSpec
+    weightingVarSpecs <- unlist(lapply(list(weightingVarSpecs), veupathUtils::getColName))
   }
 
-  weightingVarIndex <- which(purrr::map(as.list(variables), function(x) {x@variableSpec}) %in% weightingVarSpecs)
+  weightingVarIndex <- which(purrr::map(as.list(variables), function(x) {veupathUtils::getColName(x@variableSpec)}) %in% weightingVarSpecs)
   if (!length(weightingVarIndex)) return(NULL)
 
-  return(variables[weightingVarIndex])
+  return(variables[[weightingVarIndex]])
 })
 
 #' EDA Variable Metadata with a Study-dependent Vocabulary

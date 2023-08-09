@@ -1,7 +1,9 @@
+#these should probably be in
 megastudyDT <- data.table('study.id'=c('a','a','a','b','b','b'),
                           'study.author'=c('Cool Guy', 'Cool Guy', 'Cool Guy', 'Uncool Guy', 'Uncool Guy', 'Uncool Guy'),
                           'collection.id'=c(1,1,2,1,2,2), 
                           'collection.attractant'=c('A','A','B','C','D','D'),
+                          'sample.id'=c(1,2,3,4,5,6)
                           'sample.species'=c('species1','species2','species1','species1','species1','species2'),
                           'sample.sex'=c('male','male','female','male','female','male'),
                           'sample.specimen_count'=c(10,20,15,15,10,20))
@@ -91,8 +93,31 @@ test_that("Megastudy and associated validation works", {
   # expect_error(StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='', variableId=''), vocabulary=c('species1','species2','species3')))
 })
 
+# TODO this could go in its own file maybe
 test_that("imputeZeroes method is sane", {
+  m <- Megastudy(data=megastudyDT,
+                 ancestorIdColumns=c('study.id', 'collection.id'),
+                 studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs)))
+
   # case where neither study nor collection vars in the plot
+  variables <- new("VariableMetadataList", SimpleList(
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'species', entityId = 'sample'),
+      plotReference = new("PlotReference", value = 'xAxis'),
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
+      hasStudyDependentVocabulary = TRUE),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'specimen_count', entityId = 'sample'),
+      plotReference = new("PlotReference", value = 'yAxis'),
+      dataType = new("DataType", value = 'NUMBER'),
+      dataShape = new("DataShape", value = 'CONTINUOUS'))
+  ))
+
+  imputedDT <- imputeZeroes(m, variables)
 
   # collection var is present
 

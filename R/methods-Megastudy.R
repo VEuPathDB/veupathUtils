@@ -50,6 +50,29 @@ setMethod('getStudyIdColumnName', signature('StudySpecificVocabulariesByVariable
   return(object[[1]]@studyIdColumnName)
 })
 
+#' VarSpecColName as String
+#' 
+#' This function returns the variableSpec from an StudySpecificVocabulary
+#' 
+#' @param object veupathUtils::StudySpecificVocabulary
+#' @return character
+#' @export
+setGeneric("getVariableSpecColumnName", 
+  function(object) standardGeneric("getVariableSpecColumnName"),
+  signature = "object"
+)
+
+#' @export
+setMethod('getVariableSpecColumnName', signature('StudySpecificVocabulary'), function(object) {
+  return(veupathUtils::getColName(object@variableSpec))
+})
+
+#' @export
+setMethod('getVariableSpecColumnName', signature('StudySpecificVocabulariesByVariable'), function(object) {
+  #since we validate theyre all the same, can just take the first
+  return(veupathUtils::getColName(object[[1]]@variableSpec))
+})
+
 #' as.data.table
 #' 
 #' This function returns a data.table representation of 
@@ -62,7 +85,7 @@ as.data.table <- makeGeneric('as.data.table', data.table::as.data.table)
 #' @export
 setMethod('as.data.table', signature('StudySpecificVocabulary'), function(x) {
   .dt <- data.table::data.table('study'=x@study, 'variable'=x@vocabulary)
-  names(.dt) <- c(x@studyIdColName, getColName(x@variableSpec))
+  names(.dt) <- c(x@studyIdColumnName, getColName(x@variableSpec))
 
   return(.dt)
 })
@@ -71,6 +94,8 @@ setMethod('as.data.table', signature('StudySpecificVocabulary'), function(x) {
 setMethod('as.data.table', signature('StudySpecificVocabulariesByVariable'), function(x) {
   return(purrr::reduce(lapply(as.list(x), veupathUtils::as.data.table), rbind))
 })
+
+# TODO maybe call this getDTWithImputedZeroes?
 
 #' Impute Zeroes (on tall data)
 #' 
@@ -86,36 +111,42 @@ setGeneric("imputeZeroes",
   signature = c("object", "variables")
 )
 
+#' @importFrom digest digest
 #' @export
-setMethod('imputeZeroes', signature = c('Megastudy', 'VariableMetadata'), function (object, variables) {
+setMethod('imputeZeroes', signature = c('Megastudy', 'VariableMetadataList'), function (object, variables) {
  
   weightingVariablesMetadata <- findWeightingVariablesMetadata(variables)
   if (is.null(weightingVariablesMetadata)) return(object@data)
 
   .dt <- object@data
   vocabs <- object@studySpecificVocabularies
-  weightingVariablesMetadata <- findWeightingVariablesMetadata(variables)
   if (length(weightingVariablesMetadata) > 1) stop("Megastudy class does not yet support imputing zeroes when there is more than one weighting variable present.")
-  weightingVarColName <- getColName(findWeightingVariablesMetadata(variables)[[1]])
+  weightingVarColName <- getColName(weightingVariablesMetadata[[1]]@variableSpec)
   # TODO expand this to allow more than one if theyre all in the same entity and have the same weighting var spec
   if (length(vocabs) > 1) stop("Megastudy class does not yet support imputing zeroes when there is more than one study specific vocabulary present.")
-  studyIdColName <- getStudyIdColName(vocabs[[1]])
-  varSpecColName <- getVarSpecColName(vocabs[[1]])
+  studyIdColName <- getStudyIdColumnName(vocabs[[1]])
+  varSpecColName <- getVariableSpecColumnName(vocabs[[1]])
   ancestorIdColumns <- object@ancestorIdColumns
+  # TODO fxn to find ancestor id for entity matching varspec, then remove that from ancestor ids
+  varSpecEntityIdColName <- findAncestorIdForVariableSpec(vocabs[[1]]@variableSpec)
+  upstreamEntityIdColNames <- ancestorIdColumns[!ancestorIdColumns %in% varSpecEntityIdColName]
 
   # for upstream entities data
-  combinations.dt <- unique(.dt[, -c(get(weightingVarColName), get(varSpecColName)), with=FALSE])
+  combinations.dt <- unique(.dt[, -c(weightingVarColName, varSpecColName), with=FALSE])
   # for the var of interest data
-  # TODO test this merge, similar to the below one
   ancestors.dt <- unique(.dt[, c(ancestorIdColumns), with=FALSE])
-  vocabs.dt <- merge(ancestors.dt, as.data.table(vocabs), by=get(StudyIdColName))
-  present.dt <- unique(.dt[, c(ancestorIdColumns, studyIdColName, varSpecColName), with=FALSE])
+  vocabs.dt <- merge(ancestors.dt, veupathUtils::as.data.table(vocabs), by=studyIdColName, allow.cartesian=TRUE)
+  present.dt <- unique(.dt[, c(ancestorIdColumns, varSpecColName), with=FALSE])
   # assume if a value was explicitly filtered against that its not in the vocab
-  add.dt <- vocabs.dt[!present.dt, on=.(ancestorIdColumns, get(studyIdColName), get(varSpecColName))]
+  add.dt <- vocabs.dt[!present.dt, on=c(ancestorIdColumns, varSpecColName)]
+  add.dt <- merge(add.dt, combinations.dt, by=upstreamEntityIdColNames)
+  add.dt[[weightingVarColName]] <- 0
+  #make impossibly unique ids
+  add.dt[[varSpecEntityIdColName]] <- apply(add.dt[, c(ancestorIdColumns[!ancestorIdColumns %in% varSpecEntityIdColName], varSpecColName), with=FALSE], 1, digest::digest, algo='md5')
   # make the dt to rbind to the original .dt
-  # TODO make sure we dont need an arg to force the left side to keep all rows and the by key is correct, etc. this isnt tested yet.
-  .dt2 <- merge(.dt, add.dt, by=get(studyIdColName))
-  .dt2[[weightingVarColName]] <- 0
+  # TODO make sure cols are ordered the same?
+  # TODO what about sample.sex/ other vars on the entity of interest? what value do they get NA?
+  .dt2 <- rbind(.dt, add.dt)
   # combine
   .dt <- rbind(.dt, .dt2)
 
