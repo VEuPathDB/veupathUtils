@@ -49,7 +49,8 @@ setMethod('getStudyIdColumnName', signature('StudySpecificVocabulariesByVariable
 
 #' @export 
 setMethod('getStudyIdColumnName', signature('StudySpecificVocabulariesByVariableList'), function(object) {
-  return(unlist(lapply(as.list(object), veupathUtils::getStudyIdColumnName)))
+  #works bc of validation
+  return(veupathUtils::getStudyIdColumnName(object[[1]]))
 })
 
 #' VarSpecColName as String
@@ -169,29 +170,34 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     weightingVarColName <- veupathUtils::getColName(findVariableMetadataFromVariableSpec(variables, vocabs[[1]]@variableSpec)[[1]]@weightingVariableSpec)
   }
 
-  studyIdColNames <- getStudyIdColumnName(vocabs)
+  studyIdColName <- getStudyIdColumnName(vocabs)
   varSpecColNames <- getVariableSpecColumnName(vocabs)
   allEntityIdColumns <- object@ancestorIdColumns
   # this works bc we validate all vocabs must be on the same entity
   varSpecEntityIdColName <- findAncestorIdColumnNameForVariableSpec(vocabs[[1]]@variableSpec, ancestorIdColumns)
   if (!all(unlist(getHasStudyDependentVocabulary(findVariableMetadataFromEntityId(variables, vocabs[[1]]@variableSpec@entityId))))) {
-    stop("Not all variables on the entity associated with the study vocabulary have study vocabularies.")
+    stop("Not all variables on the entity associated with the present study vocabulary have study vocabularies.")
   }
+  # TODO do we need to somehow explicitly disallow assay/ downstream entity data?
   upstreamEntityIdColNames <- ancestorIdColumns[!ancestorIdColumns %in% varSpecEntityIdColName]
 
   # for upstream entities data
+  combinations.dt <- unique(.dt[, -c(weightingVarColName, varSpecColNames), with=FALSE])
+  # for the vars of interest data
+
   # TODO make sure add.dt is done once for each vocab, and the list of data.tables merged together to include all combinations
-  combinations.dt <- unique(.dt[, -c(weightingVarColName, varSpecColName), with=FALSE])
-  # for the var of interest data
+  # possibly break this into a helper fxn i can call w lapply?
   ancestors.dt <- unique(.dt[, c(ancestorIdColumns), with=FALSE])
   vocabs.dt <- merge(ancestors.dt, veupathUtils::as.data.table(vocabs), by=studyIdColName, allow.cartesian=TRUE)
   present.dt <- unique(.dt[, c(ancestorIdColumns, varSpecColName), with=FALSE])
   # assume if a value was explicitly filtered against that its not in the vocab
   add.dt <- vocabs.dt[!present.dt, on=c(ancestorIdColumns, varSpecColName)]
+
+
   add.dt <- merge(add.dt, combinations.dt, by=upstreamEntityIdColNames)
   add.dt[[weightingVarColName]] <- 0
   #make impossibly unique ids
-  add.dt[[varSpecEntityIdColName]] <- apply(add.dt[, c(upstreamEntityIdColNames, varSpecColName), with=FALSE], 1, digest::digest, algo='md5')
+  add.dt[[varSpecEntityIdColName]] <- apply(add.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
   .dt <- rbind(.dt, add.dt)
 
   return(.dt)

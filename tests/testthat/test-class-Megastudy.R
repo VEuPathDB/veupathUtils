@@ -140,4 +140,9 @@ test_that("imputeZeroes method is sane", {
   # no special vocab or weight present
 
   # only weight var present
+
+  # sample var without a study vocab present when another sample var has one
 })
+
+# TODO should also look through the various methods ive added around the place and see if any of those 
+# are complicated enough to warrant tests either here or in the VariableMetadata test file
