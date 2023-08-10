@@ -157,10 +157,20 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   .dt <- object@data
   vocabs <- object@studySpecificVocabularies
 
-  if (length(weightingVariablesMetadata) > 1) stop("Megastudy class does not yet support imputing zeroes when there is more than one weighting variable present.")
-  if (length(vocabs) > 1) {
-    varSpecsWithStudyVocabs <- VariableSpecList(S4Vectors::SimpleList(lapply(as.list(vocabs), getVariableSpec)))
-    variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, varSpecsWithStudyVocabs)
+  # it seems a lot of this validation could belong to some custom obj w both a megastudy and vm slot.. but what is that? a MegastudyPlot?
+  variableMetadataNeedingStudyVocabularies <- findStudyDependentVocabularyVariableMetadata(variables)
+  variableSpecsWithStudyVocabs <- VariableSpecList(S4Vectors::SimpleList(lapply(as.list(vocabs), getVariableSpec)))
+  variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableSpecsWithStudyVocabs)
+  if (length(variableSpecsWithStudyVocabs) > length(variableMetadataForStudyVocabVariables)) {
+    warning("Study vocabularies were provided for variables that are not present in the plot. These will be ignored.")
+  }
+  if (length(variableMetadataForStudyVocabVariables) > length(variableMetadataNeedingStudyVocabularies)) {
+    stop("Some provided variables require study vocabularies but dont have one.")
+  }
+  if (length(weightingVariablesMetadata) > 1) {
+    stop("Megastudy class does not yet support imputing zeroes when there is more than one weighting variable present.")
+  }
+  if (length(vocabs) > 1) {    
     weightingVarSpecsForStudyVocabVariables <- findWeightingVariableSpecs(variableMetadataForStudyVocabVariables)
     weightingVarColName <- unlist(lapply(weightingVarSpecsForStudyVocabVariables, veupathUtils::getColName))
     if (length(weightingVarColName) > 1) {
@@ -171,6 +181,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   }
 
   studyIdColName <- getStudyIdColumnName(vocabs)
+  # TODO should this be made based on variableSpecsTiImputeZeroesFor ??
   varSpecColNames <- getVariableSpecColumnName(vocabs)
   allEntityIdColumns <- object@ancestorIdColumns
   # this works bc we validate all vocabs must be on the same entity
@@ -183,21 +194,31 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
 
   # for upstream entities data
   combinations.dt <- unique(.dt[, -c(weightingVarColName, varSpecColNames), with=FALSE])
-  # for the vars of interest data
-
-  # TODO make sure add.dt is done once for each vocab, and the list of data.tables merged together to include all combinations
-  # possibly break this into a helper fxn i can call w lapply?
   ancestors.dt <- unique(.dt[, c(ancestorIdColumns), with=FALSE])
-  vocabs.dt <- merge(ancestors.dt, veupathUtils::as.data.table(vocabs), by=studyIdColName, allow.cartesian=TRUE)
-  present.dt <- unique(.dt[, c(ancestorIdColumns, varSpecColName), with=FALSE])
-  # assume if a value was explicitly filtered against that its not in the vocab
-  add.dt <- vocabs.dt[!present.dt, on=c(ancestorIdColumns, varSpecColName)]
 
-
+  # impute zeroes for each study vocab iteratively
+  variableSpecsToImputeZeroesFor <- lapply(as.list(variableMetadataForStudyVocabVariables), veupathUtils::getVariableSpec)
+  makeImputedZeroesDT <- function(variableSpec) {
+    vocab <- findStudyVocabularyByVariableSpec(vocabs, variableSpec)
+    vocabs.dt <- merge(ancestors.dt, veupathUtils::as.data.table(vocab), by=studyIdColName, allow.cartesian=TRUE)
+    varSpecColName <- veupathUtils::getColName(variableSpec)
+    present.dt <- unique(.dt[, c(ancestorIdColumns, varSpecColName), with=FALSE])
+    # assume if a value was explicitly filtered against that its not in the vocab
+    add.dt <- vocabs.dt[!present.dt, on=c(ancestorIdColumns, varSpecColName)]
+    add.dt[[weightingVarColName]] <- 0
+    #make impossibly unique ids
+    add.dt[[varSpecEntityIdColName]] <- apply(add.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
+   
+    return(add.dt)
+  }
+  dataTablesOfImputedValues <- lapply(variableSpecsToImputeZeroesFor, makeImputedZeroesDT)
+  mergeDTsOfImputedValues <- function(x,y) {
+    # TODO test this merge, not sure i got it right..
+    merge(x, y, by = upstreamEntityIdColNames, allow.cartesian=TRUE)
+  }
+  add.dt <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
   add.dt <- merge(add.dt, combinations.dt, by=upstreamEntityIdColNames)
-  add.dt[[weightingVarColName]] <- 0
-  #make impossibly unique ids
-  add.dt[[varSpecEntityIdColName]] <- apply(add.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
+  
   .dt <- rbind(.dt, add.dt)
 
   return(.dt)
