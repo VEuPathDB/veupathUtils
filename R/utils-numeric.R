@@ -182,6 +182,7 @@ naToZero.default <- function(x) {
 #' @param x list, data.frame, array, or vector
 #' @return vector of numeric column names in x. If no numeric columns found, returns NULL
 #' @importFrom purrr map_lgl
+#' @export
 findNumericCols <- function(x) {
   numericCols <- names(x)[purrr::map_lgl(x, is.numeric)]
   
