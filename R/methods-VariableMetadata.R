@@ -369,7 +369,7 @@ setGeneric("getHasStudyDependentVocabulary",
 )
 
 #' @export
-setMethod("getHasstudyDependentVocabulary", signature("VariableMetadata"), function(object) {
+setMethod("getHasStudyDependentVocabulary", signature("VariableMetadata"), function(object) {
   return(object@hasStudyDependentVocabulary)
 })
 

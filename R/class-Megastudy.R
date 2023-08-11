@@ -33,7 +33,7 @@ check_study_vocabulary_list <- function(object) {
   }
 
   # check we have duplicate var specs
-  if (length(unique(unlist(lapply(as.list(object), getVariableSpecAsString)))) != 1) {
+  if (length(unique(unlist(lapply(as.list(object), getVariableSpecColumnName)))) != 1) {
     errors <- c(errors, "All variableSpecs must be identical.")
   }
 

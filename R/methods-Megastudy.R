@@ -103,15 +103,7 @@ setMethod('getEntityId', signature('StudySpecificVocabulariesByVariable'), funct
   return(veupathUtils::getEntityId(object[[1]]@variableSpec))
 })
 
-#' as.data.table
-#' 
-#' This function returns a data.table representation of 
-#' StudySpecificVocabulary or StudySpecificVocabularyByVariable
-#' 
-#' @return data.table
-#' @export 
-as.data.table <- makeGeneric('as.data.table', data.table::as.data.table)
-
+#' @include methods-Statistic.R
 #' @export
 setMethod('as.data.table', signature('StudySpecificVocabulary'), function(x) {
   .dt <- data.table::data.table('study'=x@study, 'variable'=x@vocabulary)
