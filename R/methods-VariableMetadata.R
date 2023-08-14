@@ -588,7 +588,7 @@ setMethod("getColName", signature("VariableSpec"), function(varSpec) {
   varId <- varSpec@variableId
   entityId <- varSpec@entityId
   
-  if (varId == '' || is.na(varId)) stop("getColName has been passed an empty variableId.")
+  if (varId == '' || is.na(varId)) return(NA)
   if (entityId == '' || is.na(entityId)) return(varSpec@variableId)
 
   return(veupathUtils::toStringOrNull(paste0(entityId, ".", varId)))
@@ -628,7 +628,7 @@ setGeneric("findVariableMetadataFromVariableSpec",
 
 #' @export
 setMethod("findVariableMetadataFromVariableSpec", signature("VariableMetadataList", "VariableSpecList"), function(variables, object) {
-  variableSpecs <- lapply(as.list(variables, veupathUtils::getVariableSpec))
+  variableSpecs <- lapply(as.list(variables), veupathUtils::getVariableSpec)
   colNamesToMatch <- unlist(lapply(as.list(object), veupathUtils::getColName))
  
   index <- which(purrr::map(variableSpecs, function(x) {veupathUtils::getColName(x)}) %in% colNamesToMatch)
@@ -639,7 +639,7 @@ setMethod("findVariableMetadataFromVariableSpec", signature("VariableMetadataLis
 
 #' @export
 setMethod("findVariableMetadataFromVariableSpec", signature("VariableMetadataList", "VariableSpec"), function(variables, object) {
-  variableSpecs <- lapply(as.list(variables, veupathUtils::getVariableSpec))
+  variableSpecs <- lapply(as.list(variables), veupathUtils::getVariableSpec)
  
   index <- which(purrr::map(variableSpecs, function(x) {veupathUtils::getColName(x)}) == veupathUtils::getColName(object))
   if (!length(index)) return(NULL)

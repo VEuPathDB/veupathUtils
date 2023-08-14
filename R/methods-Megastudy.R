@@ -12,16 +12,14 @@ setGeneric("getVariableSpec",
   signature = "object"
 )
 
-#' @export
-setMethod('getVariableSpec', signature('ANY'), function(object) {
-  if (!'variableSpec' %in% slotNames(object)) stop("Specified object does not have a `variableSpec` slot.")
-
-  return(object@variableSpec)
-})
-
 #' @export 
 setMethod('getVariableSpec', signature('StudySpecificVocabulariesByVariable'), function(object) {
   return(veupathUtils::getVariableSpec(object[[1]]))
+})
+
+#' @export
+setMethod('getVariableSpec', signature('ANY'), function(object) {
+  return(object@variableSpec)
 })
 
 #' StuydIdColName as String
@@ -118,12 +116,21 @@ setMethod('as.data.table', signature('StudySpecificVocabulariesByVariable'), fun
 })
 
 #should this be an s4 method?
-findAncestorIdForVariableSpec <- function(varSpec, ancestorIdColumns) {
+findEntityIdColumnNameForVariableSpec <- function(varSpec, entityIdColumns) {
   if (!inherits(varSpec, 'VariableSpec')) stop("The first argument must be of the S4 class `VariableSpec`.")
 
-  return(ancestorIdColumns[grepl(varSpec@entityId, ancestorIdColumns)])
+  return(entityIdColumns[grepl(varSpec@entityId, entityIdColumns)])
 }
 
+findStudyVocabularyByVariableSpec <- function(vocabs, variableSpec) {
+  if (!inherits(vocabs, 'StudySpecificVocabulariesByVariableList')) stop("The first argument must be of the S4 class `StudySpecificVocabulariesByVariableList`.")
+  if (!inherits(variableSpec, 'VariableSpec')) stop("The second argument must be of the S4 class `VariableSpec`.")
+
+  vocabVariableSpecs <- lapply(as.list(vocabs), veupathUtils::getVariableSpec)
+  index <- which(purrr::map(vocabVariableSpecs, function(x) {veupathUtils::getColName(x)}) == veupathUtils::getColName(variableSpec))
+
+  return(vocabs[[index]])  
+}
 
 #' Impute Zeroes (on tall data)
 #' 
@@ -147,6 +154,11 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   if (is.null(weightingVariablesMetadata)) return(object@data)
 
   .dt <- object@data
+  # TODO feel like im doing this operation a lot.. maybe another method/ helper?
+  variableColumnNames <- unlist(lapply(lapply(as.list(variables), veupathUtils::getVariableSpec), veupathUtils::getColName))
+  allEntityIdColumns <- object@ancestorIdColumns
+  # drop things that arent in the plot, except ids
+  .dt <- .dt[, c(variableColumnNames, allEntityIdColumns), with=FALSE]
   vocabs <- object@studySpecificVocabularies
 
   # it seems a lot of this validation could belong to some custom obj w both a megastudy and vm slot.. but what is that? a MegastudyPlot?
@@ -162,41 +174,45 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   if (length(weightingVariablesMetadata) > 1) {
     stop("Megastudy class does not yet support imputing zeroes when there is more than one weighting variable present.")
   }
+  weightingVarSpecsForStudyVocabVariables <- findWeightingVariableSpecs(variableMetadataForStudyVocabVariables)
   if (length(vocabs) > 1) {    
-    weightingVarSpecsForStudyVocabVariables <- findWeightingVariableSpecs(variableMetadataForStudyVocabVariables)
     weightingVarColName <- unlist(lapply(weightingVarSpecsForStudyVocabVariables, veupathUtils::getColName))
     if (length(weightingVarColName) > 1) {
       stop("All study vocabularies must belong to variables on the same entity using the same weighting variable.")
     }
   } else {
-    weightingVarColName <- veupathUtils::getColName(findVariableMetadataFromVariableSpec(variables, vocabs[[1]]@variableSpec)[[1]]@weightingVariableSpec)
+    weightingVarColName <- veupathUtils::getColName(findVariableMetadataFromVariableSpec(variables, veupathUtils::getVariableSpec(vocabs[[1]]))[[1]]@weightingVariableSpec)
   }
 
   studyIdColName <- getStudyIdColumnName(vocabs)
   # TODO should this be made based on variableSpecsTiImputeZeroesFor ??
   varSpecColNames <- getVariableSpecColumnName(vocabs)
-  allEntityIdColumns <- object@ancestorIdColumns
   # this works bc we validate all vocabs must be on the same entity
-  varSpecEntityIdColName <- findAncestorIdColumnNameForVariableSpec(vocabs[[1]]@variableSpec, ancestorIdColumns)
-  if (!all(unlist(getHasStudyDependentVocabulary(findVariableMetadataFromEntityId(variables, vocabs[[1]]@variableSpec@entityId))))) {
+  varSpecEntityIdColName <- findEntityIdColumnNameForVariableSpec(veupathUtils::getVariableSpec(vocabs[[1]]), allEntityIdColumns)
+  variablesFromEntityOfInterest <- findVariableMetadataFromEntityId(variables, veupathUtils::getVariableSpec(vocabs[[1]])@entityId)
+  variableSpecsFromEntityOfInterest <- lapply(as.list(variablesFromEntityOfInterest), getVariableSpec)
+  if (any(unlist(getHasStudyDependentVocabulary(variablesFromEntityOfInterest)) & 
+          unlist(lapply(variableSpecsFromEntityOfInterest, identical, weightingVarSpecsForStudyVocabVariables[[1]])))) {
     stop("Not all variables on the entity associated with the present study vocabulary have study vocabularies.")
   }
   # TODO do we need to somehow explicitly disallow assay/ downstream entity data?
-  upstreamEntityIdColNames <- ancestorIdColumns[!ancestorIdColumns %in% varSpecEntityIdColName]
+  upstreamEntityIdColNames <- allEntityIdColumns[!allEntityIdColumns %in% varSpecEntityIdColName]
 
   # for upstream entities data
   combinations.dt <- unique(.dt[, -c(weightingVarColName, varSpecColNames), with=FALSE])
-  ancestors.dt <- unique(.dt[, c(ancestorIdColumns), with=FALSE])
+  combinations.dt[[varSpecEntityIdColName]] <- NULL
+  combinations.dt <- unique(combinations.dt)
+  entityIds.dt <- unique(.dt[, c(allEntityIdColumns), with=FALSE])
 
   # impute zeroes for each study vocab iteratively
   variableSpecsToImputeZeroesFor <- lapply(as.list(variableMetadataForStudyVocabVariables), veupathUtils::getVariableSpec)
   makeImputedZeroesDT <- function(variableSpec) {
     vocab <- findStudyVocabularyByVariableSpec(vocabs, variableSpec)
-    vocabs.dt <- merge(ancestors.dt, veupathUtils::as.data.table(vocab), by=studyIdColName, allow.cartesian=TRUE)
+    vocabs.dt <- merge(entityIds.dt, veupathUtils::as.data.table(vocab), by=studyIdColName, allow.cartesian=TRUE)
     varSpecColName <- veupathUtils::getColName(variableSpec)
-    present.dt <- unique(.dt[, c(ancestorIdColumns, varSpecColName), with=FALSE])
+    present.dt <- unique(.dt[, c(allEntityIdColumns, varSpecColName), with=FALSE])
     # assume if a value was explicitly filtered against that its not in the vocab
-    add.dt <- vocabs.dt[!present.dt, on=c(ancestorIdColumns, varSpecColName)]
+    add.dt <- vocabs.dt[!present.dt, on=c(allEntityIdColumns, varSpecColName)]
     add.dt[[weightingVarColName]] <- 0
     #make impossibly unique ids
     add.dt[[varSpecEntityIdColName]] <- apply(add.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
@@ -208,10 +224,10 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     # TODO test this merge, not sure i got it right..
     merge(x, y, by = upstreamEntityIdColNames, allow.cartesian=TRUE)
   }
-  add.dt <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
-  add.dt <- merge(add.dt, combinations.dt, by=upstreamEntityIdColNames)
+  .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues) 
+  .dt2 <- merge(.dt2, combinations.dt, by=upstreamEntityIdColNames)
   
-  .dt <- rbind(.dt, add.dt)
+  .dt <- rbind(.dt, .dt2)
 
   return(.dt)
 })

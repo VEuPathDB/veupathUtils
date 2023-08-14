@@ -96,7 +96,7 @@ test_that("Megastudy and associated validation works", {
 # TODO this could go in its own file maybe
 test_that("imputeZeroes method is sane", {
   m <- Megastudy(data=megastudyDT,
-                 ancestorIdColumns=c('study.id', 'collection.id'),
+                 ancestorIdColumns=c('study.id', 'collection.id', 'sample.id'),
                  studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs)))
 
   # case where neither study nor collection vars in the plot
