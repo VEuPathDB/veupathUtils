@@ -162,6 +162,8 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   vocabs <- object@studySpecificVocabularies
 
   # it seems a lot of this validation could belong to some custom obj w both a megastudy and vm slot.. but what is that? a MegastudyPlot?
+  # plus going that route means using this class in plot.data means an api change for plot.data
+  # that api change might be worth making in any case, but not doing it now
   variableMetadataNeedingStudyVocabularies <- findStudyDependentVocabularyVariableMetadata(variables)
   variableSpecsWithStudyVocabs <- VariableSpecList(S4Vectors::SimpleList(lapply(as.list(vocabs), getVariableSpec)))
   variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableSpecsWithStudyVocabs)
@@ -210,14 +212,18 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     vocab <- findStudyVocabularyByVariableSpec(vocabs, variableSpec)
     vocabs.dt <- merge(entityIds.dt, veupathUtils::as.data.table(vocab), by=studyIdColName, allow.cartesian=TRUE)
     varSpecColName <- veupathUtils::getColName(variableSpec)
-    present.dt <- unique(.dt[, c(allEntityIdColumns, varSpecColName), with=FALSE])
+    present.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColName), with=FALSE])
     # assume if a value was explicitly filtered against that its not in the vocab
-    add.dt <- vocabs.dt[!present.dt, on=c(allEntityIdColumns, varSpecColName)]
-    add.dt[[weightingVarColName]] <- 0
-    #make impossibly unique ids
-    add.dt[[varSpecEntityIdColName]] <- apply(add.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
+    add.dt <- vocabs.dt[!present.dt, on=c(upstreamEntityIdColNames, varSpecColName)]
+    if (nrow(add.dt) > 0) {
+      add.dt[[weightingVarColName]] <- 0
+      #make impossibly unique ids
+      add.dt[[varSpecEntityIdColName]] <- apply(add.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
+    } else {
+      add.dt[[weightingVarColName]] <- numeric()
+    }
    
-    return(add.dt)
+    return(unique(add.dt))
   }
   dataTablesOfImputedValues <- lapply(variableSpecsToImputeZeroesFor, makeImputedZeroesDT)
   mergeDTsOfImputedValues <- function(x,y) {
