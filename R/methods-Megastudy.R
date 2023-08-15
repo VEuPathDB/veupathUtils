@@ -155,6 +155,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
 
   .dt <- object@data
   # TODO feel like im doing this operation a lot.. maybe another method/ helper?
+  # also, try to figure a way we dont have to do this.. i dont remember why i did this and its inconsistent behavior
   variableColumnNames <- unlist(lapply(lapply(as.list(variables), veupathUtils::getVariableSpec), veupathUtils::getColName))
   allEntityIdColumns <- object@ancestorIdColumns
   # drop things that arent in the plot, except ids
@@ -170,7 +171,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   if (length(variableSpecsWithStudyVocabs) > length(variableMetadataForStudyVocabVariables)) {
     warning("Study vocabularies were provided for variables that are not present in the plot. These will be ignored.")
   }
-  if (length(variableMetadataForStudyVocabVariables) > length(variableMetadataNeedingStudyVocabularies)) {
+  if (length(variableMetadataForStudyVocabVariables) < length(variableMetadataNeedingStudyVocabularies)) {
     stop("Some provided variables require study vocabularies but dont have one.")
   }
   if (length(weightingVariablesMetadata) > 1) {
@@ -178,7 +179,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   }
   weightingVarSpecsForStudyVocabVariables <- findWeightingVariableSpecs(variableMetadataForStudyVocabVariables)
   if (length(vocabs) > 1) {    
-    weightingVarColName <- unlist(lapply(weightingVarSpecsForStudyVocabVariables, veupathUtils::getColName))
+    weightingVarColName <- unique(unlist(lapply(weightingVarSpecsForStudyVocabVariables, veupathUtils::getColName)))
     if (length(weightingVarColName) > 1) {
       stop("All study vocabularies must belong to variables on the same entity using the same weighting variable.")
     }
@@ -197,14 +198,20 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
           unlist(lapply(variableSpecsFromEntityOfInterest, identical, weightingVarSpecsForStudyVocabVariables[[1]])))) {
     stop("Not all variables on the entity associated with the present study vocabulary have study vocabularies.")
   }
-  # TODO do we need to somehow explicitly disallow assay/ downstream entity data?
-  upstreamEntityIdColNames <- allEntityIdColumns[!allEntityIdColumns %in% varSpecEntityIdColName]
+  # !!!! this assumes entity ids are passed in order, from a single branch
+  # alternative would i guess be to make this class aware of the entity diagram
+  upstreamEntityIdColNames <- allEntityIdColumns[1:(which(allEntityIdColumns %in% varSpecEntityIdColName)-1)]
+  if (!all(allEntityIdColumns[!allEntityIdColumns %in% varSpecEntityIdColName] %in% upstreamEntityIdColNames)) {
+    # if we have downstream entities, it doesnt make sense to do all this work. plot.data will just remove the imputed values.
+    # if/when the map supports missingness and NA values on downstream entities start to matter, we can revisit.
+    return(.dt)
+  }
 
   # for upstream entities data
   combinations.dt <- unique(.dt[, -c(weightingVarColName, varSpecColNames), with=FALSE])
   combinations.dt[[varSpecEntityIdColName]] <- NULL
   combinations.dt <- unique(combinations.dt)
-  entityIds.dt <- unique(.dt[, c(allEntityIdColumns), with=FALSE])
+  entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
 
   # impute zeroes for each study vocab iteratively
   variableSpecsToImputeZeroesFor <- lapply(as.list(variableMetadataForStudyVocabVariables), veupathUtils::getVariableSpec)
@@ -217,8 +224,6 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     add.dt <- vocabs.dt[!present.dt, on=c(upstreamEntityIdColNames, varSpecColName)]
     if (nrow(add.dt) > 0) {
       add.dt[[weightingVarColName]] <- 0
-      #make impossibly unique ids
-      add.dt[[varSpecEntityIdColName]] <- apply(add.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
     } else {
       add.dt[[weightingVarColName]] <- numeric()
     }
@@ -228,10 +233,12 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   dataTablesOfImputedValues <- lapply(variableSpecsToImputeZeroesFor, makeImputedZeroesDT)
   mergeDTsOfImputedValues <- function(x,y) {
     # TODO test this merge, not sure i got it right..
-    merge(x, y, by = upstreamEntityIdColNames, allow.cartesian=TRUE)
+    merge(x, y, by = c(upstreamEntityIdColNames, varSpecEntityIdColName, weightingVarColName), allow.cartesian=TRUE)
   }
-  .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues) 
-  .dt2 <- merge(.dt2, combinations.dt, by=upstreamEntityIdColNames)
+  .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
+  #make impossibly unique ids
+  .dt2[[varSpecEntityIdColName]] <- apply(.dt2[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
+  .dt2 <- unique(merge(.dt2, combinations.dt, by=upstreamEntityIdColNames))
   
   .dt <- rbind(.dt, .dt2)
 

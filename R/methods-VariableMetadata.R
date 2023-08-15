@@ -588,7 +588,13 @@ setMethod("getColName", signature("VariableSpec"), function(varSpec) {
   varId <- varSpec@variableId
   entityId <- varSpec@entityId
   
-  if (varId == '' || is.na(varId)) return(NA)
+  if (varId == '' || is.na(varId)) {
+    if (!length(entityId) || is.na(entityId)) {
+      return(NA)
+    } else {
+      stop("Cannot return a unique column name without a variableId.")
+    }
+  } 
   if (entityId == '' || is.na(entityId)) return(varSpec@variableId)
 
   return(veupathUtils::toStringOrNull(paste0(entityId, ".", varId)))
