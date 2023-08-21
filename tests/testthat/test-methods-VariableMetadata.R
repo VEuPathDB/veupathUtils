@@ -192,7 +192,7 @@ test_that("toJSON result is properly formatted for VariableMetadata", {
     vmlist <- jsonlite::fromJSON(vmjson)
 
     expect_equal(names(vmlist), 'variableMetadata')
-    expect_equal(names(vmlist$variableMetadata), c('variableClass', 'variableSpec', 'plotReference', 'displayName', 'displayRangeMin', 'displayRangeMax', 'dataType', 'dataShape', 'isCollection', 'imputeZero', 'members'))
+    expect_equal(names(vmlist$variableMetadata), c('variableClass', 'variableSpec', 'plotReference', 'displayName', 'displayRangeMin', 'displayRangeMax', 'dataType', 'dataShape', 'isCollection', 'imputeZero', 'hasStudyDependentVocabulary', 'members'))
     expect_equal(vmlist$variableMetadata$variableClass, c('computed'))
     expect_equal(names(vmlist$variableMetadata$variableSpec), c('variableId', 'entityId'))
     expect_equal(class(vmlist$variableMetadata$displayRangeMin), 'character')
@@ -217,7 +217,7 @@ test_that("toJSON result is properly formatted for VariableMetadata", {
     vmlist <- jsonlite::fromJSON(vmjson)
 
     expect_equal(names(vmlist), 'variableMetadata')
-    expect_equal(names(vmlist$variableMetadata), c('variableClass', 'variableSpec', 'plotReference', 'displayName', 'dataType', 'dataShape', 'vocabulary', 'isCollection', 'imputeZero'))
+    expect_equal(names(vmlist$variableMetadata), c('variableClass', 'variableSpec', 'plotReference', 'displayName', 'dataType', 'dataShape', 'vocabulary', 'isCollection', 'imputeZero', 'hasStudyDependentVocabulary'))
     expect_equal(vmlist$variableMetadata$variableClass, c('computed'))
     expect_equal(names(vmlist$variableMetadata$variableSpec), c('variableId', 'entityId'))
     expect_equal(is.character(vmlist$variableMetadata$dataType), TRUE)
