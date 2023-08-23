@@ -245,6 +245,13 @@ setMethod("toJSON", signature("VariableMetadata"), function(object, named = c(TR
     tmp <- paste0(tmp, ',"isCollection":', jsonlite::toJSON(jsonlite::unbox(object@isCollection)))
     tmp <- paste0(tmp, ',"imputeZero":', jsonlite::toJSON(jsonlite::unbox(object@imputeZero)))
     
+    if (!is.na(object@weightingVariableSpec@variableId)) {
+      weighting_variable_spec_json <- veupathUtils::toJSON(object@weightingVariableSpec, named = FALSE)
+      tmp <- paste0(tmp, ',"weightingVariableSpec":', weighting_variable_spec_json)
+    }
+
+    tmp <- paste0(tmp, ',"hasStudyDependentVocabulary":', jsonlite::toJSON(jsonlite::unbox(object@hasStudyDependentVocabulary)))
+
     if (!!length(object@members)) {
       members_json <- veupathUtils::toJSON(object@members, named = FALSE)
       tmp <- paste0(tmp, ',"members":', members_json)
@@ -288,6 +295,112 @@ setMethod("findCollectionVariableMetadata", signature("VariableMetadataList"), f
   return(variables[[index]])
 })
 
+#' EDA VariableMetadataList matching any weightingVariableSpec
+#' 
+#' This function returns a VariableMetadataList object provided
+#' an EDA-compliant VariableMetadataList object. The resulting object
+#' will be a subset of the original and include only those elements
+#' for which another variable has specified it as an annotated
+#' `weightingVariableSpec`.
+#' 
+#' @param variables a VariableMetadataList of variables to search
+#' @return VariableMetadataList object where variableSpec matches any elements specified weightingVariableSpec
+#' @export
+setGeneric("findWeightingVariablesMetadata", 
+  function(variables) standardGeneric("findWeightingVariablesMetadata"),
+  signature = "variables"
+)
+
+#' @export
+setMethod("findWeightingVariablesMetadata", signature("VariableMetadataList"), function(variables) {
+  weightingVarSpecs <- veupathUtils::findWeightingVariableSpecs(variables)
+  weightingVarSpecsColumnNames <- unlist(lapply(weightingVarSpecs, veupathUtils::getColName))
+
+  weightingVarIndex <- which(purrr::map(as.list(variables), function(x) {veupathUtils::getColName(x@variableSpec)}) %in% weightingVarSpecsColumnNames)
+  if (!length(weightingVarIndex)) return(NULL)
+
+  return(variables[weightingVarIndex])
+})
+
+#' @export
+setGeneric("findWeightingVariableSpecs", 
+  function(object) standardGeneric("findWeightingVariableSpecs"),
+  signature = "object"
+)
+
+#' @export
+setMethod("findWeightingVariableSpecs", signature("VariableMetadata"), function(object) {
+  return(object@weightingVariableSpec)
+})
+
+#TODO should this return a VariableSpecList?
+#' @export 
+setMethod("findWeightingVariableSpecs", signature("VariableMetadataList"), function(object) {
+  return(lapply(as.list(object), veupathUtils::findWeightingVariableSpecs))
+})
+
+#' EDA Variable Metadata with a Study-dependent Vocabulary
+#' 
+#' This function returns a VariableMetadataList object provided
+#' an EDA-compliant VariableMetadataList object. The resulting object
+#' is a subset of the original and includes all elements where 
+#' `hasStudyDependentVocabulary` is TRUE.
+#' 
+#' @param variables a VariableMetadataList of variables to search
+#' @return VariableMetadataList object where hasStudyDependentVocabulary is TRUE
+#' @export
+setGeneric("findStudyDependentVocabularyVariableMetadata", 
+  function(variables) standardGeneric("findStudyDependentVocabularyVariableMetadata"),
+  signature = "variables"
+)
+
+#' @export
+setMethod("findStudyDependentVocabularyVariableMetadata", signature("VariableMetadataList"), function(variables) {
+  index <- which(purrr::map(as.list(variables), function(x) {x@hasStudyDependentVocabulary}) %in% TRUE)
+  if (!length(index)) return(NULL)
+
+  return(variables[index])
+})
+
+#' @export
+setGeneric("getHasStudyDependentVocabulary", 
+  function(object) standardGeneric("getHasStudyDependentVocabulary"),
+  signature = "object"
+)
+
+#' @export
+setMethod("getHasStudyDependentVocabulary", signature("VariableMetadata"), function(object) {
+  return(object@hasStudyDependentVocabulary)
+})
+
+#' @export
+setMethod("getHasStudyDependentVocabulary", signature("VariableMetadataList"), function(variables) {
+  return(lapply(as.list(object), veupathUtils::getHasStudyDependentVocabulary))
+})
+
+#' EDA Variable Metadata which needs weighting
+#' 
+#' This function returns a VariableMetadataList object provided
+#' an EDA-compliant VariableMetadataList object. The resulting object
+#' is a subset of the original and includes all elements where 
+#' `weightingVariableSpec` is not NULL/ NA.
+#' 
+#' @param variables a VariableMetadataList of variables to search
+#' @return VariableMetadataList object where weightingVariableSpec is not NULL/ NA
+#' @export
+setGeneric("findVariablesNeedingWeightingVariableMetadata", 
+  function(variables) standardGeneric("findVariablesNeedingWeightingVariableMetadata"),
+  signature = "variables"
+)
+
+#' @export
+setMethod("findVariablesNeedingWeightingVariableMetadata", signature("VariableMetadataList"), function(variables) {
+  index <- which(!is.na(purrr::map(as.list(variables), function(x) {x@weightingVariableSpec})))
+  if (!length(index)) return(NULL)
+
+  return(variables[index])
+})
+
 #' EDA Variable Metadata matching a PlotReference
 #' 
 #' This function returns a VariableMetadata object provided
@@ -307,6 +420,20 @@ setMethod("findVariableMetadataFromPlotRef", signature("VariableMetadataList"), 
   if (!length(index)) return(NULL)
 
   return(variables[[index]])
+})
+
+#' @export
+setGeneric("findVariableMetadataFromEntityId", 
+  function(variables, entityId) standardGeneric("findVariableMetadataFromEntityId"),
+  signature = "variables"
+)
+
+#' @export
+setMethod("findVariableMetadataFromEntityId", signature("VariableMetadataList"), function(variables, entityId) {
+  index <- which(purrr::map(as.list(variables), function(x) {if (x@variableSpec@entityId == entityId) {return(TRUE)}}) %in% TRUE)
+  if (!length(index)) return(NULL)
+
+  return(variables[index])
 })
 
 #' EDA Variable Spec matching a PlotReference
@@ -461,7 +588,13 @@ setMethod("getColName", signature("VariableSpec"), function(varSpec) {
   varId <- varSpec@variableId
   entityId <- varSpec@entityId
   
-  if (varId == '' || is.na(varId)) stop("getColName has been passed an empty variableId.")
+  if (varId == '' || is.na(varId)) {
+    if (!length(entityId) || is.na(entityId)) {
+      return(NA)
+    } else {
+      stop("Cannot return a unique column name without a variableId.")
+    }
+  } 
   if (entityId == '' || is.na(entityId)) return(varSpec@variableId)
 
   return(veupathUtils::toStringOrNull(paste0(entityId, ".", varId)))
@@ -491,4 +624,31 @@ setMethod("findColNamesByPredicate", signature("VariableMetadataList"), function
   colNames <- unlist(colNames)
 
   return (colNames)
+})
+
+#' @export
+setGeneric("findVariableMetadataFromVariableSpec", 
+  function(variables, object) standardGeneric("findVariableMetadataFromVariableSpec"),
+  signature = c("variables","object")
+)
+
+#' @export
+setMethod("findVariableMetadataFromVariableSpec", signature("VariableMetadataList", "VariableSpecList"), function(variables, object) {
+  variableSpecs <- lapply(as.list(variables), veupathUtils::getVariableSpec)
+  colNamesToMatch <- unlist(lapply(as.list(object), veupathUtils::getColName))
+ 
+  index <- which(purrr::map(variableSpecs, function(x) {veupathUtils::getColName(x)}) %in% colNamesToMatch)
+  if (!length(index)) return(NULL)
+
+  return(variables[index]) 
+})
+
+#' @export
+setMethod("findVariableMetadataFromVariableSpec", signature("VariableMetadataList", "VariableSpec"), function(variables, object) {
+  variableSpecs <- lapply(as.list(variables), veupathUtils::getVariableSpec)
+ 
+  index <- which(purrr::map(variableSpecs, function(x) {veupathUtils::getColName(x)}) == veupathUtils::getColName(object))
+  if (!length(index)) return(NULL)
+
+  return(variables[index])
 })
