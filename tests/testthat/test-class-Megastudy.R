@@ -221,6 +221,8 @@ test_that("imputeZeroes method is sane", {
                                                    assay.id=c(17,18),
                                                    assay.pathogen_prevalence=c(.7,.8),
                                                    assay.pathogen_presence=c('No','Yes'),
+                                                   assay.pathogen2_presence=c('Yes','No'),
+                                                   assay.pathogen3_presence=c('No','Yes'),
                                                    assay.weighting_variable=c(35,40)))
   
   mCOMPLETE <- Megastudy(data=megastudyDTSMALL,
@@ -581,7 +583,7 @@ test_that("imputeZeroes method is sane", {
   imputedDT <- getDTWithImputedZeroes(m, variables)
   # result has the columns needed to build a plot, based on variables AND the correct number of rows/ zeroes
   # TODO lol its just possible this fxn shouldnt remove cols but my brain hurts enough already 
-  expect_equal(all(c("sample.species","sample.specimen_count") %in% names(imputedDT)), TRUE)
+  expect_equal(all(c("assay.pathogen_presence","assay.pathogen2_presence","assay.pathogen3_presence","sample.specimen_count") %in% names(imputedDT)), TRUE)
   expect_equal(nrow(imputedDT), 12)
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 6)
 })
