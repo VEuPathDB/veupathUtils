@@ -600,6 +600,11 @@ setMethod("getColName", signature("VariableSpec"), function(varSpec) {
   return(veupathUtils::toStringOrNull(paste0(entityId, ".", varId)))
 })
 
+#' @export 
+setMethod("getColName", signature("VariableSpecList"), function(varSpec) {
+  lapply(as.list(varSpec), veupathUtils::getColName)
+})
+
 #' @export
 setMethod("getColName", signature("NULL"), function(varSpec) {
   NULL
@@ -628,13 +633,13 @@ setMethod("findColNamesByPredicate", signature("VariableMetadataList"), function
 
 #' @export
 setGeneric("findVariableMetadataFromVariableSpec", 
-  function(variables, object) standardGeneric("findVariableMetadataFromVariableSpec"),
+  function(variables, object, ...) standardGeneric("findVariableMetadataFromVariableSpec"),
   signature = c("variables","object")
 )
 
 #' @export
 setMethod("findVariableMetadataFromVariableSpec", signature("VariableMetadataList", "VariableSpecList"), function(variables, object) {
-  variableSpecs <- lapply(as.list(variables), veupathUtils::getVariableSpec)
+  variableSpecs <- unlist(lapply(as.list(variables), veupathUtils::getVariableSpec, FALSE))
   colNamesToMatch <- unlist(lapply(as.list(object), veupathUtils::getColName))
  
   index <- which(purrr::map(variableSpecs, function(x) {veupathUtils::getColName(x)}) %in% colNamesToMatch)
@@ -645,7 +650,7 @@ setMethod("findVariableMetadataFromVariableSpec", signature("VariableMetadataLis
 
 #' @export
 setMethod("findVariableMetadataFromVariableSpec", signature("VariableMetadataList", "VariableSpec"), function(variables, object) {
-  variableSpecs <- lapply(as.list(variables), veupathUtils::getVariableSpec)
+  variableSpecs <- unlist(lapply(as.list(variables), veupathUtils::getVariableSpec, FALSE))
  
   index <- which(purrr::map(variableSpecs, function(x) {veupathUtils::getColName(x)}) == veupathUtils::getColName(object))
   if (!length(index)) return(NULL)

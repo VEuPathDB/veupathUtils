@@ -9,6 +9,8 @@ megastudyDT <- data.table('study.id'=c('a','a','a','b','b','b'),
                           'assay.id'=c(11,12,13,14,15,16),
                           'assay.pathogen_prevalence'=c(.1,.2,.3,.4,.5,.6),
                           'assay.pathogen_presence'=c('Yes','Yes','No','No','Yes','No'),
+                          'assay.pathogen2_presence'=c('Yes','No','Yes','No','Yes','No'),
+                          'assay.pathogen3_presence'=c('No','Yes','No','Yes','No','Yes'),
                           'assay.weighting_variable'=c(5,10,15,20,25,30))
 
 studyAspecies <- StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2','species3'))
@@ -544,4 +546,42 @@ test_that("imputeZeroes method is sane", {
   ))
 
   expect_error(getDTWithImputedZeroes(m, variables))
+
+  # variable collection exists in plot
+  pathogenVariableCollectionVocabs <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='assay',variableId='pathogen_presence_variable_collection'), vocabulary=c('Yes','No')),
+                                                                                                StudySpecificVocabulary(studyIdColumnName='study.id', study='b', variableSpec=VariableSpec(entityId='assay',variableId='pathogen_presence_variable_collection'), vocabulary=c('Yes','No'))))
+
+
+  m <- Megastudy(data=megastudyDT,
+                 ancestorIdColumns=c('study.id', 'collection.id', 'sample.id', 'assay.id'),
+                 studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(pathogenVariableCollectionVocabs)))
+
+  variables <- new("VariableMetadataList", SimpleList(
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'pathogen_presence_variable_collection', entityId = 'assay'),
+      plotReference = new("PlotReference", value = 'overlay'),
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      isCollection = TRUE,
+      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
+      hasStudyDependentVocabulary = TRUE,
+      members = VariableSpecList(S4Vectors::SimpleList(VariableSpec(variableId='pathogen_presence', entityId='assay'),
+                                                       VariableSpec(variableId='pathogen2_presence', entityId='assay'),
+                                                       VariableSpec(variableId='pathogen3_presence', entityId='assay')))
+    ),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'specimen_count', entityId = 'sample'),
+      plotReference = new("PlotReference", value = 'yAxis'),
+      dataType = new("DataType", value = 'NUMBER'),
+      dataShape = new("DataShape", value = 'CONTINUOUS'))
+  ))
+
+  imputedDT <- getDTWithImputedZeroes(m, variables)
+  # result has the columns needed to build a plot, based on variables AND the correct number of rows/ zeroes
+  # TODO lol its just possible this fxn shouldnt remove cols but my brain hurts enough already 
+  expect_equal(all(c("sample.species","sample.specimen_count") %in% names(imputedDT)), TRUE)
+  expect_equal(nrow(imputedDT), 12)
+  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 6)
 })
