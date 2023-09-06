@@ -43,3 +43,36 @@ setMethod("whichValuesInBinList", signature("BinList"), function(values, binList
   return (as.logical(inBin))
 
 })
+
+
+#' Convert a Bin with character start and end values to numeric
+#' 
+#' Given a Bin object with binStart and binEnd of class character,
+#' convert both to numeric and return the Bin.
+#' 
+#' @param x Bin
+#' @return Bin
+#' @export 
+setMethod("as.numeric", signature("Bin"), function(x) {
+  binNumeric <- Bin(
+    binStart = as.numeric(x@binStart),
+    binEnd = as.numeric(x@binEnd),
+    binLabel = x@binLabel,
+    value = x@value
+  )
+  return(binNumeric)
+})
+
+
+#' Convert bins in a BinList with character start and end values to numeric
+#' 
+#' Given a BinList object containing Bins that may have a character binStart or binEnd,
+#' convert all binStarts and binEnds to numeric and return the BinList.
+#' 
+#' @param x BinList
+#' @return BinList
+#' @export 
+setMethod("as.numeric", signature("BinList"), function(x) {
+  binListNumeric <-  BinList(lapply(x, as.numeric))
+  return(binListNumeric)
+})

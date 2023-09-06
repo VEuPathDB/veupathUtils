@@ -39,3 +39,38 @@ test_that("whichValuesInBinList works", {
   expect_equal(inBin, c(FALSE, TRUE, FALSE, TRUE, FALSE, FALSE))
 
 })
+
+test_that("converting string bins to numeric bins is successful", {
+
+
+  # Test for regular bins
+  stringBin1 <- Bin(binStart='1', binEnd='2', binLabel='1-2', value = 2)
+  
+  numericBin1 <- as.numeric(stringBin1)
+  expect_equal(class(numericBin1@binStart), 'numeric')
+  expect_equal(class(numericBin1@binEnd), 'numeric')
+  expect_equal(numericBin1@binLabel, stringBin1@binLabel)
+  expect_equal(numericBin1@value, stringBin1@value)
+
+
+
+  stringBin2 <- Bin(binStart='2.00001', binEnd='2e10', binLabel='2-2e10')
+  
+  numericBin2 <- as.numeric(stringBin2)
+  expect_equal(class(numericBin2@binStart), 'numeric')
+  expect_equal(class(numericBin2@binEnd), 'numeric')
+  expect_equal(numericBin2@binLabel, stringBin2@binLabel)
+  expect_equal(numericBin2@value, stringBin2@value)
+
+
+  # Test for BinLists
+  stringBin3 <- Bin(binStart='2e11', binEnd='2e12', binLabel='2e11-2e12')
+  stringBinList1 <- BinList(S4Vectors::SimpleList(c(stringBin2, stringBin3)))
+
+  numericBinList1 <- as.numeric(stringBinList1)
+  expect_equal(unlist(lapply(numericBinList1, function(x) {class(x@binStart)})), c('numeric','numeric'))
+  expect_equal(unlist(lapply(numericBinList1, function(x) {class(x@binEnd)})), c('numeric','numeric'))
+
+
+})
+
