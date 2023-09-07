@@ -8,7 +8,7 @@
 #' @return character
 #' @export
 setGeneric("getVariableSpec", 
-  function(object) standardGeneric("getVariableSpec"),
+  function(object, ...) standardGeneric("getVariableSpec"),
   signature = "object"
 )
 
@@ -20,6 +20,26 @@ setMethod('getVariableSpec', signature('StudySpecificVocabulariesByVariable'), f
 #' @export
 setMethod('getVariableSpec', signature('ANY'), function(object) {
   return(object@variableSpec)
+})
+
+# this might be unexpected behavior. should there be a param to choose between the collection and its member specs?
+#' @export
+setMethod('getVariableSpec', signature('VariableMetadata'), function(object, getCollectionMemberVarSpecs = c(FALSE, TRUE)) {
+  getCollectionMemberVarSpecs <- veupathUtils::matchArg(getCollectionMemberVarSpecs)
+  varSpecs <- list(object@variableSpec)
+
+  if (object@isCollection && getCollectionMemberVarSpecs) {
+    varSpecs <- as.list(object@members)
+  }
+
+  return(varSpecs)
+})
+
+#' @export 
+setMethod('getVariableSpec', signature('VariableMetadataList'), function(object, getCollectionMemberVarSpecs = c(TRUE, FALSE)) {
+  getCollectionMemberVarSpecs <- veupathUtils::matchArg(getCollectionMemberVarSpecs)
+
+  return(unlist(lapply(as.list(object), veupathUtils::getVariableSpec, getCollectionMemberVarSpecs)))
 })
 
 #' StuydIdColName as String
@@ -122,14 +142,56 @@ findEntityIdColumnNameForVariableSpec <- function(varSpec, entityIdColumns) {
   return(entityIdColumns[grepl(varSpec@entityId, entityIdColumns)])
 }
 
-findStudyVocabularyByVariableSpec <- function(vocabs, variableSpec) {
+findStudyVocabularyByVariableSpec <- function(vocabs, variables, variableSpec) {
   if (!inherits(vocabs, 'StudySpecificVocabulariesByVariableList')) stop("The first argument must be of the S4 class `StudySpecificVocabulariesByVariableList`.")
-  if (!inherits(variableSpec, 'VariableSpec')) stop("The second argument must be of the S4 class `VariableSpec`.")
+  if (!inherits(variables, 'VariableMetadataList')) stop("The second argument must be of the S4 class `VariableMetadataList`.")
+  if (!inherits(variableSpec, 'VariableSpec')) stop("The third argument must be of the S4 class `VariableSpec`.")
 
   vocabVariableSpecs <- lapply(as.list(vocabs), veupathUtils::getVariableSpec)
-  index <- which(purrr::map(vocabVariableSpecs, function(x) {veupathUtils::getColName(x)}) == veupathUtils::getColName(variableSpec))
+  vocabVariableMetadata <- veupathUtils::findVariableMetadataFromVariableSpec(variables, veupathUtils::VariableSpecList(S4Vectors::SimpleList(vocabVariableSpecs)))
+  vocabVariableSpecsAdjustedForVariableCollectionMembers <- veupathUtils::getVariableSpec(vocabVariableMetadata, TRUE)
+  
+  # if we have found variable collection members in the VariableMetadata, need to check if the passed varspec was a member
+  # look through the list that includes the members, and if we match one, get the varspec of the parent/ collection
+  # use the varspec of the parent/ collection to get the VariableMetadata associated w the entire collection
+  # remember, individual members dont have their own VariableMetadata
+  if (!identical(vocabVariableSpecs, vocabVariableSpecsAdjustedForVariableCollectionMembers)) {
+    index <- which(purrr::map(vocabVariableSpecsAdjustedForVariableCollectionMembers, function(x) {veupathUtils::getColName(x)}) == veupathUtils::getColName(variableSpec))
+    variableCollectionSpecs <- vocabVariableSpecsAdjustedForVariableCollectionMembers[[index]]
+    index <- which(purrr::map(vocabVariableMetadata, function(x) {veupathUtils::getColName(variableCollectionSpecs) %in% unlist(veupathUtils::getColName(x@members))}) == TRUE)
+  } else {
+    index <- which(purrr::map(vocabVariableSpecs, function(x) {veupathUtils::getColName(x)}) == veupathUtils::getColName(variableSpec))
+  }
 
   return(vocabs[[index]])  
+}
+
+
+findVariableSpecsFromStudyVocabulary <- function(vocabs, variables, getCollectionMemberVarSpecs = c(TRUE, FALSE)) {
+  if (!inherits(vocabs, 'StudySpecificVocabulariesByVariableList')) stop("The first argument must be of the S4 class `StudySpecificVocabulariesByVariableList`.")
+  if (!inherits(variables, 'VariableMetadataList')) stop("The second argument must be of the S4 class `VariableMetadataList`.")
+  getCollectionMemberVarSpecs <- veupathUtils::matchArg(getCollectionMemberVarSpecs)
+
+  varSpecsWithVocabs <- VariableSpecList(S4Vectors::SimpleList(lapply(as.list(vocabs), getVariableSpec)))
+
+  if (getCollectionMemberVarSpecs) {
+    varMetadataWithVocabs <- findVariableMetadataFromVariableSpec(variables, varSpecsWithVocabs)
+    varSpecsWithVocabs <- VariableSpecList(S4Vectors::SimpleList(getVariableSpec(varMetadataWithVocabs, getCollectionMemberVarSpecs)))
+  }
+
+  return(varSpecsWithVocabs)
+}
+
+getVariableColumnNames <- function(variableMetadata) {
+  if (!inherits(variableMetadata, 'VariableMetadata')) stop("The specified object must be of the S4 class `VariableMetadata`.")
+
+  colNames <- veupathUtils::getColName(variableMetadata@variableSpec)
+
+  if (variableMetadata@isCollection) {
+    colNames <- unlist(lapply(as.list(variableMetadata@members), veupathUtils::getColName))
+  }
+
+  return(colNames)
 }
 
 #' Impute Zeroes (on tall data)
@@ -156,7 +218,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   .dt <- object@data
   # TODO feel like im doing this operation a lot.. maybe another method/ helper?
   # also, try to figure a way we dont have to do this.. i dont remember why i did this and its inconsistent behavior
-  variableColumnNames <- unlist(lapply(lapply(as.list(variables), veupathUtils::getVariableSpec), veupathUtils::getColName))
+  variableColumnNames <- unlist(lapply(as.list(variables), getVariableColumnNames))
   allEntityIdColumns <- object@ancestorIdColumns
   # drop things that arent in the plot, except ids
   .dt <- .dt[, c(variableColumnNames, allEntityIdColumns), with=FALSE]
@@ -166,8 +228,13 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   # plus going that route means using this class in plot.data means an api change for plot.data
   # that api change might be worth making in any case, but not doing it now
   variableMetadataNeedingStudyVocabularies <- findStudyDependentVocabularyVariableMetadata(variables)
-  variableSpecsWithStudyVocabs <- VariableSpecList(S4Vectors::SimpleList(lapply(as.list(vocabs), getVariableSpec)))
-  variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableSpecsWithStudyVocabs)
+  variableSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, TRUE)
+  variableCollectionSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, FALSE)
+  if (is.null(variableCollectionSpecsWithStudyVocabs)) {
+    variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableSpecsWithStudyVocabs)
+  } else {
+    variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableCollectionSpecsWithStudyVocabs)
+  }
   if (length(variableSpecsWithStudyVocabs) > length(variableMetadataForStudyVocabVariables)) {
     warning("Study vocabularies were provided for variables that are not present in the plot. These will be ignored.")
   }
@@ -187,13 +254,13 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     weightingVarColName <- veupathUtils::getColName(findVariableMetadataFromVariableSpec(variables, veupathUtils::getVariableSpec(vocabs[[1]]))[[1]]@weightingVariableSpec)
   }
 
+  variableSpecsToImputeZeroesFor <- veupathUtils::getVariableSpec(variableMetadataForStudyVocabVariables)
   studyIdColName <- getStudyIdColumnName(vocabs)
-  # TODO should this be made based on variableSpecsTiImputeZeroesFor ??
-  varSpecColNames <- getVariableSpecColumnName(vocabs)
+  varSpecColNames <- unlist(lapply(variableSpecsToImputeZeroesFor, veupathUtils::getColName))
   # this works bc we validate all vocabs must be on the same entity
   varSpecEntityIdColName <- findEntityIdColumnNameForVariableSpec(veupathUtils::getVariableSpec(vocabs[[1]]), allEntityIdColumns)
   variablesFromEntityOfInterest <- findVariableMetadataFromEntityId(variables, veupathUtils::getVariableSpec(vocabs[[1]])@entityId)
-  variableSpecsFromEntityOfInterest <- lapply(as.list(variablesFromEntityOfInterest), getVariableSpec)
+  variableSpecsFromEntityOfInterest <- veupathUtils::getVariableSpec(variablesFromEntityOfInterest)
   if (any(unlist(getHasStudyDependentVocabulary(variablesFromEntityOfInterest)) & 
           unlist(lapply(variableSpecsFromEntityOfInterest, identical, weightingVarSpecsForStudyVocabVariables[[1]])))) {
     stop("Not all variables on the entity associated with the present study vocabulary have study vocabularies.")
@@ -214,11 +281,12 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
 
   # impute zeroes for each study vocab iteratively
-  variableSpecsToImputeZeroesFor <- lapply(as.list(variableMetadataForStudyVocabVariables), veupathUtils::getVariableSpec)
   makeImputedZeroesDT <- function(variableSpec) {
-    vocab <- findStudyVocabularyByVariableSpec(vocabs, variableSpec)
-    vocabs.dt <- merge(entityIds.dt, veupathUtils::as.data.table(vocab), by=studyIdColName, allow.cartesian=TRUE)
     varSpecColName <- veupathUtils::getColName(variableSpec)
+    vocab <- findStudyVocabularyByVariableSpec(vocabs, variables, variableSpec)
+    vocabs.dt <- veupathUtils::as.data.table(vocab)
+    names(vocabs.dt)[2] <- varSpecColName
+    vocabs.dt <- merge(entityIds.dt, vocabs.dt, by=studyIdColName, allow.cartesian=TRUE)
     present.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColName), with=FALSE])
     # assume if a value was explicitly filtered against that its not in the vocab
     add.dt <- vocabs.dt[!present.dt, on=c(upstreamEntityIdColNames, varSpecColName)]
@@ -232,7 +300,6 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   }
   dataTablesOfImputedValues <- lapply(variableSpecsToImputeZeroesFor, makeImputedZeroesDT)
   mergeDTsOfImputedValues <- function(x,y) {
-    # TODO test this merge, not sure i got it right..
     merge(x, y, by = c(upstreamEntityIdColNames, varSpecEntityIdColName, weightingVarColName), allow.cartesian=TRUE)
   }
   .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
