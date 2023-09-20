@@ -1,6 +1,6 @@
 Package: veupathUtils
 Title: General Helper Functions for VEuPathDB Projects
-Version: 2.2.4
+Version: 2.3.3
 Authors@R: 
     c(person(given = "Danielle",
            family = "Callan",
@@ -27,3 +27,19 @@ RoxygenNote: 7.2.3
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Collate: 
+    'class-Bin.R'
+    'class-VariableMetadata.R'
+    'class-Megastudy.R'
+    'class-Range.R'
+    'class-Statistic.R'
+    'methods-Bin.R'
+    'methods-Statistic.R'
+    'methods-Megastudy.R'
+    'methods-VariableMetadata.R'
+    'utils-classes.R'
+    'utils-cut.R'
+    'utils-numeric.R'
+    'utils-string.R'
+    'utils.R'
+    'veupathUtils-package.R'
