@@ -47,3 +47,11 @@ test_that("BinList validation works", {
   # none have start or ends or value and thats ok
   expect_equal(length(BinList(S4Vectors::SimpleList(c(bin6, bin7)))), 2)
 })
+
+test_that("BinList can handle a list of one", {
+  
+  bin1 <- Bin(binStart=1, binEnd=2, binLabel='1-2')
+  lonelyBinList <- BinList(S4Vectors::SimpleList(c(bin1)))
+  expect_equal(length(lonelyBinList), 1)
+
+})

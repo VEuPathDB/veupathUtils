@@ -4,7 +4,7 @@
 \alias{getVariableSpec}
 \title{get a VariableSpec}
 \usage{
-getVariableSpec(object)
+getVariableSpec(object, ...)
 }
 \arguments{
 \item{object}{An object containing a veupathUtils::VariableSpec}
