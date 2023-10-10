@@ -97,14 +97,16 @@ check_bin_range_list <- function(object) {
       errors <- c(errors, msg)
     }
   
-    # no overlapping ranges
-    sortOrder <- order(binStarts)
-    binStarts <- binStarts[sortOrder]
-    binEnds <- binEnds[sortOrder]
-    binValues <- binValues[sortOrder]
-    if (any(binStarts[2:length(binStarts)] < binEnds[1:(length(binEnds)-1)], na.rm=TRUE)) {
-      msg <- "Some provided bins overlap."
-      errors <- c(errors, msg) 
+    # no overlapping ranges (only useful when multiple bins in the BinList)
+    if (length(binStarts) > 1) {
+      sortOrder <- order(binStarts)
+      binStarts <- binStarts[sortOrder]
+      binEnds <- binEnds[sortOrder]
+      binValues <- binValues[sortOrder]
+      if (any(binStarts[2:length(binStarts)] < binEnds[1:(length(binEnds)-1)], na.rm=TRUE)) {
+        msg <- "Some provided bins overlap."
+        errors <- c(errors, msg) 
+      }
     }
   }
 
