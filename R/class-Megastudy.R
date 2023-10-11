@@ -84,7 +84,7 @@ check_megastudy <- function(object) {
 
   if (!!length(ancestor_id_cols)) {
     if (!all(ancestor_id_cols %in% names(df))) {
-      msg <- paste("Not all ancestor ID columns are present in abundance data.frame")
+      msg <- paste("Not all ancestor ID columns are present in data.frame")
       errors <- c(errors, msg)
     }
   } else {
