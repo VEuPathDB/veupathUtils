@@ -204,16 +204,21 @@ getVariableColumnNames <- function(variableMetadata) {
 #' @include class-VariableMetadata.R
 #' @export
 setGeneric("getDTWithImputedZeroes", 
-  function(object, variables) standardGeneric("getDTWithImputedZeroes"),
+  function(object, variables, verbose = c(TRUE, FALSE)) standardGeneric("getDTWithImputedZeroes"),
   signature = c("object", "variables")
 )
 
 #' @importFrom digest digest
 #' @export
-setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadataList'), function (object, variables) {
- 
+setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadataList'), function (object, variables, verbose = c(TRUE, FALSE)) {
+  verbose <- veupathUtils::matchArg(verbose)
+  veupathUtils::logWithTime("Start imputing zeroes...", verbose)
+  
   weightingVariablesMetadata <- findWeightingVariablesMetadata(variables)
-  if (is.null(weightingVariablesMetadata)) return(object@data)
+  if (is.null(weightingVariablesMetadata))  {
+    veupathUtils::logWithTime("No weighting variables present in the plot. No imputation will be done.", verbose)
+    return(object@data)
+  }
 
   .dt <- object@data
   # TODO feel like im doing this operation a lot.. maybe another method/ helper?
@@ -254,6 +259,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     weightingVarColName <- veupathUtils::getColName(findVariableMetadataFromVariableSpec(variables, veupathUtils::getVariableSpec(vocabs[[1]]))[[1]]@weightingVariableSpec)
   }
 
+  veupathUtils::logWithTime("Finding variables with study vocabularies...", verbose)
   variableSpecsToImputeZeroesFor <- veupathUtils::getVariableSpec(variableMetadataForStudyVocabVariables)
   studyIdColName <- getStudyIdColumnName(vocabs)
   varSpecColNames <- unlist(lapply(variableSpecsToImputeZeroesFor, veupathUtils::getColName))
@@ -265,12 +271,15 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
           unlist(lapply(variableSpecsFromEntityOfInterest, identical, weightingVarSpecsForStudyVocabVariables[[1]])))) {
     stop("Not all variables on the entity associated with the present study vocabulary have study vocabularies.")
   }
+  veupathUtils::logWithTime("Imputing zeroes request validated.", verbose)
+
   # !!!! this assumes entity ids are passed in order, from a single branch
   # alternative would i guess be to make this class aware of the entity diagram
   upstreamEntityIdColNames <- allEntityIdColumns[1:(which(allEntityIdColumns %in% varSpecEntityIdColName)-1)]
   if (!all(allEntityIdColumns[!allEntityIdColumns %in% varSpecEntityIdColName] %in% upstreamEntityIdColNames)) {
     # if we have downstream entities, it doesnt make sense to do all this work. plot.data will just remove the imputed values.
     # if/when the map supports missingness and NA values on downstream entities start to matter, we can revisit.
+    veupathUtils::logWithTime("Downstream entities present. No imputation will be done (for now... mwahahaha).", verbose)
     return(.dt)
   }
 
@@ -279,9 +288,11 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   combinations.dt[[varSpecEntityIdColName]] <- NULL
   combinations.dt <- unique(combinations.dt)
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
+  veupathUtils::logWithTime("Found all possible variable value combinations.", verbose)
 
   # impute zeroes for each study vocab iteratively
   makeImputedZeroesDT <- function(variableSpec) {
+    veupathUtils::logWithTime(paste("Imputing zeroes for", veupathUtils::getColName(variableSpec)), verbose)
     varSpecColName <- veupathUtils::getColName(variableSpec)
     vocab <- findStudyVocabularyByVariableSpec(vocabs, variables, variableSpec)
     vocabs.dt <- veupathUtils::as.data.table(vocab)
@@ -303,11 +314,13 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     merge(x, y, by = c(upstreamEntityIdColNames, varSpecEntityIdColName, weightingVarColName), allow.cartesian=TRUE)
   }
   .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
+  veupathUtils::logWithTime("Finished collapsing imputed values for all variables into one table.", verbose)
   #make impossibly unique ids
   .dt2[[varSpecEntityIdColName]] <- apply(.dt2[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
   .dt2 <- unique(merge(.dt2, combinations.dt, by=upstreamEntityIdColNames))
   
   .dt <- rbind(.dt, .dt2)
+  veupathUtils::logWithTime("Added imputed values to table. Finished imputing zeroes.", verbose)
 
   return(.dt)
 })
