@@ -137,7 +137,7 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CONTINUOUS'))
   ))
 
-  imputedDT <- getDTWithImputedZeroes(m, variables)
+  imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   # result has the columns needed to build a plot, based on variables AND the correct number of rows/ zeroes
   # TODO lol its just possible this fxn shouldnt remove cols but my brain hurts enough already 
   expect_equal(all(c("sample.species","sample.specimen_count") %in% names(imputedDT)), TRUE)
@@ -168,7 +168,7 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CATEGORICAL'))
   ))
 
-  imputedDT <- getDTWithImputedZeroes(m, variables)
+  imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   expect_equal(all(c("sample.species","sample.specimen_count","collection.attractant") %in% names(imputedDT)), TRUE)
   expect_equal(nrow(imputedDT), 12)
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 6)
@@ -203,7 +203,7 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CATEGORICAL'))
   ))
 
-  imputedDT <- getDTWithImputedZeroes(m, variables)
+  imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   expect_equal(all(c("sample.species","sample.specimen_count","collection.attractant","study.author") %in% names(imputedDT)), TRUE)
   expect_equal(nrow(imputedDT), 12)
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 6)
@@ -258,7 +258,7 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CATEGORICAL'))
   ))
 
-  imputedDT <- getDTWithImputedZeroes(mCOMPLETE, variables)
+  imputedDT <- getDTWithImputedZeroes(mCOMPLETE, variables, FALSE)
   expect_equal(all(names(imputedDT) %in% names(m@data)), TRUE)
   expect_equal(nrow(imputedDT), nrow(mCOMPLETE@data))
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
@@ -287,7 +287,7 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CATEGORICAL'))
   ))
 
-  imputedDT <- getDTWithImputedZeroes(mCOMPLETE, variables)
+  imputedDT <- getDTWithImputedZeroes(mCOMPLETE, variables, FALSE)
   expect_equal(all(names(imputedDT) %in% names(mCOMPLETE@data)), TRUE)
   expect_equal(nrow(imputedDT), nrow(mCOMPLETE@data))
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
@@ -326,7 +326,7 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CATEGORICAL'))
   ))
 
-  imputedDT <- getDTWithImputedZeroes(m, variables)
+  imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   # are we ok that it leaves all cols if it decides nothing needs doing??
   # it wont hurt anything, its just inconsistent behavior
   expect_equal(all(names(imputedDT) %in% names(m@data)), TRUE)
@@ -362,7 +362,7 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CATEGORICAL'))
   ))
 
-  imputedDT <- getDTWithImputedZeroes(m, variables)
+  imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   expect_equal(all(names(imputedDT) %in% names(m@data)), TRUE)
   expect_equal(nrow(imputedDT), nrow(m@data))
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
@@ -403,7 +403,7 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CATEGORICAL'))
   ))
 
-  imputedDT <- getDTWithImputedZeroes(m, variables)
+  imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   expect_equal(all(c("sample.species","sample.specimen_count","sample.sex","collection.attractant") %in% names(imputedDT)), TRUE)
   expect_equal(nrow(imputedDT), 20)
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 14)
@@ -475,7 +475,7 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CATEGORICAL'))
   ))
 
-  imputedDT <- getDTWithImputedZeroes(m, variables)
+  imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   expect_equal(all(names(imputedDT) %in% names(m@data)), TRUE)
   expect_equal(nrow(imputedDT), nrow(m@data))
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
@@ -506,7 +506,7 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CATEGORICAL'))
   ))
 
-  imputedDT <- getDTWithImputedZeroes(m, variables)
+  imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   expect_equal(all(names(imputedDT) %in% names(m@data)), TRUE)
   expect_equal(nrow(imputedDT), nrow(m@data))
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
@@ -547,7 +547,7 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CATEGORICAL'))
   ))
 
-  expect_error(getDTWithImputedZeroes(m, variables))
+  expect_error(getDTWithImputedZeroes(m, variables, FALSE))
 
   # variable collection exists in plot
   pathogenVariableCollectionVocabs <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='assay',variableId='pathogen_presence_variable_collection'), vocabulary=c('Yes','No')),
@@ -580,7 +580,7 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CONTINUOUS'))
   ))
 
-  imputedDT <- getDTWithImputedZeroes(m, variables)
+  imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   # result has the columns needed to build a plot, based on variables AND the correct number of rows/ zeroes
   # TODO lol its just possible this fxn shouldnt remove cols but my brain hurts enough already 
   expect_equal(all(c("assay.pathogen_presence","assay.pathogen2_presence","assay.pathogen3_presence","sample.specimen_count") %in% names(imputedDT)), TRUE)
