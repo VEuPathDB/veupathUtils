@@ -4,7 +4,7 @@
 \alias{getDTWithImputedZeroes}
 \title{Impute Zeroes (on tall data)}
 \usage{
-getDTWithImputedZeroes(object, variables)
+getDTWithImputedZeroes(object, variables, verbose = c(TRUE, FALSE))
 }
 \arguments{
 \item{object}{veupathUtils::Megastudy}
