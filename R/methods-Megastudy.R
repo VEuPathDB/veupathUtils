@@ -275,9 +275,9 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
 
   # !!!! this assumes entity ids are passed in order, from a single branch
   # alternative would i guess be to make this class aware of the entity diagram
-  print(paste0("allEntityIdColumns: ", allEntityIdColumns))
-  print(paste0("varSpecEntityIdColName: ", varSpecEntityIdColName))
-  print(paste0("upstreamEntityIdColIndices: ", which(allEntityIdColumns %in% varSpecEntityIdColName)-1))
+  message("allEntityIdColumns: ", allEntityIdColumns)
+  message("varSpecEntityIdColName: ", varSpecEntityIdColName)
+  message("upstreamEntityIdColIndices: ", which(allEntityIdColumns %in% varSpecEntityIdColName)-1)
   upstreamEntityIdColNames <- allEntityIdColumns[1:(which(allEntityIdColumns %in% varSpecEntityIdColName)-1)]
   if (!all(allEntityIdColumns[!allEntityIdColumns %in% varSpecEntityIdColName] %in% upstreamEntityIdColNames)) {
     # if we have downstream entities, it doesnt make sense to do all this work. plot.data will just remove the imputed values.
