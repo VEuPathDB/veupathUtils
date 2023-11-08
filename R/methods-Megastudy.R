@@ -138,7 +138,7 @@ setMethod('as.data.table', signature('StudySpecificVocabulariesByVariable'), fun
 #should this be an s4 method?
 findEntityIdColumnNameForVariableSpec <- function(varSpec, entityIdColumns) {
   if (!inherits(varSpec, 'VariableSpec')) stop("The first argument must be of the S4 class `VariableSpec`.")
-  message("varSpec: ", veupathUtils::getColName(varSpec))
+  
   return(entityIdColumns[grepl(varSpec@entityId, entityIdColumns)])
 }
 
@@ -275,9 +275,6 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
 
   # !!!! this assumes entity ids are passed in order, from a single branch
   # alternative would i guess be to make this class aware of the entity diagram
-  message("allEntityIdColumns: ", allEntityIdColumns)
-  message("varSpecEntityIdColName: ", varSpecEntityIdColName)
-  message("upstreamEntityIdColIndices: ", which(allEntityIdColumns %in% varSpecEntityIdColName)-1)
   upstreamEntityIdColNames <- allEntityIdColumns[1:(which(allEntityIdColumns %in% varSpecEntityIdColName)-1)]
   if (!all(allEntityIdColumns[!allEntityIdColumns %in% varSpecEntityIdColName] %in% upstreamEntityIdColNames)) {
     # if we have downstream entities, it doesnt make sense to do all this work. plot.data will just remove the imputed values.
