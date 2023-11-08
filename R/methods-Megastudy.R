@@ -138,7 +138,7 @@ setMethod('as.data.table', signature('StudySpecificVocabulariesByVariable'), fun
 #should this be an s4 method?
 findEntityIdColumnNameForVariableSpec <- function(varSpec, entityIdColumns) {
   if (!inherits(varSpec, 'VariableSpec')) stop("The first argument must be of the S4 class `VariableSpec`.")
-
+  message("varSpec: ", veupathUtils::getColName(varSpec))
   return(entityIdColumns[grepl(varSpec@entityId, entityIdColumns)])
 }
 
