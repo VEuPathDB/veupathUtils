@@ -229,6 +229,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   # drop things that arent in the plot, except ids
   .dt <- .dt[, c(variableColumnNames, allEntityIdColumns), with=FALSE]
   message("dt has ", ncol(.dt), " columns and ", nrow(.dt), " rows after limiting to columns of interest")
+  message("cols names: ", colnames(.dt))
   message("head of dt: ", head(.dt,1))
   vocabs <- object@studySpecificVocabularies
 
@@ -291,8 +292,10 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   combinations.dt[[varSpecEntityIdColName]] <- NULL
   combinations.dt <- unique(combinations.dt)
   message(paste("Found", nrow(combinations.dt), "possible variable value combinations."))
+  message("cols names: ", colnames(combinations.dt))
   message("head(combinations.dt): ", head(combinations.dt, 1))
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
+  message("cols names: ", colnames(entityIds.dt))
   message("head(entityIds.dt): ", head(entityIds.dt, 1))
   veupathUtils::logWithTime("Found all possible variable value combinations.", verbose)
 
@@ -301,7 +304,6 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     veupathUtils::logWithTime(paste("Imputing zeroes for", veupathUtils::getColName(variableSpec)), verbose)
     varSpecColName <- veupathUtils::getColName(variableSpec)
     vocab <- findStudyVocabularyByVariableSpec(vocabs, variables, variableSpec)
-    message("vocab: ", vocab)
     vocabs.dt <- veupathUtils::as.data.table(vocab)
     names(vocabs.dt)[2] <- varSpecColName
     message("cols names: ", colnames(vocabs.dt))
@@ -329,14 +331,17 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     merge(x, y, by = c(upstreamEntityIdColNames, varSpecEntityIdColName, weightingVarColName), allow.cartesian=TRUE)
   }
   .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
+  message("cols names: ", colnames(.dt2))
   message("head(.dt2): ", head(.dt2, 1))
   veupathUtils::logWithTime("Finished collapsing imputed values for all variables into one table.", verbose)
   #make impossibly unique ids
   .dt2[[varSpecEntityIdColName]] <- apply(.dt2[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
   .dt2 <- unique(merge(.dt2, combinations.dt, by=upstreamEntityIdColNames))
+  message("with ids- cols names: ", colnames(.dt2))
   message("with ids- head(.dt2): ", head(.dt2, 1))
   .dt <- rbind(.dt, .dt2)
   veupathUtils::logWithTime("Added imputed values to table. Finished imputing zeroes.", verbose)
+  message("cols names: ", colnames(.dt))
   message("head(.dt): ", head(.dt, 1))
   return(.dt)
 })
