@@ -221,12 +221,15 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   }
 
   .dt <- object@data
+  message("dt has ", ncol(.dt), " columns and ", nrow(.dt), " rows")
   # TODO feel like im doing this operation a lot.. maybe another method/ helper?
   # also, try to figure a way we dont have to do this.. i dont remember why i did this and its inconsistent behavior
   variableColumnNames <- unlist(lapply(as.list(variables), getVariableColumnNames))
   allEntityIdColumns <- object@ancestorIdColumns
   # drop things that arent in the plot, except ids
   .dt <- .dt[, c(variableColumnNames, allEntityIdColumns), with=FALSE]
+  message("dt has ", ncol(.dt), " columns and ", nrow(.dt), " rows after limiting to columns of interest")
+  message("head of dt: ", head(.dt,1))
   vocabs <- object@studySpecificVocabularies
 
   # it seems a lot of this validation could belong to some custom obj w both a megastudy and vm slot.. but what is that? a MegastudyPlot?
@@ -287,7 +290,10 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   combinations.dt <- unique(.dt[, -c(weightingVarColName, varSpecColNames), with=FALSE])
   combinations.dt[[varSpecEntityIdColName]] <- NULL
   combinations.dt <- unique(combinations.dt)
+  message(paste("Found", nrow(combinations.dt), "possible variable value combinations."))
+  message("head(combinations.dt): ", head(combinations.dt, 1))
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
+  message("head(entityIds.dt): ", head(entityIds.dt, 1))
   veupathUtils::logWithTime("Found all possible variable value combinations.", verbose)
 
   # impute zeroes for each study vocab iteratively
@@ -307,6 +313,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
       add.dt[[weightingVarColName]] <- numeric()
     }
    
+    message("head(add.dt): ", head(add.dt, 1))
     return(unique(add.dt))
   }
   dataTablesOfImputedValues <- lapply(variableSpecsToImputeZeroesFor, makeImputedZeroesDT)
@@ -314,13 +321,14 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     merge(x, y, by = c(upstreamEntityIdColNames, varSpecEntityIdColName, weightingVarColName), allow.cartesian=TRUE)
   }
   .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
+  message("head(.dt2): ", head(.dt2, 1))
   veupathUtils::logWithTime("Finished collapsing imputed values for all variables into one table.", verbose)
   #make impossibly unique ids
   .dt2[[varSpecEntityIdColName]] <- apply(.dt2[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
   .dt2 <- unique(merge(.dt2, combinations.dt, by=upstreamEntityIdColNames))
-  
+  message("with ids- head(.dt2): ", head(.dt2, 1))
   .dt <- rbind(.dt, .dt2)
   veupathUtils::logWithTime("Added imputed values to table. Finished imputing zeroes.", verbose)
-
+  message("head(.dt): ", head(.dt, 1))
   return(.dt)
 })
