@@ -301,10 +301,17 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     veupathUtils::logWithTime(paste("Imputing zeroes for", veupathUtils::getColName(variableSpec)), verbose)
     varSpecColName <- veupathUtils::getColName(variableSpec)
     vocab <- findStudyVocabularyByVariableSpec(vocabs, variables, variableSpec)
+    message("vocab: ", vocab)
     vocabs.dt <- veupathUtils::as.data.table(vocab)
     names(vocabs.dt)[2] <- varSpecColName
+    message("cols names: ", colnames(vocabs.dt))
+    message("head(vocabs.dt): ", head(vocabs.dt, 1))
     vocabs.dt <- merge(entityIds.dt, vocabs.dt, by=studyIdColName, allow.cartesian=TRUE)
+    message("after merge- cols names: ", colnames(vocabs.dt))
+    message("after merge- head(vocabs.dt): ", head(vocabs.dt, 1))
     present.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColName), with=FALSE])
+    message("cols names: ", colnames(present.dt))
+    message("head(present.dt): ", head(present.dt, 1))
     # assume if a value was explicitly filtered against that its not in the vocab
     add.dt <- vocabs.dt[!present.dt, on=c(upstreamEntityIdColNames, varSpecColName)]
     if (nrow(add.dt) > 0) {
@@ -313,6 +320,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
       add.dt[[weightingVarColName]] <- numeric()
     }
    
+    message("cols names: ", colnames(add.dt))
     message("head(add.dt): ", head(add.dt, 1))
     return(unique(add.dt))
   }
