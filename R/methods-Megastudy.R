@@ -124,6 +124,8 @@ setMethod('getEntityId', signature('StudySpecificVocabulariesByVariable'), funct
 #' @include methods-Statistic.R
 #' @export
 setMethod('as.data.table', signature('StudySpecificVocabulary'), function(x) {
+  message("as.data.table StudySpecificVocabulary- vocabulary: ", x@vocabulary)
+  message("vocab length: ", length(x@vocabulary))
   .dt <- data.table::data.table('study'=x@study, 'variable'=x@vocabulary)
   names(.dt) <- c(x@studyIdColumnName, getColName(x@variableSpec))
 
