@@ -124,8 +124,6 @@ setMethod('getEntityId', signature('StudySpecificVocabulariesByVariable'), funct
 #' @include methods-Statistic.R
 #' @export
 setMethod('as.data.table', signature('StudySpecificVocabulary'), function(x) {
-  message("as.data.table StudySpecificVocabulary- vocabulary: ", x@vocabulary)
-  message("vocab length: ", length(x@vocabulary))
   .dt <- data.table::data.table('study'=x@study, 'variable'=x@vocabulary)
   names(.dt) <- c(x@studyIdColumnName, getColName(x@variableSpec))
 
@@ -223,16 +221,13 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   }
 
   .dt <- object@data
-  message("dt has ", ncol(.dt), " columns and ", nrow(.dt), " rows")
+  veupathUtils::logWithTime(paste0("Imputing zeroes for data.table with ", ncol(.dt), " columns and ", nrow(.dt), " rows"), verbose)
   # TODO feel like im doing this operation a lot.. maybe another method/ helper?
   # also, try to figure a way we dont have to do this.. i dont remember why i did this and its inconsistent behavior
   variableColumnNames <- unlist(lapply(as.list(variables), getVariableColumnNames))
   allEntityIdColumns <- object@ancestorIdColumns
   # drop things that arent in the plot, except ids
   .dt <- .dt[, c(variableColumnNames, allEntityIdColumns), with=FALSE]
-  message("dt has ", ncol(.dt), " columns and ", nrow(.dt), " rows after limiting to columns of interest")
-  message("cols names: ", colnames(.dt))
-  message("head of dt: ", head(.dt,1))
   vocabs <- object@studySpecificVocabularies
 
   # it seems a lot of this validation could belong to some custom obj w both a megastudy and vm slot.. but what is that? a MegastudyPlot?
@@ -293,13 +288,9 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   combinations.dt <- unique(.dt[, -c(weightingVarColName, varSpecColNames), with=FALSE])
   combinations.dt[[varSpecEntityIdColName]] <- NULL
   combinations.dt <- unique(combinations.dt)
-  message(paste("Found", nrow(combinations.dt), "possible variable value combinations."))
-  message("cols names: ", colnames(combinations.dt))
-  message("head(combinations.dt): ", head(combinations.dt, 1))
+  veupathUtils::logWithTime(paste("Found", nrow(combinations.dt), "possible variable value combinations."), verbose)
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
-  message("cols names: ", colnames(entityIds.dt))
-  message("head(entityIds.dt): ", head(entityIds.dt, 1))
-  veupathUtils::logWithTime("Found all possible variable value combinations.", verbose)
+  
 
   # impute zeroes for each study vocab iteratively
   makeImputedZeroesDT <- function(variableSpec) {
@@ -308,14 +299,8 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     vocab <- findStudyVocabularyByVariableSpec(vocabs, variables, variableSpec)
     vocabs.dt <- veupathUtils::as.data.table(vocab)
     names(vocabs.dt)[2] <- varSpecColName
-    message("cols names: ", colnames(vocabs.dt))
-    message("head(vocabs.dt): ", head(vocabs.dt, 1))
     vocabs.dt <- merge(entityIds.dt, vocabs.dt, by=studyIdColName, allow.cartesian=TRUE)
-    message("after merge- cols names: ", colnames(vocabs.dt))
-    message("after merge- head(vocabs.dt): ", head(vocabs.dt, 1))
     present.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColName), with=FALSE])
-    message("cols names: ", colnames(present.dt))
-    message("head(present.dt): ", head(present.dt, 1))
     # assume if a value was explicitly filtered against that its not in the vocab
     add.dt <- vocabs.dt[!present.dt, on=c(upstreamEntityIdColNames, varSpecColName)]
     if (nrow(add.dt) > 0) {
@@ -324,26 +309,21 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
       add.dt[[weightingVarColName]] <- numeric()
     }
    
-    message("cols names: ", colnames(add.dt))
-    message("head(add.dt): ", head(add.dt, 1))
     return(unique(add.dt))
   }
+  
   dataTablesOfImputedValues <- lapply(variableSpecsToImputeZeroesFor, makeImputedZeroesDT)
   mergeDTsOfImputedValues <- function(x,y) {
     merge(x, y, by = c(upstreamEntityIdColNames, varSpecEntityIdColName, weightingVarColName), allow.cartesian=TRUE)
   }
   .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
-  message("cols names: ", colnames(.dt2))
-  message("head(.dt2): ", head(.dt2, 1))
   veupathUtils::logWithTime("Finished collapsing imputed values for all variables into one table.", verbose)
+
   #make impossibly unique ids
   .dt2[[varSpecEntityIdColName]] <- apply(.dt2[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
   .dt2 <- unique(merge(.dt2, combinations.dt, by=upstreamEntityIdColNames))
-  message("with ids- cols names: ", colnames(.dt2))
-  message("with ids- head(.dt2): ", head(.dt2, 1))
   .dt <- rbind(.dt, .dt2)
   veupathUtils::logWithTime("Added imputed values to table. Finished imputing zeroes.", verbose)
-  message("cols names: ", colnames(.dt))
-  message("head(.dt): ", head(.dt, 1))
+ 
   return(.dt)
 })
