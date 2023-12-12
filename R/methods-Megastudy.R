@@ -288,7 +288,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   combinations.dt <- unique(.dt[, -c(weightingVarColName, varSpecColNames), with=FALSE])
   combinations.dt[[varSpecEntityIdColName]] <- NULL
   combinations.dt <- unique(combinations.dt)
-  veupathUtils::logWithTime(paste("Found", nrow(combinations.dt), "possible variable value combinations."), verbose)
+  veupathUtils::logWithTime(paste("Found", nrow(combinations.dt), "existing variable value combinations."), verbose)
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
   
 
@@ -309,6 +309,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
       add.dt[[weightingVarColName]] <- numeric()
     }
    
+    veupathUtils::logWithTime(paste("Found", nrow(add.dt), "new combinations of values for", veupathUtils::getColName(variableSpec)), verbose)
     return(unique(add.dt))
   }
   
@@ -317,13 +318,13 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     merge(x, y, by = c(upstreamEntityIdColNames, varSpecEntityIdColName, weightingVarColName), allow.cartesian=TRUE)
   }
   .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
-  veupathUtils::logWithTime("Finished collapsing imputed values for all variables into one table.", verbose)
+  veupathUtils::logWithTime(paste("Finished collapsing imputed values for all variables into one table. Added", nrow(.dt2), "total rows."), verbose)
 
   #make impossibly unique ids
   .dt2[[varSpecEntityIdColName]] <- apply(.dt2[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
   .dt2 <- unique(merge(.dt2, combinations.dt, by=upstreamEntityIdColNames))
   .dt <- rbind(.dt, .dt2)
-  veupathUtils::logWithTime("Added imputed values to table. Finished imputing zeroes.", verbose)
+  veupathUtils::logWithTime("Added imputed values to existing table. Finished imputing zeroes.", verbose)
  
   return(.dt)
 })
