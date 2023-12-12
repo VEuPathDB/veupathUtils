@@ -319,6 +319,8 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   }
   .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
   veupathUtils::logWithTime(paste("Finished collapsing imputed values for all variables into one table. Added", nrow(.dt2), "total rows."), verbose)
+  message(colnames(.dt2))
+  message(head(.dt2))
 
   #make impossibly unique ids
   .dt2[[varSpecEntityIdColName]] <- apply(.dt2[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
