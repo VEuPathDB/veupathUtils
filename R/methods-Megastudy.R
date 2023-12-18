@@ -28,8 +28,11 @@ setMethod('getVariableSpec', signature('VariableMetadata'), function(object, get
   getCollectionMemberVarSpecs <- veupathUtils::matchArg(getCollectionMemberVarSpecs)
   varSpecs <- list(object@variableSpec)
 
+  #if the variable is a collection, then we want to return the member variable specs
   if (object@isCollection && getCollectionMemberVarSpecs) {
     varSpecs <- as.list(object@members)
+  } else if (!object@isCollection && getCollectionMemberVarSpecs) {
+    varSpecs <- NULL
   }
 
   return(varSpecs)
@@ -38,8 +41,13 @@ setMethod('getVariableSpec', signature('VariableMetadata'), function(object, get
 #' @export 
 setMethod('getVariableSpec', signature('VariableMetadataList'), function(object, getCollectionMemberVarSpecs = c(TRUE, FALSE)) {
   getCollectionMemberVarSpecs <- veupathUtils::matchArg(getCollectionMemberVarSpecs)
+  
+  varSpecs <- unlist(lapply(as.list(object), veupathUtils::getVariableSpec, getCollectionMemberVarSpecs))
+  if (all(unlist(lapply(varSpecs, is.null)))) {
+    return(NULL)
+  }
 
-  return(unlist(lapply(as.list(object), veupathUtils::getVariableSpec, getCollectionMemberVarSpecs)))
+  return(varSpecs)
 })
 
 #' StuydIdColName as String
@@ -176,7 +184,11 @@ findVariableSpecsFromStudyVocabulary <- function(vocabs, variables, getCollectio
 
   if (getCollectionMemberVarSpecs) {
     varMetadataWithVocabs <- findVariableMetadataFromVariableSpec(variables, varSpecsWithVocabs)
-    varSpecsWithVocabs <- VariableSpecList(S4Vectors::SimpleList(getVariableSpec(varMetadataWithVocabs, getCollectionMemberVarSpecs)))
+    varSpecsWithVocabs <- getVariableSpec(varMetadataWithVocabs, getCollectionMemberVarSpecs)
+    if (is.null(varSpecsWithVocabs)) {
+      return(NULL)
+    }
+    varSpecsWithVocabs <- VariableSpecList(S4Vectors::SimpleList(varSpecsWithVocabs))
   }
 
   return(varSpecsWithVocabs)
@@ -222,28 +234,23 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
 
   .dt <- object@data
   veupathUtils::logWithTime(paste0("Imputing zeroes for data.table with ", ncol(.dt), " columns and ", nrow(.dt), " rows"), verbose)
-  # TODO feel like im doing this operation a lot.. maybe another method/ helper?
-  # also, try to figure a way we dont have to do this.. i dont remember why i did this and its inconsistent behavior
-  variableColumnNames <- unlist(lapply(as.list(variables), getVariableColumnNames))
   allEntityIdColumns <- object@ancestorIdColumns
-  # drop things that arent in the plot, except ids
-  #.dt <- .dt[, c(variableColumnNames, allEntityIdColumns), with=FALSE]
   vocabs <- object@studySpecificVocabularies
 
   # it seems a lot of this validation could belong to some custom obj w both a megastudy and vm slot.. but what is that? a MegastudyPlot?
   # plus going that route means using this class in plot.data means an api change for plot.data
   # that api change might be worth making in any case, but not doing it now
   variableMetadataNeedingStudyVocabularies <- findStudyDependentVocabularyVariableMetadata(variables)
-  variableSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, TRUE)
-  variableCollectionSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, FALSE)
+  variableSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, FALSE)
+  variableCollectionSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, TRUE)
   if (is.null(variableCollectionSpecsWithStudyVocabs)) {
     variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableSpecsWithStudyVocabs)
   } else {
     variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableCollectionSpecsWithStudyVocabs)
   }
-  if (length(variableSpecsWithStudyVocabs) > length(variableMetadataForStudyVocabVariables)) {
-    warning("Study vocabularies were provided for variables that are not present in the plot. These will be ignored.")
-  }
+  #if (length(variableSpecsWithStudyVocabs) > length(variableMetadataForStudyVocabVariables)) {
+  #  warning("Study vocabularies were provided for variables that are not present in the plot. These will be ignored.")
+  #}
   if (length(variableMetadataForStudyVocabVariables) < length(variableMetadataNeedingStudyVocabularies)) {
     stop("Some provided variables require study vocabularies but dont have one.")
   }
