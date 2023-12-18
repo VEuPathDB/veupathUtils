@@ -115,7 +115,7 @@ test_that("Megastudy and associated validation works", {
 
 # TODO this could go in its own file maybe
 test_that("imputeZeroes method is sane", {
-  m <- Megastudy(data=megastudyDT,
+  m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.species', 'collection.attractant', 'study.author'), with=FALSE],
                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id'),
                  studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs)))
 
@@ -259,7 +259,7 @@ test_that("imputeZeroes method is sane", {
   ))
 
   imputedDT <- getDTWithImputedZeroes(mCOMPLETE, variables, FALSE)
-  expect_equal(all(names(imputedDT) %in% names(m@data)), TRUE)
+  expect_equal(all(names(imputedDT) %in% names(mCOMPLETE@data)), TRUE)
   expect_equal(nrow(imputedDT), nrow(mCOMPLETE@data))
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
 
@@ -368,7 +368,7 @@ test_that("imputeZeroes method is sane", {
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
 
   # multiple special vocabs in same plot, w one shared weighting var
-  m <- Megastudy(data=megastudyDT,
+  m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.species', 'sample.sex', 'collection.attractant'), with=FALSE],
                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id'),
                  studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs,sexVocabs)))
 

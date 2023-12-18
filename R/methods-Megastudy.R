@@ -227,7 +227,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   variableColumnNames <- unlist(lapply(as.list(variables), getVariableColumnNames))
   allEntityIdColumns <- object@ancestorIdColumns
   # drop things that arent in the plot, except ids
-  .dt <- .dt[, c(variableColumnNames, allEntityIdColumns), with=FALSE]
+  #.dt <- .dt[, c(variableColumnNames, allEntityIdColumns), with=FALSE]
   vocabs <- object@studySpecificVocabularies
 
   # it seems a lot of this validation could belong to some custom obj w both a megastudy and vm slot.. but what is that? a MegastudyPlot?
