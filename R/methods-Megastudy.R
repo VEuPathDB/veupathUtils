@@ -22,16 +22,15 @@ setMethod('getVariableSpec', signature('ANY'), function(object) {
   return(object@variableSpec)
 })
 
-# this might be unexpected behavior. should there be a param to choose between the collection and its member specs?
 #' @export
-setMethod('getVariableSpec', signature('VariableMetadata'), function(object, getCollectionMemberVarSpecs = c(FALSE, TRUE)) {
+setMethod('getVariableSpec', signature('VariableMetadata'), function(object, getCollectionMemberVarSpecs = c("Dynamic", "Never", "Always")) {
   getCollectionMemberVarSpecs <- veupathUtils::matchArg(getCollectionMemberVarSpecs)
   varSpecs <- list(object@variableSpec)
 
   #if the variable is a collection, then we want to return the member variable specs
-  if (object@isCollection && getCollectionMemberVarSpecs) {
+  if (object@isCollection && getCollectionMemberVarSpecs %in% c("Dynamic", "Always")) {
     varSpecs <- as.list(object@members)
-  } else if (!object@isCollection && getCollectionMemberVarSpecs) {
+  } else if (!object@isCollection && getCollectionMemberVarSpecs == "Always") {
     varSpecs <- NULL
   }
 
@@ -39,7 +38,7 @@ setMethod('getVariableSpec', signature('VariableMetadata'), function(object, get
 })
 
 #' @export 
-setMethod('getVariableSpec', signature('VariableMetadataList'), function(object, getCollectionMemberVarSpecs = c(TRUE, FALSE)) {
+setMethod('getVariableSpec', signature('VariableMetadataList'), function(object, getCollectionMemberVarSpecs = c("Dynamic", "Never", "Always")) {
   getCollectionMemberVarSpecs <- veupathUtils::matchArg(getCollectionMemberVarSpecs)
   
   varSpecs <- unlist(lapply(as.list(object), veupathUtils::getVariableSpec, getCollectionMemberVarSpecs))
@@ -157,7 +156,7 @@ findStudyVocabularyByVariableSpec <- function(vocabs, variables, variableSpec) {
 
   vocabVariableSpecs <- lapply(as.list(vocabs), veupathUtils::getVariableSpec)
   vocabVariableMetadata <- veupathUtils::findVariableMetadataFromVariableSpec(variables, veupathUtils::VariableSpecList(S4Vectors::SimpleList(vocabVariableSpecs)))
-  vocabVariableSpecsAdjustedForVariableCollectionMembers <- veupathUtils::getVariableSpec(vocabVariableMetadata, TRUE)
+  vocabVariableSpecsAdjustedForVariableCollectionMembers <- veupathUtils::getVariableSpec(vocabVariableMetadata, "Dynamic")
   
   # if we have found variable collection members in the VariableMetadata, need to check if the passed varspec was a member
   # look through the list that includes the members, and if we match one, get the varspec of the parent/ collection
@@ -175,14 +174,14 @@ findStudyVocabularyByVariableSpec <- function(vocabs, variables, variableSpec) {
 }
 
 
-findVariableSpecsFromStudyVocabulary <- function(vocabs, variables, getCollectionMemberVarSpecs = c(TRUE, FALSE)) {
+findVariableSpecsFromStudyVocabulary <- function(vocabs, variables, getCollectionMemberVarSpecs = c("Dynamic", "Never", "Always")) {
   if (!inherits(vocabs, 'StudySpecificVocabulariesByVariableList')) stop("The first argument must be of the S4 class `StudySpecificVocabulariesByVariableList`.")
   if (!inherits(variables, 'VariableMetadataList')) stop("The second argument must be of the S4 class `VariableMetadataList`.")
   getCollectionMemberVarSpecs <- veupathUtils::matchArg(getCollectionMemberVarSpecs)
 
   varSpecsWithVocabs <- VariableSpecList(S4Vectors::SimpleList(lapply(as.list(vocabs), getVariableSpec)))
 
-  if (getCollectionMemberVarSpecs) {
+  if (getCollectionMemberVarSpecs != "Never") {
     varMetadataWithVocabs <- findVariableMetadataFromVariableSpec(variables, varSpecsWithVocabs)
     varSpecsWithVocabs <- getVariableSpec(varMetadataWithVocabs, getCollectionMemberVarSpecs)
     if (is.null(varSpecsWithVocabs)) {
@@ -241,8 +240,8 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   # plus going that route means using this class in plot.data means an api change for plot.data
   # that api change might be worth making in any case, but not doing it now
   variableMetadataNeedingStudyVocabularies <- findStudyDependentVocabularyVariableMetadata(variables)
-  variableSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, FALSE)
-  variableCollectionSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, TRUE)
+  variableSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, "Never")
+  variableCollectionSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, "Always")
   if (is.null(variableCollectionSpecsWithStudyVocabs)) {
     variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableSpecsWithStudyVocabs)
   } else {
@@ -326,8 +325,6 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   }
   .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
   veupathUtils::logWithTime(paste("Finished collapsing imputed values for all variables into one table. Added", nrow(.dt2), "total rows."), verbose)
-  message(colnames(.dt2))
-  message(head(.dt2))
 
   #make impossibly unique ids
   .dt2[[varSpecEntityIdColName]] <- apply(.dt2[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
