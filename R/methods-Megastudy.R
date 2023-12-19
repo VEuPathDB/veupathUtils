@@ -284,45 +284,45 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   }
 
   # for upstream entities data
-  combinations.dt <- unique(.dt[, -c(weightingVarColName, varSpecColNames), with=FALSE])
-  combinations.dt[[varSpecEntityIdColName]] <- NULL
-  combinations.dt <- unique(combinations.dt)
-  veupathUtils::logWithTime(paste("Found", nrow(combinations.dt), "existing variable value combinations."), verbose)
+  upstreamEntityVariables.dt <- unique(.dt[, -c(weightingVarColName, varSpecColNames), with=FALSE])
+  upstreamEntityVariables.dt[[varSpecEntityIdColName]] <- NULL
+  upstreamEntityVariables.dt <- unique(upstreamEntityVariables.dt)
+  veupathUtils::logWithTime(paste("Found", nrow(upstreamEntityVariables.dt), "unique existing upstream variable value combinations."), verbose)
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
   
-
-  # impute zeroes for each study vocab iteratively
-  makeImputedZeroesDT <- function(variableSpec) {
-    veupathUtils::logWithTime(paste("Imputing zeroes for", veupathUtils::getColName(variableSpec)), verbose)
+  # make vocab table for a single variable
+  makeVocabDT <- function(variableSpec) {
+    veupathUtils::logWithTime(paste("Finding vocab for", veupathUtils::getColName(variableSpec)), verbose)
     varSpecColName <- veupathUtils::getColName(variableSpec)
     vocab <- findStudyVocabularyByVariableSpec(vocabs, variables, variableSpec)
     vocabs.dt <- veupathUtils::as.data.table(vocab)
     names(vocabs.dt)[2] <- varSpecColName
-    vocabs.dt <- merge(entityIds.dt, vocabs.dt, by=studyIdColName, allow.cartesian=TRUE)
-    present.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColName), with=FALSE])
-    # assume if a value was explicitly filtered against that its not in the vocab
-    add.dt <- vocabs.dt[!present.dt, on=c(upstreamEntityIdColNames, varSpecColName)]
-    if (nrow(add.dt) > 0) {
-      add.dt[[weightingVarColName]] <- 0
-    } else {
-      add.dt[[weightingVarColName]] <- numeric()
-    }
-   
-    veupathUtils::logWithTime(paste("Found", nrow(add.dt), "new combinations of values for", veupathUtils::getColName(variableSpec)), verbose)
-    return(unique(add.dt))
+    return(vocabs.dt)
   }
-  
-  dataTablesOfImputedValues <- lapply(variableSpecsToImputeZeroesFor, makeImputedZeroesDT)
-  mergeDTsOfImputedValues <- function(x,y) {
-    merge(x, y, by = c(upstreamEntityIdColNames, varSpecEntityIdColName, weightingVarColName), allow.cartesian=TRUE, all=TRUE)
-  }
-  .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
-  veupathUtils::logWithTime(paste("Finished collapsing imputed values for all variables into one table. Added", nrow(.dt2), "total rows."), verbose)
 
-  #make impossibly unique ids
-  .dt2[[varSpecEntityIdColName]] <- apply(.dt2[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
-  .dt2 <- unique(merge(.dt2, combinations.dt, by=upstreamEntityIdColNames))
-  .dt <- rbind(.dt, .dt2)
+  # make all possible variable value combinations table
+  vocabDTs <- lapply(variableSpecsToImputeZeroesFor, makeVocabDT)
+  allCombinations.dt <- purrr::reduce(vocabDTs, merge, allow.cartesian=TRUE)
+  
+  # find which ones we need to add
+  presentCombinations.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE])
+  # need upstream entity ids for all combinations in order to properly find and merge missing values
+  allCombinations.dt <- merge(allCombinations.dt, upstreamEntityVariables.dt, allow.cartesian=TRUE)
+  # NOTE: we're assuming if a value was explicitly filtered against that its not in the vocab
+  addCombinations.dt <- allCombinations.dt[!presentCombinations.dt, on=c(upstreamEntityIdColNames, varSpecColNames)]
+
+  if (nrow(addCombinations.dt) == 0) {
+    veupathUtils::logWithTime("No new combinations to add. Returning existing table.", verbose)
+    return(.dt)
+  } else {
+    veupathUtils::logWithTime(paste("Adding", nrow(addCombinations.dt), "new combinations."), verbose)
+  }
+
+  # go ahead and add them, first filling in values for all columns
+  addCombinations.dt[[weightingVarColName]] <- 0  
+  addCombinations.dt[[varSpecEntityIdColName]] <- apply(addCombinations.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo="md5")
+  # bind them to the existing rows
+  .dt <- rbind(.dt, addCombinations.dt)
   veupathUtils::logWithTime("Added imputed values to existing table. Finished imputing zeroes.", verbose)
  
   return(.dt)
