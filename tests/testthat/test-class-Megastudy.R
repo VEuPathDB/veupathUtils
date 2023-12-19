@@ -249,9 +249,9 @@ test_that("imputeZeroes method is sane", {
                                                    assay.pathogen3_presence=c('No','Yes'),
                                                    assay.weighting_variable=c(35,40)))
   
-  mCOMPLETE <- Megastudy(data=megastudyDTSMALL,
+  mCOMPLETE <- Megastudy(data=megastudyDTSMALL[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.species', 'sample.sex', 'collection.attractant', 'study.author'), with=FALSE],
                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id'),
-                 studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabsSMALL)))
+                 studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabsSMALL, sexVocabsSMALL)))
   
   variables <- new("VariableMetadataList", SimpleList(
     new("VariableMetadata",
@@ -292,8 +292,9 @@ test_that("imputeZeroes method is sane", {
 
   imputedDT <- getDTWithImputedZeroes(mCOMPLETE, variables, FALSE)
   expect_equal(all(names(imputedDT) %in% names(mCOMPLETE@data)), TRUE)
-  expect_equal(nrow(imputedDT), nrow(mCOMPLETE@data))
-  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
+  # 2 species * 2 sexes * 2 collections * 2 studies = 16
+  expect_equal(nrow(imputedDT), 16)
+  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 6)
 
   # no weighting var in plot
   variables <- new("VariableMetadataList", SimpleList(
@@ -333,9 +334,9 @@ test_that("imputeZeroes method is sane", {
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
 
   # an assay var is present 
-  m <- Megastudy(data=megastudyDT,
+  m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id','assay.id', 'assay.pathogen_prevalence', 'sample.species', 'sample.sex', 'collection.attractant', 'study.author')],
                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id','assay.id'),
-                 studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs)))
+                 studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs, sexVocabs)))
 
   variables <- new("VariableMetadataList", SimpleList(
     new("VariableMetadata",
@@ -375,8 +376,6 @@ test_that("imputeZeroes method is sane", {
   ))
 
   imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
-  # are we ok that it leaves all cols if it decides nothing needs doing??
-  # it wont hurt anything, its just inconsistent behavior
   expect_equal(all(names(imputedDT) %in% names(m@data)), TRUE)
   expect_equal(nrow(imputedDT), nrow(m@data))
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
@@ -618,7 +617,7 @@ test_that("imputeZeroes method is sane", {
                                                                                                 StudySpecificVocabulary(studyIdColumnName='study.id', study='b', variableSpec=VariableSpec(entityId='assay',variableId='pathogen_presence_variable_collection'), vocabulary=c('Yes','No'))))
 
 
-  m <- Megastudy(data=megastudyDT,
+  m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'assay.id', 'sample.specimen_count', 'collection.attractant', 'study.author', 'assay.pathogen_presence', 'assay.pathogen2_presence', 'assay.pathogen3_presence'), with=FALSE],
                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id', 'assay.id'),
                  studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(pathogenVariableCollectionVocabs)))
 

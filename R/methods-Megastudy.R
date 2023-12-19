@@ -242,14 +242,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   variableMetadataNeedingStudyVocabularies <- findStudyDependentVocabularyVariableMetadata(variables)
   variableSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, "Never")
   variableCollectionSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, "Always")
-  if (is.null(variableCollectionSpecsWithStudyVocabs)) {
-    variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableSpecsWithStudyVocabs)
-  } else {
-    variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableCollectionSpecsWithStudyVocabs)
-  }
-  #if (length(variableSpecsWithStudyVocabs) > length(variableMetadataForStudyVocabVariables)) {
-  #  warning("Study vocabularies were provided for variables that are not present in the plot. These will be ignored.")
-  #}
+  variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableSpecsWithStudyVocabs)
   if (length(variableMetadataForStudyVocabVariables) < length(variableMetadataNeedingStudyVocabularies)) {
     stop("Some provided variables require study vocabularies but dont have one.")
   }
