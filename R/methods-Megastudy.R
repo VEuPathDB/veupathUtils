@@ -321,7 +321,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   
   dataTablesOfImputedValues <- lapply(variableSpecsToImputeZeroesFor, makeImputedZeroesDT)
   mergeDTsOfImputedValues <- function(x,y) {
-    merge(x, y, by = c(upstreamEntityIdColNames, varSpecEntityIdColName, weightingVarColName), allow.cartesian=TRUE)
+    merge(x, y, by = c(upstreamEntityIdColNames, varSpecEntityIdColName, weightingVarColName), allow.cartesian=TRUE, all=TRUE)
   }
   .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
   veupathUtils::logWithTime(paste("Finished collapsing imputed values for all variables into one table. Added", nrow(.dt2), "total rows."), verbose)
