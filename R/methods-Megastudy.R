@@ -157,7 +157,8 @@ findStudyVocabularyByVariableSpec <- function(vocabs, variables, variableSpec) {
   vocabVariableSpecs <- lapply(as.list(vocabs), veupathUtils::getVariableSpec)
   vocabVariableMetadata <- veupathUtils::findVariableMetadataFromVariableSpec(variables, veupathUtils::VariableSpecList(S4Vectors::SimpleList(vocabVariableSpecs)))
   vocabVariableSpecsAdjustedForVariableCollectionMembers <- veupathUtils::getVariableSpec(vocabVariableMetadata, "Dynamic")
-  
+  message("vocabVariableSpecs: ", paste(vocabVariableSpecs, collapse = ","))
+  message("vocabVariableSpecsAdjustedForVariableCollectionMembers: ", paste(vocabVariableSpecsAdjustedForVariableCollectionMembers, collapse = ","))
   # if we have found variable collection members in the VariableMetadata, need to check if the passed varspec was a member
   # look through the list that includes the members, and if we match one, get the varspec of the parent/ collection
   # use the varspec of the parent/ collection to get the VariableMetadata associated w the entire collection
