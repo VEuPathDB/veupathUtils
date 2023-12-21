@@ -156,14 +156,14 @@ findStudyVocabularyByVariableSpec <- function(vocabs, variables, variableSpec) {
 
   vocabVariableSpecs <- lapply(as.list(vocabs), veupathUtils::getVariableSpec)
   vocabVariableMetadata <- veupathUtils::findVariableMetadataFromVariableSpec(variables, veupathUtils::VariableSpecList(S4Vectors::SimpleList(vocabVariableSpecs)))
-  vocabVariableSpecsAdjustedForVariableCollectionMembers <- veupathUtils::getVariableSpec(vocabVariableMetadata, "Dynamic")
+  vocabVariableSpecsAdjustedForVariableCollectionMembers <- veupathUtils::getVariableSpec(vocabVariableMetadata, "Never")
   message("vocabVariableSpecs: ", paste(vocabVariableSpecs, collapse = ","))
   message("vocabVariableSpecsAdjustedForVariableCollectionMembers: ", paste(vocabVariableSpecsAdjustedForVariableCollectionMembers, collapse = ","))
   # if we have found variable collection members in the VariableMetadata, need to check if the passed varspec was a member
   # look through the list that includes the members, and if we match one, get the varspec of the parent/ collection
   # use the varspec of the parent/ collection to get the VariableMetadata associated w the entire collection
   # remember, individual members dont have their own VariableMetadata
-  if (!identical(vocabVariableSpecs, vocabVariableSpecsAdjustedForVariableCollectionMembers)) {
+  if (length(vocabVariableSpecsAdjustedForVariableCollectionMembers) > 0) {
     index <- which(purrr::map(vocabVariableSpecsAdjustedForVariableCollectionMembers, function(x) {veupathUtils::getColName(x)}) == veupathUtils::getColName(variableSpec))
     variableCollectionSpecs <- vocabVariableSpecsAdjustedForVariableCollectionMembers[[index]]
     index <- which(purrr::map(vocabVariableMetadata, function(x) {veupathUtils::getColName(variableCollectionSpecs) %in% unlist(veupathUtils::getColName(x@members))}) == TRUE)
