@@ -169,6 +169,9 @@ findStudyVocabularyByVariableSpec <- function(vocabs, variables, variableSpec) {
   } else {
     index <- which(purrr::map(vocabVariableSpecs, function(x) {veupathUtils::getColName(x)}) == veupathUtils::getColName(variableSpec))
   }
+  message(paste("index", index))
+  message(paste("vocabs:", length(vocabs)))
+  
 
   return(vocabs[[index]])  
 }
