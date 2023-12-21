@@ -599,15 +599,7 @@ test_that("imputeZeroes method is sane", {
       variableSpec = new("VariableSpec", variableId = 'attractant', entityId = 'collection'),
       plotReference = new("PlotReference", value = 'facet1'),
       dataType = new("DataType", value = 'STRING'),
-      dataShape = new("DataShape", value = 'CATEGORICAL')),
-    new("VariableMetadata",
-      variableClass = new("VariableClass", value = 'native'),
-      variableSpec = new("VariableSpec", variableId = 'sex', entityId = 'sample'),
-      # empty plotReference means that it is not plotted
-      dataType = new("DataType", value = 'STRING'),
-      dataShape = new("DataShape", value = 'CATEGORICAL'),
-      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
-      hasStudyDependentVocabulary = TRUE)
+      dataShape = new("DataShape", value = 'CATEGORICAL'))
   ))
 
   expect_error(getDTWithImputedZeroes(m, variables, FALSE))
