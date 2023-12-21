@@ -167,6 +167,8 @@ findStudyVocabularyByVariableSpec <- function(vocabs, variables, variableSpec) {
     variableCollectionSpecs <- vocabVariableSpecsAdjustedForVariableCollectionMembers[[index]]
     index <- which(purrr::map(vocabVariableMetadata, function(x) {veupathUtils::getColName(variableCollectionSpecs) %in% unlist(veupathUtils::getColName(x@members))}) == TRUE)
   } else {
+    message("no variable collection members found")
+    message("vocabVariableSpecs: ", paste(vocabVariableSpecs, collapse = ","))
     index <- which(purrr::map(vocabVariableSpecs, function(x) {veupathUtils::getColName(x)}) == veupathUtils::getColName(variableSpec))
   }
   message(paste("index", index))
