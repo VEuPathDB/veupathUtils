@@ -472,7 +472,7 @@ setGeneric("findIndexFromPlotRef",
 
 #' @export
 setMethod("findIndexFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
-  index <- which(purrr::map(as.list(variables), function(x) {if (x@plotReference@value == plotRef) {return(TRUE)}}) %in% TRUE)
+  index <- which(purrr::map(as.list(variables), function(x) {if (!is.na(x@plotReference@value) && x@plotReference@value == plotRef) {return(TRUE)}}) %in% TRUE)
   if (!length(index)) return(NULL)
 
   return(index)
@@ -493,7 +493,7 @@ setGeneric("findColNamesFromPlotRef",
 
 #' @export
 setMethod("findColNamesFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
-  colNames <- veupathUtils::findColNamesByPredicate(variables, function(x) {if (x@plotReference@value == plotRef && !x@isCollection) TRUE})
+  colNames <- veupathUtils::findColNamesByPredicate(variables, function(x) {if (!is.na(x@plotReference@value) && x@plotReference@value == plotRef && !x@isCollection) TRUE})
   if (!length(colNames)) {
     collectionVM <- veupathUtils::findCollectionVariableMetadata(variables)
     if (!length(collectionVM)) return(NULL)
@@ -544,7 +544,7 @@ setGeneric("findDataTypesFromPlotRef",
 setMethod("findDataTypesFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
   if (is.null(variables)) return(NULL)
 
-  dataTypes <- purrr::map(as.list(variables), function(x) { if(x@plotReference@value == plotRef) { return(x@dataType@value) } })
+  dataTypes <- purrr::map(as.list(variables), function(x) { if(!is.na(x@plotReference@value) && x@plotReference@value == plotRef) { return(x@dataType@value) } })
 
   return(veupathUtils::toStringOrNull(unlist(dataTypes)))
 })
@@ -566,7 +566,7 @@ setGeneric("findDataShapesFromPlotRef",
 setMethod("findDataShapesFromPlotRef", signature("VariableMetadataList"), function(variables, plotRef) {
   if (is.null(variables)) return(NULL)
 
-  dataShapes <- purrr::map(as.list(variables), function(x) { if(x@plotReference@value == plotRef) { return(x@dataShape@value) } })
+  dataShapes <- purrr::map(as.list(variables), function(x) { if(!is.na(x@plotReference@value) && x@plotReference@value == plotRef) { return(x@dataShape@value) } })
 
   return(veupathUtils::toStringOrNull(unlist(dataShapes)))
 })
