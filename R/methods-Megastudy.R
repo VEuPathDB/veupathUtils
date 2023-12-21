@@ -157,8 +157,7 @@ findStudyVocabularyByVariableSpec <- function(vocabs, variables, variableSpec) {
   vocabVariableSpecs <- lapply(as.list(vocabs), veupathUtils::getVariableSpec)
   vocabVariableMetadata <- veupathUtils::findVariableMetadataFromVariableSpec(variables, veupathUtils::VariableSpecList(S4Vectors::SimpleList(vocabVariableSpecs)))
   vocabVariableSpecsAdjustedForVariableCollectionMembers <- veupathUtils::getVariableSpec(vocabVariableMetadata, "Always")
-  message("vocabVariableSpecs: ", paste(vocabVariableSpecs, collapse = ","))
-  message("vocabVariableSpecsAdjustedForVariableCollectionMembers: ", paste(vocabVariableSpecsAdjustedForVariableCollectionMembers, collapse = ","))
+  
   # if we have found variable collection members in the VariableMetadata, need to check if the passed varspec was a member
   # look through the list that includes the members, and if we match one, get the varspec of the parent/ collection
   # use the varspec of the parent/ collection to get the VariableMetadata associated w the entire collection
@@ -168,14 +167,9 @@ findStudyVocabularyByVariableSpec <- function(vocabs, variables, variableSpec) {
     variableCollectionSpecs <- vocabVariableSpecsAdjustedForVariableCollectionMembers[[index]]
     index <- which(purrr::map(vocabVariableMetadata, function(x) {veupathUtils::getColName(variableCollectionSpecs) %in% unlist(veupathUtils::getColName(x@members))}) == TRUE)
   } else {
-    message("no variable collection members found")
-    message("vocabVariableSpecs: ", paste(vocabVariableSpecs, collapse = ","))
     index <- which(purrr::map(vocabVariableSpecs, function(x) {veupathUtils::getColName(x)}) == veupathUtils::getColName(variableSpec))
   }
-  message(paste("index", index))
-  message(paste("vocabs:", length(vocabs)))
-  
-
+ 
   return(vocabs[[index]])  
 }
 
@@ -300,13 +294,9 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   makeVocabDT <- function(variableSpec) {
     veupathUtils::logWithTime(paste("Finding vocab for", veupathUtils::getColName(variableSpec)), verbose)
     varSpecColName <- veupathUtils::getColName(variableSpec)
-    message(paste("varSpecColName", varSpecColName))
     vocab <- findStudyVocabularyByVariableSpec(vocabs, variables, variableSpec)
-    message(paste("vocab", length(vocab)))
     vocabs.dt <- veupathUtils::as.data.table(vocab)
-    message(paste("vocabs.dt", nrow(vocabs.dt)))
     names(vocabs.dt)[2] <- varSpecColName
-    message(paste("names(vocabs.dt)", names(vocabs.dt)))
     return(vocabs.dt)
   }
 
@@ -320,6 +310,8 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   presentCombinations.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE])
   message(paste("presentCombinations.dt", nrow(presentCombinations.dt)))
   # need upstream entity ids for all combinations in order to properly find and merge missing values
+  message("names(allCombinations.dt)", names(allCombinations.dt))
+  message("names(upstreamEntityVariables.dt)", names(upstreamEntityVariables.dt))
   allCombinations.dt <- merge(allCombinations.dt, upstreamEntityVariables.dt, allow.cartesian=TRUE)
   message(paste("allCombinations.dt", nrow(allCombinations.dt)))
   # NOTE: we're assuming if a value was explicitly filtered against that its not in the vocab
