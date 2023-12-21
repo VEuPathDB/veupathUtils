@@ -22,24 +22,31 @@ setMethod('getVariableSpec', signature('ANY'), function(object) {
   return(object@variableSpec)
 })
 
-# this might be unexpected behavior. should there be a param to choose between the collection and its member specs?
 #' @export
-setMethod('getVariableSpec', signature('VariableMetadata'), function(object, getCollectionMemberVarSpecs = c(FALSE, TRUE)) {
+setMethod('getVariableSpec', signature('VariableMetadata'), function(object, getCollectionMemberVarSpecs = c("Dynamic", "Never", "Always")) {
   getCollectionMemberVarSpecs <- veupathUtils::matchArg(getCollectionMemberVarSpecs)
   varSpecs <- list(object@variableSpec)
 
-  if (object@isCollection && getCollectionMemberVarSpecs) {
+  #if the variable is a collection, then we want to return the member variable specs
+  if (object@isCollection && getCollectionMemberVarSpecs %in% c("Dynamic", "Always")) {
     varSpecs <- as.list(object@members)
+  } else if (!object@isCollection && getCollectionMemberVarSpecs == "Always") {
+    varSpecs <- NULL
   }
 
   return(varSpecs)
 })
 
 #' @export 
-setMethod('getVariableSpec', signature('VariableMetadataList'), function(object, getCollectionMemberVarSpecs = c(TRUE, FALSE)) {
+setMethod('getVariableSpec', signature('VariableMetadataList'), function(object, getCollectionMemberVarSpecs = c("Dynamic", "Never", "Always")) {
   getCollectionMemberVarSpecs <- veupathUtils::matchArg(getCollectionMemberVarSpecs)
+  
+  varSpecs <- unlist(lapply(as.list(object), veupathUtils::getVariableSpec, getCollectionMemberVarSpecs))
+  if (all(unlist(lapply(varSpecs, is.null)))) {
+    return(NULL)
+  }
 
-  return(unlist(lapply(as.list(object), veupathUtils::getVariableSpec, getCollectionMemberVarSpecs)))
+  return(varSpecs)
 })
 
 #' StuydIdColName as String
@@ -149,7 +156,7 @@ findStudyVocabularyByVariableSpec <- function(vocabs, variables, variableSpec) {
 
   vocabVariableSpecs <- lapply(as.list(vocabs), veupathUtils::getVariableSpec)
   vocabVariableMetadata <- veupathUtils::findVariableMetadataFromVariableSpec(variables, veupathUtils::VariableSpecList(S4Vectors::SimpleList(vocabVariableSpecs)))
-  vocabVariableSpecsAdjustedForVariableCollectionMembers <- veupathUtils::getVariableSpec(vocabVariableMetadata, TRUE)
+  vocabVariableSpecsAdjustedForVariableCollectionMembers <- veupathUtils::getVariableSpec(vocabVariableMetadata, "Dynamic")
   
   # if we have found variable collection members in the VariableMetadata, need to check if the passed varspec was a member
   # look through the list that includes the members, and if we match one, get the varspec of the parent/ collection
@@ -167,16 +174,20 @@ findStudyVocabularyByVariableSpec <- function(vocabs, variables, variableSpec) {
 }
 
 
-findVariableSpecsFromStudyVocabulary <- function(vocabs, variables, getCollectionMemberVarSpecs = c(TRUE, FALSE)) {
+findVariableSpecsFromStudyVocabulary <- function(vocabs, variables, getCollectionMemberVarSpecs = c("Dynamic", "Never", "Always")) {
   if (!inherits(vocabs, 'StudySpecificVocabulariesByVariableList')) stop("The first argument must be of the S4 class `StudySpecificVocabulariesByVariableList`.")
   if (!inherits(variables, 'VariableMetadataList')) stop("The second argument must be of the S4 class `VariableMetadataList`.")
   getCollectionMemberVarSpecs <- veupathUtils::matchArg(getCollectionMemberVarSpecs)
 
   varSpecsWithVocabs <- VariableSpecList(S4Vectors::SimpleList(lapply(as.list(vocabs), getVariableSpec)))
 
-  if (getCollectionMemberVarSpecs) {
+  if (getCollectionMemberVarSpecs != "Never") {
     varMetadataWithVocabs <- findVariableMetadataFromVariableSpec(variables, varSpecsWithVocabs)
-    varSpecsWithVocabs <- VariableSpecList(S4Vectors::SimpleList(getVariableSpec(varMetadataWithVocabs, getCollectionMemberVarSpecs)))
+    varSpecsWithVocabs <- getVariableSpec(varMetadataWithVocabs, getCollectionMemberVarSpecs)
+    if (is.null(varSpecsWithVocabs)) {
+      return(NULL)
+    }
+    varSpecsWithVocabs <- VariableSpecList(S4Vectors::SimpleList(varSpecsWithVocabs))
   }
 
   return(varSpecsWithVocabs)
@@ -222,28 +233,16 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
 
   .dt <- object@data
   veupathUtils::logWithTime(paste0("Imputing zeroes for data.table with ", ncol(.dt), " columns and ", nrow(.dt), " rows"), verbose)
-  # TODO feel like im doing this operation a lot.. maybe another method/ helper?
-  # also, try to figure a way we dont have to do this.. i dont remember why i did this and its inconsistent behavior
-  variableColumnNames <- unlist(lapply(as.list(variables), getVariableColumnNames))
   allEntityIdColumns <- object@ancestorIdColumns
-  # drop things that arent in the plot, except ids
-  .dt <- .dt[, c(variableColumnNames, allEntityIdColumns), with=FALSE]
   vocabs <- object@studySpecificVocabularies
 
   # it seems a lot of this validation could belong to some custom obj w both a megastudy and vm slot.. but what is that? a MegastudyPlot?
   # plus going that route means using this class in plot.data means an api change for plot.data
   # that api change might be worth making in any case, but not doing it now
   variableMetadataNeedingStudyVocabularies <- findStudyDependentVocabularyVariableMetadata(variables)
-  variableSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, TRUE)
-  variableCollectionSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, FALSE)
-  if (is.null(variableCollectionSpecsWithStudyVocabs)) {
-    variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableSpecsWithStudyVocabs)
-  } else {
-    variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableCollectionSpecsWithStudyVocabs)
-  }
-  if (length(variableSpecsWithStudyVocabs) > length(variableMetadataForStudyVocabVariables)) {
-    warning("Study vocabularies were provided for variables that are not present in the plot. These will be ignored.")
-  }
+  variableSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, "Never")
+  variableCollectionSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, "Always")
+  variableMetadataForStudyVocabVariables <- findVariableMetadataFromVariableSpec(variables, variableSpecsWithStudyVocabs)
   if (length(variableMetadataForStudyVocabVariables) < length(variableMetadataNeedingStudyVocabularies)) {
     stop("Some provided variables require study vocabularies but dont have one.")
   }
@@ -285,47 +284,45 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   }
 
   # for upstream entities data
-  combinations.dt <- unique(.dt[, -c(weightingVarColName, varSpecColNames), with=FALSE])
-  combinations.dt[[varSpecEntityIdColName]] <- NULL
-  combinations.dt <- unique(combinations.dt)
-  veupathUtils::logWithTime(paste("Found", nrow(combinations.dt), "existing variable value combinations."), verbose)
+  upstreamEntityVariables.dt <- unique(.dt[, -c(weightingVarColName, varSpecColNames), with=FALSE])
+  upstreamEntityVariables.dt[[varSpecEntityIdColName]] <- NULL
+  upstreamEntityVariables.dt <- unique(upstreamEntityVariables.dt)
+  veupathUtils::logWithTime(paste("Found", nrow(upstreamEntityVariables.dt), "unique existing upstream variable value combinations."), verbose)
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
   
-
-  # impute zeroes for each study vocab iteratively
-  makeImputedZeroesDT <- function(variableSpec) {
-    veupathUtils::logWithTime(paste("Imputing zeroes for", veupathUtils::getColName(variableSpec)), verbose)
+  # make vocab table for a single variable
+  makeVocabDT <- function(variableSpec) {
+    veupathUtils::logWithTime(paste("Finding vocab for", veupathUtils::getColName(variableSpec)), verbose)
     varSpecColName <- veupathUtils::getColName(variableSpec)
     vocab <- findStudyVocabularyByVariableSpec(vocabs, variables, variableSpec)
     vocabs.dt <- veupathUtils::as.data.table(vocab)
     names(vocabs.dt)[2] <- varSpecColName
-    vocabs.dt <- merge(entityIds.dt, vocabs.dt, by=studyIdColName, allow.cartesian=TRUE)
-    present.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColName), with=FALSE])
-    # assume if a value was explicitly filtered against that its not in the vocab
-    add.dt <- vocabs.dt[!present.dt, on=c(upstreamEntityIdColNames, varSpecColName)]
-    if (nrow(add.dt) > 0) {
-      add.dt[[weightingVarColName]] <- 0
-    } else {
-      add.dt[[weightingVarColName]] <- numeric()
-    }
-   
-    veupathUtils::logWithTime(paste("Found", nrow(add.dt), "new combinations of values for", veupathUtils::getColName(variableSpec)), verbose)
-    return(unique(add.dt))
+    return(vocabs.dt)
   }
-  
-  dataTablesOfImputedValues <- lapply(variableSpecsToImputeZeroesFor, makeImputedZeroesDT)
-  mergeDTsOfImputedValues <- function(x,y) {
-    merge(x, y, by = c(upstreamEntityIdColNames, varSpecEntityIdColName, weightingVarColName), allow.cartesian=TRUE)
-  }
-  .dt2 <- purrr::reduce(dataTablesOfImputedValues, mergeDTsOfImputedValues)
-  veupathUtils::logWithTime(paste("Finished collapsing imputed values for all variables into one table. Added", nrow(.dt2), "total rows."), verbose)
-  message(colnames(.dt2))
-  message(head(.dt2))
 
-  #make impossibly unique ids
-  .dt2[[varSpecEntityIdColName]] <- apply(.dt2[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo='md5')
-  .dt2 <- unique(merge(.dt2, combinations.dt, by=upstreamEntityIdColNames))
-  .dt <- rbind(.dt, .dt2)
+  # make all possible variable value combinations table
+  vocabDTs <- lapply(variableSpecsToImputeZeroesFor, makeVocabDT)
+  allCombinations.dt <- purrr::reduce(vocabDTs, merge, allow.cartesian=TRUE)
+  
+  # find which ones we need to add
+  presentCombinations.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE])
+  # need upstream entity ids for all combinations in order to properly find and merge missing values
+  allCombinations.dt <- merge(allCombinations.dt, upstreamEntityVariables.dt, allow.cartesian=TRUE)
+  # NOTE: we're assuming if a value was explicitly filtered against that its not in the vocab
+  addCombinations.dt <- allCombinations.dt[!presentCombinations.dt, on=c(upstreamEntityIdColNames, varSpecColNames)]
+
+  if (nrow(addCombinations.dt) == 0) {
+    veupathUtils::logWithTime("No new combinations to add. Returning existing table.", verbose)
+    return(.dt)
+  } else {
+    veupathUtils::logWithTime(paste("Adding", nrow(addCombinations.dt), "new combinations."), verbose)
+  }
+
+  # go ahead and add them, first filling in values for all columns
+  addCombinations.dt[[weightingVarColName]] <- 0  
+  addCombinations.dt[[varSpecEntityIdColName]] <- apply(addCombinations.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo="md5")
+  # bind them to the existing rows
+  .dt <- rbind(.dt, addCombinations.dt)
   veupathUtils::logWithTime("Added imputed values to existing table. Finished imputing zeroes.", verbose)
  
   return(.dt)

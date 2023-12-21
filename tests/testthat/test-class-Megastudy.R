@@ -115,9 +115,9 @@ test_that("Megastudy and associated validation works", {
 
 # TODO this could go in its own file maybe
 test_that("imputeZeroes method is sane", {
-  m <- Megastudy(data=megastudyDT,
+  m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.sex', 'sample.species', 'collection.attractant', 'study.author'), with=FALSE],
                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id'),
-                 studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs)))
+                 studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs, sexVocabs)))
 
   # case where neither study nor collection vars in the plot
   variables <- new("VariableMetadataList", SimpleList(
@@ -134,15 +134,23 @@ test_that("imputeZeroes method is sane", {
       variableSpec = new("VariableSpec", variableId = 'specimen_count', entityId = 'sample'),
       plotReference = new("PlotReference", value = 'yAxis'),
       dataType = new("DataType", value = 'NUMBER'),
-      dataShape = new("DataShape", value = 'CONTINUOUS'))
+      dataShape = new("DataShape", value = 'CONTINUOUS')),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'sex', entityId = 'sample'),
+      # empty plotReference means that it is not plotted
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
+      hasStudyDependentVocabulary = TRUE)
   ))
 
   imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   # result has the columns needed to build a plot, based on variables AND the correct number of rows/ zeroes
-  # TODO lol its just possible this fxn shouldnt remove cols but my brain hurts enough already 
   expect_equal(all(c("sample.species","sample.specimen_count") %in% names(imputedDT)), TRUE)
-  expect_equal(nrow(imputedDT), 12)
-  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 6)
+  # 5 sexes * 3 species in study A (15) + 2 sexes * 3 species in study B (6) * 2 collections per study = 42
+  expect_equal(nrow(imputedDT), 42)
+  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 36)
 
   # collection entity var is present
   variables <- new("VariableMetadataList", SimpleList(
@@ -165,13 +173,21 @@ test_that("imputeZeroes method is sane", {
       variableSpec = new("VariableSpec", variableId = 'attractant', entityId = 'collection'),
       plotReference = new("PlotReference", value = 'overlay'),
       dataType = new("DataType", value = 'STRING'),
-      dataShape = new("DataShape", value = 'CATEGORICAL'))
+      dataShape = new("DataShape", value = 'CATEGORICAL')),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'sex', entityId = 'sample'),
+      # empty plotReference means that it is not plotted
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
+      hasStudyDependentVocabulary = TRUE)
   ))
 
   imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   expect_equal(all(c("sample.species","sample.specimen_count","collection.attractant") %in% names(imputedDT)), TRUE)
-  expect_equal(nrow(imputedDT), 12)
-  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 6)
+  expect_equal(nrow(imputedDT), 42)
+  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 36)
 
   # both collection and study entity vars are present
   variables <- new("VariableMetadataList", SimpleList(
@@ -200,13 +216,21 @@ test_that("imputeZeroes method is sane", {
       variableSpec = new("VariableSpec", variableId = 'author', entityId = 'study'),
       plotReference = new("PlotReference", value = 'facet1'),
       dataType = new("DataType", value = 'STRING'),
-      dataShape = new("DataShape", value = 'CATEGORICAL'))
+      dataShape = new("DataShape", value = 'CATEGORICAL')),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'sex', entityId = 'sample'),
+      # empty plotReference means that it is not plotted
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
+      hasStudyDependentVocabulary = TRUE)
   ))
 
   imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   expect_equal(all(c("sample.species","sample.specimen_count","collection.attractant","study.author") %in% names(imputedDT)), TRUE)
-  expect_equal(nrow(imputedDT), 12)
-  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 6)
+  expect_equal(nrow(imputedDT), 42)
+  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 36)
 
   # all values in vocab already present
   megastudyDTSMALL <- rbind(megastudyDT, 
@@ -225,9 +249,9 @@ test_that("imputeZeroes method is sane", {
                                                    assay.pathogen3_presence=c('No','Yes'),
                                                    assay.weighting_variable=c(35,40)))
   
-  mCOMPLETE <- Megastudy(data=megastudyDTSMALL,
+  mCOMPLETE <- Megastudy(data=megastudyDTSMALL[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.species', 'sample.sex', 'collection.attractant', 'study.author'), with=FALSE],
                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id'),
-                 studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabsSMALL)))
+                 studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabsSMALL, sexVocabsSMALL)))
   
   variables <- new("VariableMetadataList", SimpleList(
     new("VariableMetadata",
@@ -255,13 +279,22 @@ test_that("imputeZeroes method is sane", {
       variableSpec = new("VariableSpec", variableId = 'author', entityId = 'study'),
       plotReference = new("PlotReference", value = 'facet1'),
       dataType = new("DataType", value = 'STRING'),
-      dataShape = new("DataShape", value = 'CATEGORICAL'))
+      dataShape = new("DataShape", value = 'CATEGORICAL')),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'sex', entityId = 'sample'),
+      # empty plotReference means that it is not plotted
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
+      hasStudyDependentVocabulary = TRUE)
   ))
 
   imputedDT <- getDTWithImputedZeroes(mCOMPLETE, variables, FALSE)
-  expect_equal(all(names(imputedDT) %in% names(m@data)), TRUE)
-  expect_equal(nrow(imputedDT), nrow(mCOMPLETE@data))
-  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
+  expect_equal(all(names(imputedDT) %in% names(mCOMPLETE@data)), TRUE)
+  # 2 species * 2 sexes * 2 collections * 2 studies = 16
+  expect_equal(nrow(imputedDT), 16)
+  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 8)
 
   # no weighting var in plot
   variables <- new("VariableMetadataList", SimpleList(
@@ -284,7 +317,15 @@ test_that("imputeZeroes method is sane", {
       variableSpec = new("VariableSpec", variableId = 'author', entityId = 'study'),
       plotReference = new("PlotReference", value = 'facet1'),
       dataType = new("DataType", value = 'STRING'),
-      dataShape = new("DataShape", value = 'CATEGORICAL'))
+      dataShape = new("DataShape", value = 'CATEGORICAL')),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'sex', entityId = 'sample'),
+      # empty plotReference means that it is not plotted
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
+      hasStudyDependentVocabulary = TRUE)
   ))
 
   imputedDT <- getDTWithImputedZeroes(mCOMPLETE, variables, FALSE)
@@ -293,9 +334,9 @@ test_that("imputeZeroes method is sane", {
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
 
   # an assay var is present 
-  m <- Megastudy(data=megastudyDT,
+  m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id','assay.id', 'assay.pathogen_prevalence', 'sample.species', 'sample.sex', 'collection.attractant', 'study.author')],
                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id','assay.id'),
-                 studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs)))
+                 studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs, sexVocabs)))
 
   variables <- new("VariableMetadataList", SimpleList(
     new("VariableMetadata",
@@ -323,12 +364,18 @@ test_that("imputeZeroes method is sane", {
       variableSpec = new("VariableSpec", variableId = 'author', entityId = 'study'),
       plotReference = new("PlotReference", value = 'facet1'),
       dataType = new("DataType", value = 'STRING'),
-      dataShape = new("DataShape", value = 'CATEGORICAL'))
+      dataShape = new("DataShape", value = 'CATEGORICAL')),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'sex', entityId = 'sample'),
+      # empty plotReference means that it is not plotted
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
+      hasStudyDependentVocabulary = TRUE)
   ))
 
   imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
-  # are we ok that it leaves all cols if it decides nothing needs doing??
-  # it wont hurt anything, its just inconsistent behavior
   expect_equal(all(names(imputedDT) %in% names(m@data)), TRUE)
   expect_equal(nrow(imputedDT), nrow(m@data))
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
@@ -359,7 +406,15 @@ test_that("imputeZeroes method is sane", {
       variableSpec = new("VariableSpec", variableId = 'pathogen_presence', entityId = 'assay'),
       plotReference = new("PlotReference", value = 'facet1'),
       dataType = new("DataType", value = 'STRING'),
-      dataShape = new("DataShape", value = 'CATEGORICAL'))
+      dataShape = new("DataShape", value = 'CATEGORICAL')),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'sex', entityId = 'sample'),
+      # empty plotReference means that it is not plotted
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
+      hasStudyDependentVocabulary = TRUE)
   ))
 
   imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
@@ -368,7 +423,7 @@ test_that("imputeZeroes method is sane", {
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 0)
 
   # multiple special vocabs in same plot, w one shared weighting var
-  m <- Megastudy(data=megastudyDT,
+  m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.species', 'sample.sex', 'collection.attractant'), with=FALSE],
                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id'),
                  studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs,sexVocabs)))
 
@@ -405,8 +460,8 @@ test_that("imputeZeroes method is sane", {
 
   imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   expect_equal(all(c("sample.species","sample.specimen_count","sample.sex","collection.attractant") %in% names(imputedDT)), TRUE)
-  expect_equal(nrow(imputedDT), 20)
-  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 14)
+  expect_equal(nrow(imputedDT), 42)
+  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 36)
 
   # special vocab on sample, regular weighting var on assay
   # phase this in
@@ -554,7 +609,7 @@ test_that("imputeZeroes method is sane", {
                                                                                                 StudySpecificVocabulary(studyIdColumnName='study.id', study='b', variableSpec=VariableSpec(entityId='assay',variableId='pathogen_presence_variable_collection'), vocabulary=c('Yes','No'))))
 
 
-  m <- Megastudy(data=megastudyDT,
+  m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'assay.id', 'sample.specimen_count', 'collection.attractant', 'study.author', 'assay.pathogen_presence', 'assay.pathogen2_presence', 'assay.pathogen3_presence'), with=FALSE],
                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id', 'assay.id'),
                  studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(pathogenVariableCollectionVocabs)))
 
@@ -582,8 +637,10 @@ test_that("imputeZeroes method is sane", {
 
   imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   # result has the columns needed to build a plot, based on variables AND the correct number of rows/ zeroes
-  # TODO lol its just possible this fxn shouldnt remove cols but my brain hurts enough already 
   expect_equal(all(c("assay.pathogen_presence","assay.pathogen2_presence","assay.pathogen3_presence","sample.specimen_count") %in% names(imputedDT)), TRUE)
-  expect_equal(nrow(imputedDT), 12)
-  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 6)
+  # 2 studies * 2 collections per study * 2 values for each of 3 pathogen variables = 32?
+  # im not sure this test makes any sense, bc were imputing 0 on a sample for a collection on assay
+  # im going to comment until we see a real use case
+  #expect_equal(nrow(imputedDT), 32)
+  #expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 26)
 })

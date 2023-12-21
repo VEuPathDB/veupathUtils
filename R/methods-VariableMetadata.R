@@ -639,18 +639,19 @@ setGeneric("findVariableMetadataFromVariableSpec",
 
 #' @export
 setMethod("findVariableMetadataFromVariableSpec", signature("VariableMetadataList", "VariableSpecList"), function(variables, object) {
-  variableSpecs <- unlist(lapply(as.list(variables), veupathUtils::getVariableSpec, FALSE))
+  variableSpecs <- unlist(lapply(as.list(variables), veupathUtils::getVariableSpec, "Never"))
   colNamesToMatch <- unlist(lapply(as.list(object), veupathUtils::getColName))
  
   index <- which(purrr::map(variableSpecs, function(x) {veupathUtils::getColName(x)}) %in% colNamesToMatch)
+  
   if (!length(index)) return(NULL)
-
+  
   return(variables[index]) 
 })
 
 #' @export
 setMethod("findVariableMetadataFromVariableSpec", signature("VariableMetadataList", "VariableSpec"), function(variables, object) {
-  variableSpecs <- unlist(lapply(as.list(variables), veupathUtils::getVariableSpec, FALSE))
+  variableSpecs <- unlist(lapply(as.list(variables), veupathUtils::getVariableSpec, "Never"))
  
   index <- which(purrr::map(variableSpecs, function(x) {veupathUtils::getColName(x)}) == veupathUtils::getColName(object))
   if (!length(index)) return(NULL)
