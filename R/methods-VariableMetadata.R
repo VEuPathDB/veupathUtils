@@ -208,9 +208,14 @@ setMethod("toJSON", signature("VariableMetadata"), function(object, named = c(TR
 
     variable_class_json <- veupathUtils::toJSON(object@variableClass, named = FALSE)
     variable_spec_json <- veupathUtils::toJSON(object@variableSpec, named = FALSE)
-    plot_reference_json <- veupathUtils::toJSON(object@plotReference, named = FALSE)
+    
 
-    tmp <- paste0('"variableClass":', variable_class_json, ',"variableSpec":', variable_spec_json, ',"plotReference":', plot_reference_json)
+    tmp <- paste0('"variableClass":', variable_class_json, ',"variableSpec":', variable_spec_json)
+
+    if (!is.na(object@plotReference@value)) {
+      plot_reference_json <- veupathUtils::toJSON(object@plotReference, named = FALSE)
+      tmp <- paste0(tmp, ',"plotReference":', plot_reference_json)
+    }
 
     if (!is.na(object@displayName)) {
       display_name_json <- jsonlite::toJSON(jsonlite::unbox(object@displayName))
