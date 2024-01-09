@@ -302,21 +302,14 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
 
   # make all possible variable value combinations table
   vocabDTs <- lapply(variableSpecsToImputeZeroesFor, makeVocabDT)
-  message(paste("vocabDTs", length(vocabDTs)))
-  allCombinations.dt <- purrr::reduce(vocabDTs, merge, allow.cartesian=TRUE)
-  message(paste("allCombinations.dt", nrow(allCombinations.dt)))
+  allCombinations.dt <- purrr::reduce(vocabDTs, merge, allow.cartesian=TRUE, all=TRUE)
 
   # find which ones we need to add
   presentCombinations.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE])
-  message(paste("presentCombinations.dt", nrow(presentCombinations.dt)))
   # need upstream entity ids for all combinations in order to properly find and merge missing values
-  message("names(allCombinations.dt)", names(allCombinations.dt))
-  message("names(upstreamEntityVariables.dt)", names(upstreamEntityVariables.dt))
   allCombinations.dt <- merge(allCombinations.dt, upstreamEntityVariables.dt, allow.cartesian=TRUE)
-  message(paste("allCombinations.dt", nrow(allCombinations.dt)))
   # NOTE: we're assuming if a value was explicitly filtered against that its not in the vocab
   addCombinations.dt <- allCombinations.dt[!presentCombinations.dt, on=c(upstreamEntityIdColNames, varSpecColNames)]
-  message(paste("addCombinations.dt", nrow(addCombinations.dt)))
 
   if (nrow(addCombinations.dt) == 0) {
     veupathUtils::logWithTime("No new combinations to add. Returning existing table.", verbose)
