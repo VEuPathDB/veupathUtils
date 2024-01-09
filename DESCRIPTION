@@ -43,3 +43,5 @@ Collate:
     'utils-string.R'
     'utils.R'
     'veupathUtils-package.R'
+Depends: 
+    R (>= 2.10)
