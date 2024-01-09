@@ -52,15 +52,16 @@ getVarSpecAsString <- function(entityId, variableId) {
   paste0("veupathUtils::VariableSpec(entityId='", entityId, "', variableId='", variableId, "')")
 }
 
-veupathUtils::StudySpecificVocabulary(
-  variableSpec=veupathUtils::VariableSpec(
-    entityId='EUPATH_0000609', 
-    variableId='PATO_0000047'
-  ), 
-  vocabulary=c('female,male'),
-  study='1969-Iowa-surveillance',
-  studyIdColumnName='EUPATH_0000605.Study_stable_id'
-)
+# an example output from the `values` column of the output of getStudyVocabTibble function
+#veupathUtils::StudySpecificVocabulary(
+#  variableSpec=veupathUtils::VariableSpec(
+#    entityId='EUPATH_0000609', 
+#    variableId='PATO_0000047'
+#  ), 
+#  vocabulary=c('female,male'),
+#  study='1969-Iowa-surveillance',
+#  studyIdColumnName='EUPATH_0000605.Study_stable_id'
+#)
 
 
 ## some 'real life' test data, though minified for brevity
