@@ -302,7 +302,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
 
   # make all possible variable value combinations table
   vocabDTs <- lapply(variableSpecsToImputeZeroesFor, makeVocabDT)
-  allCombinations.dt <- purrr::reduce(vocabDTs, merge, allow.cartesian=TRUE)
+  allCombinations.dt <- purrr::reduce(vocabDTs, merge, allow.cartesian=TRUE, all=TRUE)
 
   # find which ones we need to add
   presentCombinations.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE])

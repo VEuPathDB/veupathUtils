@@ -20,6 +20,7 @@ speciesVocabs <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(study
 studyAsex <- StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='sample',variableId='sex'), vocabulary=c('female','male','non-binary','other','do not wish to specify'))
 studyBsex <- StudySpecificVocabulary(studyIdColumnName='study.id', study='b', variableSpec=VariableSpec(entityId='sample',variableId='sex'), vocabulary=c('male','female'))
 sexVocabs <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(studyAsex,studyBsex))
+sexVocabsSingleStudy <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(studyAsex))
 
 studyAspeciesSMALL <- StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2'))
 studyBspeciesSMALL <- StudySpecificVocabulary(studyIdColumnName='study.id', study='b', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2'))
@@ -151,6 +152,22 @@ test_that("imputeZeroes method is sane", {
   # 5 sexes * 3 species in study A (15) + 2 sexes * 3 species in study B (6) * 2 collections per study = 42
   expect_equal(nrow(imputedDT), 42)
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 36)
+
+  # case where one study vocab is missing a study
+  mDTSexSingleStudy <- megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.sex', 'sample.species', 'collection.attractant', 'study.author'), with=FALSE]
+  mDTSexSingleStudy$sample.sex[mDTSexSingleStudy$study.id == 'b'] <- NA_character_
+  mDTSexSingleStudy <- unique(mDTSexSingleStudy)
+
+  mSexSingleStudy <- Megastudy(data=mDTSexSingleStudy,
+                 ancestorIdColumns=c('study.id', 'collection.id', 'sample.id'),
+                 studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs, sexVocabsSingleStudy)))
+
+  imputedDT <- getDTWithImputedZeroes(mSexSingleStudy, variables, FALSE)
+  # result has the columns needed to build a plot, based on variables AND the correct number of rows/ zeroes
+  expect_equal(all(c("sample.species","sample.specimen_count") %in% names(imputedDT)), TRUE)
+  # 5 sexes * 3 species in study A (15) + 3 species in study B * 2 collections per study = 42
+  expect_equal(nrow(imputedDT), 36)
+  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 30)
 
   # collection entity var is present
   variables <- new("VariableMetadataList", SimpleList(
