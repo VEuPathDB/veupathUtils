@@ -33,6 +33,7 @@ Collate:
     'class-Megastudy.R'
     'class-Range.R'
     'class-Statistic.R'
+    'data.R'
     'methods-Bin.R'
     'methods-Statistic.R'
     'methods-Megastudy.R'
