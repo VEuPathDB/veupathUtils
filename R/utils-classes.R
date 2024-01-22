@@ -1,5 +1,6 @@
 # helper S4Vectors SimpleList toJSON
 # no easy option to be named here really i guess
+#' @export
 S4SimpleListToJSON <- function(S4SimpleList, named = c(TRUE, FALSE)) {
     if (!inherits(S4SimpleList, 'SimpleList')) stop("S4SimpleListToJSON only accepts an S4Vectors::SimpleList as input.", class(S4SimpleList), "was provided.")
 
