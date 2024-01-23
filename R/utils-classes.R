@@ -7,7 +7,7 @@ S4SimpleListToJSON <- function(S4SimpleList, named = c(TRUE, FALSE)) {
     tmp <- as.list(S4SimpleList)
     tmp <- lapply(tmp, veupathUtils::toJSON, named)
     tmp <- paste(tmp, collapse = ",")
-    tmp <- paste0('[', tmp, ']')
+    if (tmp != "") tmp <- paste0("[", tmp, "]")
 
     return(tmp)
 }
