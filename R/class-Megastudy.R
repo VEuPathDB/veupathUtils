@@ -58,11 +58,11 @@ check_multiple_study_vocabularies_on_same_entity <- function(object) {
   errors <- character()
 
   if (length(unique(unlist(lapply(as.list(object), getStudyIdColumnName)))) != 1) {
-    errors <- c(errors, "All study vocabularies must belong to the same entity.")
+    errors <- c(errors, paste0("All study vocabularies must be able to be identified by the same study entity. Found the following study entities: ", paste(unique(unlist(lapply(as.list(object), getStudyIdColumnName))), collapse = ", ")))
   }
 
   if (length(unique(unlist(lapply(as.list(object), getEntityId)))) != 1) {
-    errors <- c(errors, "All study vocabularies must belong to the same entity.")
+    errors <- c(errors, paste0("All study vocabularies must belong to the same entity. Found the following entities: ", paste(unique(unlist(lapply(as.list(object), getEntityId))), collapse = ", ")))
   }
 
   return(if (length(errors) == 0) TRUE else errors)
