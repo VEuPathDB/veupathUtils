@@ -95,3 +95,13 @@ setroworder <- function(x, neworder) {
     .Call(data.table:::Creorder, x, as.integer(neworder), PACKAGE = "data.table")
     invisible(x)
 }
+
+#' Rescale Values to be non-negative
+#'
+#' This function rescales all values in a vector to be non-negative.
+#' @param x numeric vector
+#' @export
+rescaleToNonNeg <- function(x) {
+  x <- x - min(x, na.rm = TRUE)
+  return(x)
+}
