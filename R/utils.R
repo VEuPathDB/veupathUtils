@@ -96,12 +96,12 @@ setroworder <- function(x, neworder) {
     invisible(x)
 }
 
-#' Rescale Values to be non-negative
+#' Shift Values to be non-negative
 #'
-#' This function rescales all values in a vector to be non-negative.
+#' This function shifts all values in a vector to be non-negative.
 #' @param x numeric vector
 #' @export
-rescaleToNonNeg <- function(x) {
+shiftToNonNeg <- function(x) {
   x <- x - min(x, na.rm = TRUE)
   return(x)
 }
