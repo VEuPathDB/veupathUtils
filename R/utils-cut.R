@@ -83,6 +83,11 @@ cut_width <- function(x, width, center = NULL, boundary = NULL, closed = c("righ
   # Perhaps we can rationalise/remove the boundary code if a use-case can't
   # be described.
   min_x <- find_origin(x_range, width, boundary)
+  # if x are integers and width is 1, make sure min_x is one smaller than the data
+  if (all(x == round(x)) && width == 1) {
+    min_x <- min_x - 1
+  }
+
   max_x <- max(x, na.rm = TRUE)
 
   breaks <- c(seq(min_x, max_x, width))

@@ -21,3 +21,11 @@ test_that("breaks returns appropriate results", {
                                median(df) + 2*sd(df), 
                                max(max(df),median(df) + 3*sd(df))), tolerance=.5), TRUE)
 })
+
+test_that("cut_width splits the first inclusive bin for integers where bin width is 1", {
+  ints <- c(0,1,2,2,3,3,3,4,4,4,4)
+  expectedBins <- c("[-1,0]","(0,1]","(1,2]","(1,2]","(2,3]","(2,3]","(2,3]","(3,4]","(3,4]","(3,4]","(3,4]")
+
+  expect_equal(as.character(cut_width(ints, 1, .5)), expectedBins)
+  expect_equal(as.character(cut_width(ints,1,boundary=min(ints))), expectedBins) 
+})
