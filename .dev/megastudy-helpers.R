@@ -63,6 +63,34 @@ getVarSpecAsString <- function(entityId, variableId) {
 #  studyIdColumnName='EUPATH_0000605.Study_stable_id'
 #)
 
+## for reading in some vocabs
+sexVocab <- getStudySpecificVocabularyByVariable(
+  '../rootVocab_bobs_analysis_sex.tsv',
+  'EUPATH_0000609',
+  'PATO_0000047',
+  'EUPATH_0000605.Study_stable_id'
+)
+
+speciesVocab <- getStudySpecificVocabularyByVariable(
+  '../rootVocab_bobs_analysis_species.tsv',
+  'EUPATH_0000609',
+  'OBI_0001909',
+  'EUPATH_0000605.Study_stable_id'
+)
+
+lifeStageVocab <- getStudySpecificVocabularyByVariable(
+  '../rootVocab_bobs_analysis_lifeStage.tsv',
+  'EUPATH_0000609',
+  'UBERON_0000105',
+  'EUPATH_0000605.Study_stable_id'
+)
+
+feedingStatusVocab <- getStudySpecificVocabularyByVariable(
+  '../rootVocab_bobs_analysis_feedingStatus.tsv',
+  'EUPATH_0000609',
+  'EUPATH_0043227',
+  'EUPATH_0000605.Study_stable_id'
+)
 
 ## some 'real life' test data, though minified for brevity
 # some stuff for bobs analysis
@@ -165,8 +193,16 @@ speciesVocabReal.mini <-
       hasStudyDependentVocabulary = TRUE)
   ))
 
-  megastudyReal <- Megastudy(
+  ## mini vocabs
+  megastudyReal.mini <- Megastudy(
     data=megastudyDataReal,
     ancestorIdColumns=c('EUPATH_0000605.Study_stable_id', 'GAZ_00000448.GeographicLocation_stable_id','OBI_0000659.ParentOfSample_stable_id','EUPATH_0000609.Sample_stable_id'),
     studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(sexVocabReal.mini, speciesVocabReal.mini, lifeStageVocabReal.mini, feedingStatusVocabReal.mini))
+  )
+
+  ## full vocabs
+  megastudyReal <- Megastudy(
+    data=megastudyDataReal,
+    ancestorIdColumns=c('EUPATH_0000605.Study_stable_id', 'GAZ_00000448.GeographicLocation_stable_id','OBI_0000659.ParentOfSample_stable_id','EUPATH_0000609.Sample_stable_id'),
+    studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(sexVocab, speciesVocab, lifeStageVocab, feedingStatusVocab))
   )
