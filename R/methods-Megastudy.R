@@ -51,9 +51,9 @@ setMethod('getVariableSpec', signature('VariableMetadataList'), function(object,
 
 #' StuydIdColName as String
 #' 
-#' This function returns the studyIdColName from an StudySpecificVocabulary
+#' This function returns the studyIdColName from an StudySpecificVocabulariesByVariable
 #' 
-#' @param object veupathUtils::StudySpecificVocabulary
+#' @param object veupathUtils::StudySpecificVocabulariesByVariable
 #' @return character
 #' @export
 setGeneric("getStudyIdColumnName", 
@@ -74,9 +74,9 @@ setMethod('getStudyIdColumnName', signature('StudySpecificVocabulariesByVariable
 
 #' VarSpecColName as String
 #' 
-#' This function returns the variableSpec from an StudySpecificVocabulary
+#' This function returns the variableSpec from an StudySpecificVocabulariesByVariable
 #' 
-#' @param object veupathUtils::StudySpecificVocabulary
+#' @param object veupathUtils::StudySpecificVocabulariesByVariable
 #' @return character
 #' @export
 setGeneric("getVariableSpecColumnName", 

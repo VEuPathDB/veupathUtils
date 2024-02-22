@@ -20,6 +20,7 @@ check_study_vocabulary <- function(object) {
 #' @slot studyVocab A data.table with columns studyIdColumnName and variableSpecColumnName that specifies expected vocabularies for each study
 #' @name StudySpecificVocabulariesByVariable-class
 #' @rdname StudySpecificVocabulariesByVariable-class
+#' @include class-VariableMetadata.R
 #' @export
 StudySpecificVocabulariesByVariable <- setClass("StudySpecificVocabulariesByVariable",
   representation = representation(
