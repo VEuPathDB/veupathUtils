@@ -14,7 +14,7 @@ setGeneric("getVariableSpec",
 
 #' @export 
 setMethod('getVariableSpec', signature('StudySpecificVocabulariesByVariable'), function(object) {
-  return(veupathUtils::getVariableSpec(object[[1]]))
+  return(object@variableSpec)
 })
 
 #' @export
@@ -62,19 +62,13 @@ setGeneric("getStudyIdColumnName",
 )
 
 #' @export
-setMethod('getStudyIdColumnName', signature('StudySpecificVocabulary'), function(object) {
-  return(object@studyIdColumnName)
-})
-
-#' @export
 setMethod('getStudyIdColumnName', signature('StudySpecificVocabulariesByVariable'), function(object) {
-  #since we validate theyre all the same, can just take the first
-  return(object[[1]]@studyIdColumnName)
+  return(object@studyIdColumnName)
 })
 
 #' @export 
 setMethod('getStudyIdColumnName', signature('StudySpecificVocabulariesByVariableList'), function(object) {
-  #works bc of validation
+  #works bc of class validation that theyre all the same
   return(veupathUtils::getStudyIdColumnName(object[[1]]))
 })
 
@@ -91,14 +85,9 @@ setGeneric("getVariableSpecColumnName",
 )
 
 #' @export
-setMethod('getVariableSpecColumnName', signature('StudySpecificVocabulary'), function(object) {
-  return(veupathUtils::getColName(object@variableSpec))
-})
-
-#' @export
 setMethod('getVariableSpecColumnName', signature('StudySpecificVocabulariesByVariable'), function(object) {
   #since we validate theyre all the same, can just take the first
-  return(veupathUtils::getColName(object[[1]]@variableSpec))
+  return(veupathUtils::getColName(object@variableSpec))
 })
 
 #' @export 
@@ -118,28 +107,8 @@ setMethod('getEntityId', signature('VariableSpec'), function(object) {
 })
 
 #' @export
-setMethod('getEntityId', signature('StudySpecificVocabulary'), function(object) {
-  return(veupathUtils::getEntityId(object@variableSpec))
-})
-
-#' @export
 setMethod('getEntityId', signature('StudySpecificVocabulariesByVariable'), function(object) {
-  #since we validate theyre all the same, can just take the first
-  return(veupathUtils::getEntityId(object[[1]]@variableSpec))
-})
-
-#' @include methods-Statistic.R
-#' @export
-setMethod('as.data.table', signature('StudySpecificVocabulary'), function(x) {
-  .dt <- data.table::data.table('study'=x@study, 'variable'=x@vocabulary)
-  names(.dt) <- c(x@studyIdColumnName, getColName(x@variableSpec))
-
-  return(.dt)
-})
-
-#' @export 
-setMethod('as.data.table', signature('StudySpecificVocabulariesByVariable'), function(x) {
-  return(purrr::reduce(lapply(as.list(x), veupathUtils::as.data.table), rbind))
+  return(veupathUtils::getEntityId(object@variableSpec))
 })
 
 #should this be an s4 method?
@@ -289,19 +258,10 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   upstreamEntityVariables.dt <- unique(upstreamEntityVariables.dt)
   veupathUtils::logWithTime(paste("Found", nrow(upstreamEntityVariables.dt), "unique existing upstream variable value combinations."), verbose)
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
-  
-  # make vocab table for a single variable
-  makeVocabDT <- function(variableSpec) {
-    veupathUtils::logWithTime(paste("Finding vocab for", veupathUtils::getColName(variableSpec)), verbose)
-    varSpecColName <- veupathUtils::getColName(variableSpec)
-    vocab <- findStudyVocabularyByVariableSpec(vocabs, variables, variableSpec)
-    vocabs.dt <- veupathUtils::as.data.table(vocab)
-    names(vocabs.dt)[2] <- varSpecColName
-    return(vocabs.dt)
-  }
 
   # make all possible variable value combinations table
-  vocabDTs <- lapply(variableSpecsToImputeZeroesFor, makeVocabDT)
+  #vocabDTs <- lapply(variableSpecsToImputeZeroesFor, makeVocabDT)
+  vocabDTs <- lapply(vocabs, function(x) {x@studyVocab})
   allCombinations.dt <- purrr::reduce(vocabDTs, merge, allow.cartesian=TRUE, all=TRUE)
 
   # find which ones we need to add
