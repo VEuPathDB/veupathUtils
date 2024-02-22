@@ -2,8 +2,13 @@ check_study_vocabulary <- function(object) {
   errors <- character()
 
   # the column names should be in the vocabulary
-  if (!c(object@studyIdColumnName, veupathUtils::getColName(object@variableSpec)) %in% names(object@studyVocab)) {
+  if (!object@studyIdColumnName %in% names(object@studyVocab)) {
     msg <- paste0("Study ID column '", object@getStudyIdColumnName, "' not found in vocabulary.")
+    errors <- c(errors, msg)
+  }
+
+  if (!veupathUtils::getColName(object@variableSpec) %in% names(object@studyVocab)) {
+    msg <- paste0("Variable spec column '", veupathUtils::getColName(object@variableSpec), "' not found in vocabulary.")
     errors <- c(errors, msg)
   }
 
