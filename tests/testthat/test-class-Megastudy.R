@@ -705,3 +705,61 @@ test_that("imputeZeroes method is sane", {
   #expect_equal(nrow(imputedDT), 32)
   #expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 26)
 })
+
+test_that("we have reasonable perf w a real-ish use case", {
+  megastudyVariablesReal <- new("VariableMetadataList", SimpleList(
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'POPBIO_8000017', entityId = 'EUPATH_0000609'),
+      plotReference = new("PlotReference", value = 'yAxis'),
+      dataType = new("DataType", value = 'NUMBER'),
+      dataShape = new("DataShape", value = 'CONTINUOUS'),
+      hasStudyDependentVocabulary = FALSE),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'PATO_0000047', entityId = 'EUPATH_0000609'),
+      plotReference = new("PlotReference", value = 'xAxis'),
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='POPBIO_8000017',entityId='EUPATH_0000609'),
+      hasStudyDependentVocabulary = TRUE),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'OBI_0001909', entityId = 'EUPATH_0000609'),
+      plotReference = new("PlotReference", value = 'overlay'),
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='POPBIO_8000017',entityId='EUPATH_0000609'),
+      hasStudyDependentVocabulary = TRUE),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'UBERON_0000105', entityId = 'EUPATH_0000609'),
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='POPBIO_8000017',entityId='EUPATH_0000609'),
+      hasStudyDependentVocabulary = TRUE),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'EUPATH_0043227', entityId = 'EUPATH_0000609'),
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='POPBIO_8000017',entityId='EUPATH_0000609'),
+      hasStudyDependentVocabulary = TRUE)
+  ))
+
+  ## minimal use case, with real vocabularies. based on a heavily subsetted megastudy.
+  megastudyReal <- Megastudy(
+    data=megastudyDataReal,
+    ancestorIdColumns=c(
+      'EUPATH_0000605.Study_stable_id', 
+      'GAZ_00000448.GeographicLocation_stable_id',
+      'OBI_0000659.ParentOfSample_stable_id',
+      'EUPATH_0000609.Sample_stable_id'
+    ),
+    studySpecificVocabularies=studyVocabsReal
+  )
+
+  benchmark <- microbenchmark::microbenchmark(getDTWithImputedZeroes(megastudyReal, megastudyVariablesReal, verbose = FALSE))
+  expect_that(mean(benchmark$time)/1000000 < 50, TRUE) ## this is in milliseconds
+  expect_that(median(benchmark$time)/1000000 < 50, TRUE)
+})
