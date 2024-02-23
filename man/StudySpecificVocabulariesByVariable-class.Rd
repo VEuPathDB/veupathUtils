@@ -9,3 +9,13 @@
 A class to specify expected values per study for some variable
 of interest.
 }
+\section{Slots}{
+
+\describe{
+\item{\code{studyIdColumnName}}{A string specifying the name of the column in the vocab data table that contains the study id}
+
+\item{\code{variableSpecColumnName}}{A string specifying the name of the column in the vocab data table that contains the variable vocabulary values}
+
+\item{\code{studyVocab}}{A data.table with columns studyIdColumnName and variableSpecColumnName that specifies expected vocabularies for each study}
+}}
+

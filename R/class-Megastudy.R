@@ -1,40 +1,15 @@
 check_study_vocabulary <- function(object) {
   errors <- character()
 
-  if (is.na(object@studyIdColumnName)) {
-    errors <- c(errors, "StudyIdColumnName is required but not provided.")
+  # the column names should be in the vocabulary
+  if (!object@studyIdColumnName %in% names(object@studyVocab)) {
+    msg <- paste0("Study ID column '", object@getStudyIdColumnName, "' not found in vocabulary.")
+    errors <- c(errors, msg)
   }
 
-  if (is.na(object@variableSpec@variableId)) {
-    errors <- c(errors, "VariableSpec is required but not provided.") 
-  }
-
-  return(if (length(errors) == 0) TRUE else errors)  
-}
-
-#' @include class-VariableMetadata.R
-#' @export
-StudySpecificVocabulary <- setClass("StudySpecificVocabulary", representation(
-  studyIdColumnName = 'character',
-  study = 'character',
-  variableSpec = 'VariableSpec',
-  vocabulary = 'character'
-), prototype = prototype(
-  studyIdColumnName = NA_character_,
-  study = NA_character_,
-  vocabulary = NA_character_
-), validity = check_study_vocabulary)
-
-check_study_vocabulary_list <- function(object) {
-  errors <- character()
-
-  if (length(unique(unlist(lapply(as.list(object), getStudyIdColumnName)))) != 1) {
-    errors <- c(errors, "All studyIdColumnName's must be identical.")
-  }
-
-  # check we have duplicate var specs
-  if (length(unique(unlist(lapply(as.list(object), getVariableSpecColumnName)))) != 1) {
-    errors <- c(errors, "All variableSpecs must be identical.")
+  if (!veupathUtils::getColName(object@variableSpec) %in% names(object@studyVocab)) {
+    msg <- paste0("Variable spec column '", veupathUtils::getColName(object@variableSpec), "' not found in vocabulary.")
+    errors <- c(errors, msg)
   }
 
   return(if (length(errors) == 0) TRUE else errors)
@@ -45,13 +20,20 @@ check_study_vocabulary_list <- function(object) {
 #' A class to specify expected values per study for some variable
 #' of interest.
 #' 
+#' @slot studyIdColumnName A string specifying the name of the column in the vocab data table that contains the study id
+#' @slot variableSpecColumnName A string specifying the name of the column in the vocab data table that contains the variable vocabulary values
+#' @slot studyVocab A data.table with columns studyIdColumnName and variableSpecColumnName that specifies expected vocabularies for each study
 #' @name StudySpecificVocabulariesByVariable-class
 #' @rdname StudySpecificVocabulariesByVariable-class
+#' @include class-VariableMetadata.R
 #' @export
 StudySpecificVocabulariesByVariable <- setClass("StudySpecificVocabulariesByVariable",
-  contains = "SimpleList",
-  prototype = prototype(elementType = "StudySpecificVocabulary"),
-  validity = check_study_vocabulary_list
+  representation = representation(
+    studyIdColumnName = 'character',
+    variableSpec = 'VariableSpec',
+    studyVocab = 'data.table'
+  ),
+  validity = check_study_vocabulary
 )
 
 check_multiple_study_vocabularies_on_same_entity <- function(object) {

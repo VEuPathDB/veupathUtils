@@ -7,11 +7,11 @@
 getVariableSpecColumnName(object)
 }
 \arguments{
-\item{object}{veupathUtils::StudySpecificVocabulary}
+\item{object}{veupathUtils::StudySpecificVocabulariesByVariable}
 }
 \value{
 character
 }
 \description{
-This function returns the variableSpec from an StudySpecificVocabulary
+This function returns the variableSpec from an StudySpecificVocabulariesByVariable
 }

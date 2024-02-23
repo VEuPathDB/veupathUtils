@@ -7,11 +7,11 @@
 getStudyIdColumnName(object)
 }
 \arguments{
-\item{object}{veupathUtils::StudySpecificVocabulary}
+\item{object}{veupathUtils::StudySpecificVocabulariesByVariable}
 }
 \value{
 character
 }
 \description{
-This function returns the studyIdColName from an StudySpecificVocabulary
+This function returns the studyIdColName from an StudySpecificVocabulariesByVariable
 }

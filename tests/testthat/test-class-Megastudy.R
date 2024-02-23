@@ -13,25 +13,65 @@ megastudyDT <- data.table('study.id'=c('a','a','a','b','b','b'),
                           'assay.pathogen3_presence'=c('No','Yes','No','Yes','No','Yes'),
                           'assay.weighting_variable'=c(5,10,15,20,25,30))
 
-studyAspecies <- StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2','species3'))
-studyBspecies <- StudySpecificVocabulary(studyIdColumnName='study.id', study='b', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2','species5'))
-speciesVocabs <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(studyAspecies,studyBspecies))
+sexVocabs.dt <- data.table::data.table(
+  'study.id' = c('a', 'a', 'a', 'a', 'a', 'b', 'b'),
+  'sample.sex' = c('female', 'male', 'non-binary', 'other', 'do not wish to specify', 'male', 'female'))
 
-studyAsex <- StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='sample',variableId='sex'), vocabulary=c('female','male','non-binary','other','do not wish to specify'))
-studyBsex <- StudySpecificVocabulary(studyIdColumnName='study.id', study='b', variableSpec=VariableSpec(entityId='sample',variableId='sex'), vocabulary=c('male','female'))
-sexVocabs <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(studyAsex,studyBsex))
-sexVocabsSingleStudy <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(studyAsex))
+sexVocabs <- veupathUtils::StudySpecificVocabulariesByVariable(
+  studyIdColumnName='study.id',
+  variableSpec=veupathUtils::VariableSpec(entityId='sample',variableId='sex'),
+  studyVocab=sexVocabs.dt
+)
 
-studyAspeciesSMALL <- StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2'))
-studyBspeciesSMALL <- StudySpecificVocabulary(studyIdColumnName='study.id', study='b', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2'))
-speciesVocabsSMALL <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(studyAspeciesSMALL,studyBspeciesSMALL))
+sexVocabsSMALL.dt <- data.table::data.table(
+  'study.id' = c('a', 'a', 'b', 'b'),
+  'sample.sex' = c('female', 'male', 'male', 'female'))
 
-studyAsexSMALL <- StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='sample',variableId='sex'), vocabulary=c('female','male'))
-studyBsexSMALL <- StudySpecificVocabulary(studyIdColumnName='study.id', study='b', variableSpec=VariableSpec(entityId='sample',variableId='sex'), vocabulary=c('male','female'))
-sexVocabsSMALL <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(studyAsexSMALL,studyBsexSMALL))
+sexVocabsSMALL <- veupathUtils::StudySpecificVocabulariesByVariable(
+  studyIdColumnName='study.id',
+  variableSpec=veupathUtils::VariableSpec(entityId='sample',variableId='sex'),
+  studyVocab=sexVocabsSMALL.dt
+)
 
-pathogenVocabs <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='assay',variableId='pathogen_presence'), vocabulary=c('Yes','No')),
-                                                                            StudySpecificVocabulary(studyIdColumnName='study.id', study='b', variableSpec=VariableSpec(entityId='assay',variableId='pathogen_presence'), vocabulary=c('Yes','No'))))
+sexVocabsSingleStudy.dt <- data.table::data.table(
+  'study.id' = c('a', 'a', 'a', 'a', 'a'),
+  'sample.sex' = c('female', 'male', 'non-binary', 'other', 'do not wish to specify'))
+
+sexVocabsSingleStudy <- veupathUtils::StudySpecificVocabulariesByVariable(
+  studyIdColumnName='study.id',
+  variableSpec=veupathUtils::VariableSpec(entityId='sample',variableId='sex'),
+  studyVocab=sexVocabsSingleStudy.dt
+)
+
+speciesVocabs.dt <- data.table::data.table(
+  'study.id' = c('a', 'a', 'a', 'b', 'b', 'b'),
+  'sample.species' = c('species1', 'species2', 'species3', 'species1', 'species2', 'species5'))
+
+speciesVocabs <- veupathUtils::StudySpecificVocabulariesByVariable(
+  studyIdColumnName='study.id',
+  variableSpec=veupathUtils::VariableSpec(entityId='sample',variableId='species'),
+  studyVocab=speciesVocabs.dt
+)
+
+speciesVocabsSMALL.dt <- data.table::data.table(
+  'study.id' = c('a', 'a', 'b', 'b'),
+  'sample.species' = c('species1', 'species2', 'species1', 'species2'))
+
+speciesVocabsSMALL <- veupathUtils::StudySpecificVocabulariesByVariable(
+  studyIdColumnName='study.id',
+  variableSpec=veupathUtils::VariableSpec(entityId='sample',variableId='species'),
+  studyVocab=speciesVocabsSMALL.dt
+)
+
+pathogenVocabs.dt <- data.table::data.table(
+  'study.id' = c('a', 'a', 'b', 'b'),
+  'assay.pathogen_presence' = c('Yes', 'No', 'Yes', 'No'))
+
+pathogenVocabs <- veupathUtils::StudySpecificVocabulariesByVariable(
+  studyIdColumnName='study.id',
+  variableSpec=veupathUtils::VariableSpec(entityId='assay',variableId='pathogen_presence'),
+  studyVocab=pathogenVocabs.dt
+)
 
 test_that("Megastudy and associated validation works", {
   # works at all
@@ -41,8 +81,8 @@ test_that("Megastudy and associated validation works", {
 
   expect_equal(slotNames(m), c('data','ancestorIdColumns','studySpecificVocabularies'))
   expect_equal(length(m@studySpecificVocabularies), 1)
-  expect_equal(length(m@studySpecificVocabularies[[1]]), 2)
-  expect_equal(slotNames(m@studySpecificVocabularies[[1]][[1]]), c("studyIdColumnName","study","variableSpec","vocabulary"))    
+  expect_equal(data.table::uniqueN(m@studySpecificVocabularies[[1]]@studyVocab[,1]), 2)
+  expect_equal(slotNames(m@studySpecificVocabularies[[1]]), c("studyIdColumnName","variableSpec","studyVocab"))    
 
   # works w multiple vocab lists
   m <- Megastudy(data=megastudyDT,
@@ -51,8 +91,8 @@ test_that("Megastudy and associated validation works", {
 
   expect_equal(slotNames(m), c('data','ancestorIdColumns','studySpecificVocabularies'))
   expect_equal(length(m@studySpecificVocabularies), 2)
-  expect_equal(length(m@studySpecificVocabularies[[2]]), 2)
-  expect_equal(slotNames(m@studySpecificVocabularies[[2]][[1]]), c("studyIdColumnName","study","variableSpec","vocabulary"))              
+  expect_equal(data.table::uniqueN(m@studySpecificVocabularies[[2]]@studyVocab[,1]), 2)
+  expect_equal(slotNames(m@studySpecificVocabularies[[2]]), c("studyIdColumnName","variableSpec","studyVocab"))              
 
   # errs if no ancestors/ids?
   expect_error(Megastudy(data=megastudyDT,
@@ -88,30 +128,25 @@ test_that("Megastudy and associated validation works", {
                          ancestorIdColumns=c('study.id', 'collection.id', 'sample.id','assay.id'),
                          studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs, pathogenVocabs))))
 
-
-  # errs if study id not consistent within a study vocab
-  studyAspecies <- StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2','species3'))
-  studyBspecies <- StudySpecificVocabulary(studyIdColumnName='imNOTa.studyId', study='b', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2','species5'))
-  expect_error(speciesVocabs <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(studyAspecies,studyBspecies)))
-
-  # errs if var spec not consistent
-  studyAspecies <- StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2','species3'))
-  studyBspecies <- StudySpecificVocabulary(studyIdColumnName='study.id', study='b', variableSpec=VariableSpec(entityId='sample',variableId='imNOTaVariableId'), vocabulary=c('species1','species2','species5'))
-  expect_error(speciesVocabs <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(studyAspecies,studyBspecies)))
+  # errs if studyIdColumnName and varSpec col name not in dt
+  expect_error(StudySpecificVocabulariesByVariable(
+    studyIdColumnName='imNOTan.id', 
+    variableSpec=VariableSpec(entityId='sample',variableId='species'), 
+    vocabulary=speciesVocabs.dt)
+  )
 
   # errs if no study id provided for study vocab
-  expect_error(StudySpecificVocabulary(study='a', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2','species3')))
-  expect_error(StudySpecificVocabulary(studyIdColumnName=NA, study='a', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2','species3')))
-  expect_error(StudySpecificVocabulary(studyIdColumnName=NULL, study='a', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2','species3')))
-  expect_error(StudySpecificVocabulary(studyIdColumnName=c(), study='a', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2','species3')))
-  expect_error(StudySpecificVocabulary(studyIdColumnName=character(), study='a', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2','species3')))
-  expect_error(StudySpecificVocabulary(studyIdColumnName=NA_character_, study='a', variableSpec=VariableSpec(entityId='sample',variableId='species'), vocabulary=c('species1','species2','species3')))
+  expect_error(StudySpecificVocabulariesByVariable(variableSpec=VariableSpec(entityId='sample',variableId='species'), studyVocab=speciesVocabs.dt))
+  expect_error(StudySpecificVocabulariesByVariable(studyIdColumnName=NA, variableSpec=VariableSpec(entityId='sample',variableId='species'), studyVocab=speciesVocabs.dt))
+  expect_error(StudySpecificVocabulariesByVariable(studyIdColumnName=NULL, variableSpec=VariableSpec(entityId='sample',variableId='species'), studyVocab=speciesVocabs.dt))
+  expect_error(StudySpecificVocabulariesByVariable(studyIdColumnName=c(), variableSpec=VariableSpec(entityId='sample',variableId='species'), studyVocab=speciesVocabs.dt))
+  expect_error(StudySpecificVocabulariesByVariable(studyIdColumnName=character(), variableSpec=VariableSpec(entityId='sample',variableId='species'), studyVocab=speciesVocabs.dt))
+  expect_error(StudySpecificVocabulariesByVariable(studyIdColumnName=NA_character_, variableSpec=VariableSpec(entityId='sample',variableId='species'), studyVocab=speciesVocabs.dt))
 
   # errs if no var spec provided for study vocab
-  expect_error(StudySpecificVocabulary(studyIdColumnName='study.id', study='a', vocabulary=c('species1','species2','species3')))
-  expect_error(StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=NA, vocabulary=c('species1','species2','species3')))
-  expect_error(StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=NULL, vocabulary=c('species1','species2','species3')))
-  # expect_error(StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='', variableId=''), vocabulary=c('species1','species2','species3')))
+  expect_error(StudySpecificVocabulariesByVariable(studyIdColumnName='study.id', studyVocab=speciesVocabs.dt))
+  expect_error(StudySpecificVocabulariesByVariable(studyIdColumnName='study.id', variableSpec=NA, studyVocab=speciesVocabs.dt))
+  expect_error(StudySpecificVocabulariesByVariable(studyIdColumnName='study.id', variableSpec=NULL, studyVocab=speciesVocabs.dt))
 })
 
 # TODO this could go in its own file maybe
@@ -622,9 +657,15 @@ test_that("imputeZeroes method is sane", {
   expect_error(getDTWithImputedZeroes(m, variables, FALSE))
 
   # variable collection exists in plot
-  pathogenVariableCollectionVocabs <- StudySpecificVocabulariesByVariable(S4Vectors::SimpleList(StudySpecificVocabulary(studyIdColumnName='study.id', study='a', variableSpec=VariableSpec(entityId='assay',variableId='pathogen_presence_variable_collection'), vocabulary=c('Yes','No')),
-                                                                                                StudySpecificVocabulary(studyIdColumnName='study.id', study='b', variableSpec=VariableSpec(entityId='assay',variableId='pathogen_presence_variable_collection'), vocabulary=c('Yes','No'))))
-
+  pathogenVariableCollectionVocabs.dt <- data.table::data.table(
+    study.id = c('a','a','b','b'),
+    assay.pathogen_presence_variable_collection = c('Yes','No','Yes','No')
+  )
+  pathogenVariableCollectionVocabs <- StudySpecificVocabulariesByVariable(
+    studyIdColumnName='study.id',
+    variableSpec=VariableSpec(entityId='assay',variableId='pathogen_presence_variable_collection'),
+    studyVocab=pathogenVariableCollectionVocabs.dt
+  )
 
   m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'assay.id', 'sample.specimen_count', 'collection.attractant', 'study.author', 'assay.pathogen_presence', 'assay.pathogen2_presence', 'assay.pathogen3_presence'), with=FALSE],
                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id', 'assay.id'),
@@ -652,12 +693,73 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CONTINUOUS'))
   ))
 
-  imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
+  ## Im inclined to commenting this for now. i dont think we have a case like this yet,
+  ## and im not even completely sure yet what the api would be for when we do...
+
+  #imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   # result has the columns needed to build a plot, based on variables AND the correct number of rows/ zeroes
-  expect_equal(all(c("assay.pathogen_presence","assay.pathogen2_presence","assay.pathogen3_presence","sample.specimen_count") %in% names(imputedDT)), TRUE)
+  #expect_equal(all(c("assay.pathogen_presence","assay.pathogen2_presence","assay.pathogen3_presence","sample.specimen_count") %in% names(imputedDT)), TRUE)
   # 2 studies * 2 collections per study * 2 values for each of 3 pathogen variables = 32?
   # im not sure this test makes any sense, bc were imputing 0 on a sample for a collection on assay
   # im going to comment until we see a real use case
   #expect_equal(nrow(imputedDT), 32)
   #expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 26)
+})
+
+test_that("we have reasonable perf w a real-ish use case", {
+  megastudyVariablesReal <- new("VariableMetadataList", SimpleList(
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'POPBIO_8000017', entityId = 'EUPATH_0000609'),
+      plotReference = new("PlotReference", value = 'yAxis'),
+      dataType = new("DataType", value = 'NUMBER'),
+      dataShape = new("DataShape", value = 'CONTINUOUS'),
+      hasStudyDependentVocabulary = FALSE),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'PATO_0000047', entityId = 'EUPATH_0000609'),
+      plotReference = new("PlotReference", value = 'xAxis'),
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='POPBIO_8000017',entityId='EUPATH_0000609'),
+      hasStudyDependentVocabulary = TRUE),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'OBI_0001909', entityId = 'EUPATH_0000609'),
+      plotReference = new("PlotReference", value = 'overlay'),
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='POPBIO_8000017',entityId='EUPATH_0000609'),
+      hasStudyDependentVocabulary = TRUE),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'UBERON_0000105', entityId = 'EUPATH_0000609'),
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='POPBIO_8000017',entityId='EUPATH_0000609'),
+      hasStudyDependentVocabulary = TRUE),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'EUPATH_0043227', entityId = 'EUPATH_0000609'),
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='POPBIO_8000017',entityId='EUPATH_0000609'),
+      hasStudyDependentVocabulary = TRUE)
+  ))
+
+  ## minimal use case, with real vocabularies. based on a heavily subsetted megastudy.
+  megastudyReal <- Megastudy(
+    data=megastudyDataReal,
+    ancestorIdColumns=c(
+      'EUPATH_0000605.Study_stable_id', 
+      'GAZ_00000448.GeographicLocation_stable_id',
+      'OBI_0000659.ParentOfSample_stable_id',
+      'EUPATH_0000609.Sample_stable_id'
+    ),
+    studySpecificVocabularies=studyVocabsReal
+  )
+
+  benchmark <- microbenchmark::microbenchmark(getDTWithImputedZeroes(megastudyReal, megastudyVariablesReal, verbose = FALSE))
+  expect_that(mean(benchmark$time)/1000000 < 50, TRUE) ## this is in milliseconds
+  expect_that(median(benchmark$time)/1000000 < 50, TRUE)
 })
