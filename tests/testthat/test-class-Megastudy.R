@@ -693,6 +693,9 @@ test_that("imputeZeroes method is sane", {
       dataShape = new("DataShape", value = 'CONTINUOUS'))
   ))
 
+  ## Im inclined to commenting this for now. i dont think we have a case like this yet,
+  ## and im not even completely sure yet what the api would be for when we do...
+
   #imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   # result has the columns needed to build a plot, based on variables AND the correct number of rows/ zeroes
   #expect_equal(all(c("assay.pathogen_presence","assay.pathogen2_presence","assay.pathogen3_presence","sample.specimen_count") %in% names(imputedDT)), TRUE)
