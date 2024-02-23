@@ -13,6 +13,7 @@ Authors@R:
 biocViews: 
 Imports:
     data.table,
+    microbenchmark,
     S4Vectors,
     stringi,
     purrr
