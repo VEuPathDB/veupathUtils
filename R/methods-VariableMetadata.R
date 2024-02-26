@@ -31,7 +31,7 @@ setMethod("merge", signature("VariableSpecList", "VariableSpecList"), function(x
 #' @return character vector of length 1 containing JSON string
 #' @export
 setGeneric("toJSON", 
-  function(object, named = c(TRUE, FALSE)) standardGeneric("toJSON"),
+  function(object, named = c(TRUE, FALSE), ...) standardGeneric("toJSON"),
   signature = "object"
 )
 
