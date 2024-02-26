@@ -760,6 +760,6 @@ test_that("we have reasonable perf w a real-ish use case", {
   )
 
   benchmark <- microbenchmark::microbenchmark(getDTWithImputedZeroes(megastudyReal, megastudyVariablesReal, verbose = FALSE))
-  expect_that(mean(benchmark$time)/1000000 < 50, TRUE) ## this is in milliseconds
-  expect_that(median(benchmark$time)/1000000 < 50, TRUE)
+  expect_true(mean(benchmark$time)/1000000 < 50) ## this is in milliseconds
+  expect_true(median(benchmark$time)/1000000 < 50)
 })
