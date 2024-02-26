@@ -105,3 +105,18 @@ shiftToNonNeg <- function(x) {
   x <- x - min(x, na.rm = TRUE)
   return(x)
 }
+
+#' Strip Entity ID from Column Header
+#'
+#' This function strips entity ID from column headers for EDA formatted tabular data.
+#' @param columnNames character vector
+#' @export
+stripEntityIdFromColumnHeader <- function(columnNames) {
+  columnsToFix <- grepl(".", columnNames, fixed=T)
+
+  if (sum(columnsToFix) > 0) {
+    columnNames[columnsToFix] <- veupathUtils::strSplit(columnNames[columnsToFix], ".", index=2)
+  }
+
+  return(columnNames)
+}
