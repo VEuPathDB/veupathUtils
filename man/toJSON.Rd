@@ -4,7 +4,7 @@
 \alias{toJSON}
 \title{R object as JSON string}
 \usage{
-toJSON(object, named = c(TRUE, FALSE))
+toJSON(object, named = c(TRUE, FALSE), ...)
 }
 \arguments{
 \item{object}{object of a supported S4 class to convert to a JSON string representation}

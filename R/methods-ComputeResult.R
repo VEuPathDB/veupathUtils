@@ -116,6 +116,7 @@ setMethod("writeStatistics", signature("ComputeResult"), function(object, patter
   return(outFileName)
 })
 
+#' @include methods-VariableMetadata.R
 setMethod("toJSON", signature("CorrelationResult"), function(object, ...) {
   tmp <- character()
 

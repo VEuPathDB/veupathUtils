@@ -72,6 +72,7 @@ check_compute_result <- function(object) {
 #' @name ComputeResult-class
 #' @rdname ComputeResult-class
 #' @export
+#' @include class-VariableMetadata.R
 ComputeResult <- setClass("ComputeResult", representation(
     name = 'character',
     data = 'data.frame',
