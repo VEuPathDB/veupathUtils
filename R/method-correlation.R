@@ -52,8 +52,8 @@ setMethod("predicateFactory", signature("character", "numeric"), function(predic
 #'
 #' This function returns correlation coefficients for variables in one dataset against variables in a second dataset
 #' 
-#' @param data1 first dataset. An AbundanceData object or data.table
-#' @param data2 second dataset. A SampleMetadata object (if data1 is class AbundanceData) or a data.table
+#' @param data1 first dataset. A data.table
+#' @param data2 second dataset. A data.table
 #' @param method string defining the type of correlation to run. The currently supported values are specific to the class of data1 and data2.
 #' @param format string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.
 #' @param verbose boolean indicating if timed logging is desired
@@ -256,7 +256,7 @@ buildCorrelationComputeResult <- function(corrResult, data1, data2 = NULL, metho
 #'
 #' This function returns correlation coefficients for variables in one dataset against itself
 #' 
-#' @param data first dataset. An AbundanceData object or data.table
+#' @param data first dataset. A data.table
 #' @param method string defining the type of correlation to run. The currently supported values are 'spearman','pearson' and 'sparcc'
 #' @param format string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.
 #' @param verbose boolean indicating if timed logging is desired

@@ -13,7 +13,7 @@ selfCorrelation(
 )
 }
 \arguments{
-\item{data}{first dataset. An AbundanceData object or data.table}
+\item{data}{first dataset. A data.table}
 
 \item{method}{string defining the type of correlation to run. The currently supported values are 'spearman','pearson' and 'sparcc'}
 

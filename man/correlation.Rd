@@ -14,9 +14,9 @@ correlation(
 )
 }
 \arguments{
-\item{data1}{first dataset. An AbundanceData object or data.table}
+\item{data1}{first dataset. A data.table}
 
-\item{data2}{second dataset. A SampleMetadata object (if data1 is class AbundanceData) or a data.table}
+\item{data2}{second dataset. A data.table}
 
 \item{method}{string defining the type of correlation to run. The currently supported values are specific to the class of data1 and data2.}
 
