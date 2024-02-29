@@ -58,9 +58,7 @@ setMethod("predicateFactory", signature("character", "numeric"), function(predic
 #' @param format string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.
 #' @param verbose boolean indicating if timed logging is desired
 #' @return data.frame with correlation coefficients or a ComputeResult object
-#' @import veupathUtils
 #' @import data.table
-#' @useDynLib microbiomeComputations
 #' @export
 setGeneric("correlation",
   function(data1, data2, method, format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), ...) standardGeneric("correlation"),
@@ -261,7 +259,6 @@ buildCorrelationComputeResult <- function(corrResult, data1, data2 = NULL, metho
 #' @param format string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.
 #' @param verbose boolean indicating if timed logging is desired
 #' @return ComputeResult object
-#' @import veupathUtils
 #' @export
 setGeneric("selfCorrelation",
   function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), ...) standardGeneric("selfCorrelation"),
@@ -271,14 +268,13 @@ setGeneric("selfCorrelation",
 #' Self Correlation
 #'
 #' This function returns correlation coefficients for variables in one data.table against itself.
-#' This is essentially an alias to the microbiomeComputations::correlation function.
+#' This is essentially an alias to the veupathUtils::correlation function.
 #' 
 #' @param data a data.table
 #' @param method string defining the type of correlation to run. The currently supported values are 'spearman', 'pearson' and 'sparcc'
 #' @param format string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.
 #' @param verbose boolean indicating if timed logging is desired
 #' @return ComputeResult object
-#' @import veupathUtils
 #' @export
 setMethod("selfCorrelation", signature("data.table"), 
 function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE)) {

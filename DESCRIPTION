@@ -12,11 +12,17 @@ Authors@R:
            email = "annsize@upenn.edu"))
 biocViews: 
 Imports:
+    boot,
     data.table,
+    digest,
+    Hmisc,
     microbenchmark,
     S4Vectors,
+    SpiecEasi (>= 1.1.1),
     stringi,
     purrr
+Remotes:
+    zdk123/SpiecEasi
 URL: https://github.com/VEuPathDB/veupathUtils
 BugReports: https://github.com/VEuPathDB/veupathUtils/issues
 Description: veupathUtils contains various R helper functions intended to be useful across a variety of projects, including the plot.data and microbiomeComputations packages.

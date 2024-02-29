@@ -25,5 +25,5 @@ ComputeResult object
 }
 \description{
 This function returns correlation coefficients for variables in one data.table against itself.
-This is essentially an alias to the microbiomeComputations::correlation function.
+This is essentially an alias to the veupathUtils::correlation function.
 }
