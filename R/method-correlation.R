@@ -216,6 +216,7 @@ getDataMetadataType <- function(data) {
 
 ## Helper function
 # should this be s4?
+#' @export
 buildCorrelationComputeResult <- function(corrResult, data1, data2 = NULL, method = c('spearman','pearson','sparcc'), verbose = c(TRUE, FALSE)) {
   method <- veupathUtils::matchArg(method)
   verbose <- veupathUtils::matchArg(verbose)
