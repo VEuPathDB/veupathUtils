@@ -284,5 +284,5 @@ function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeRes
   method <- veupathUtils::matchArg(method)
   verbose <- veupathUtils::matchArg(verbose)
   
-  correlation(data, method=method, format = format, verbose=verbose)
+  correlation(data1 = data, method=method, format = format, verbose=verbose)
 })
