@@ -21,6 +21,9 @@ Imports:
     SpiecEasi (>= 1.1.1),
     stringi,
     purrr
+Depends:
+    R (>= 2.10),
+    jsonlite
 Remotes:
     zdk123/SpiecEasi
 URL: https://github.com/VEuPathDB/veupathUtils
@@ -55,5 +58,3 @@ Collate:
     'utils-string.R'
     'utils.R'
     'veupathUtils-package.R'
-Depends: 
-    R (>= 2.10)

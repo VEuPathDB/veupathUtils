@@ -84,6 +84,11 @@ VariableClass <- setClass("VariableClass", representation(
     value = NA_character_
 ), validity = check_variable_class)
 
+#' Variable Specification
+#' 
+#' A class for working with variable specifications. Contains a variable ID and an entity ID.
+#' @slot variableId The name of the variable
+#' @slot entityId The name of the entity
 #' @name VariableSpec-class
 #' @rdname VariableSpec-class
 #' @export

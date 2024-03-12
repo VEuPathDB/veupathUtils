@@ -132,9 +132,7 @@ setMethod("toJSON", signature("StatisticList"), function(object, named = c(TRUE,
 
 # these let jsonlite::toJSON work by using the veupathUtils::toJSON methods for our custom S4 classes
 asJSONGeneric <- getGeneric("asJSON", package = "jsonlite")
-#' @export
 setMethod(asJSONGeneric, "Statistic", function(x, ...) veupathUtils::toJSON(x, FALSE))
-#' @export
 setMethod(asJSONGeneric, "StatisticList", function(x, ...) veupathUtils::toJSON(x, FALSE))
 
 
@@ -379,7 +377,7 @@ setMethod("getHasStudyDependentVocabulary", signature("VariableMetadata"), funct
 })
 
 #' @export
-setMethod("getHasStudyDependentVocabulary", signature("VariableMetadataList"), function(variables) {
+setMethod("getHasStudyDependentVocabulary", signature("VariableMetadataList"), function(object) {
   return(lapply(as.list(object), veupathUtils::getHasStudyDependentVocabulary))
 })
 

@@ -7,13 +7,13 @@
 #' @param object A StatisticList object
 #' @return data.table
 #' @export
-setGeneric("as.data.table", 
-  function(object) standardGeneric("as.data.table"),
+setGeneric("getDataTable", 
+  function(object) standardGeneric("getDataTable"),
   signature = "object"
 )
 
 #' @export
-setMethod("as.data.table", signature("StatisticList"), function(object) {
+setMethod("getDataTable", signature("StatisticList"), function(object) {
     colNames <- unlist(lapply(as.list(object), function(x) {x@name}))
     dt <- data.table::as.data.table(as.list(object))
     data.table::setnames(dt, colNames)
@@ -22,7 +22,7 @@ setMethod("as.data.table", signature("StatisticList"), function(object) {
 })
 
 #' @export
-setMethod("as.data.table", signature("Statistic"), function(object) {
+setMethod("getDataTable", signature("Statistic"), function(object) {
     colName <- object@name
     dt <- data.table::as.data.table(colName = object)
 
