@@ -80,6 +80,7 @@ setGeneric("correlation",
 #' @param verbose boolean indicating if timed logging is desired
 #' @importFrom Hmisc rcorr
 #' @return data.frame with correlation coefficients
+#' @export
 setMethod("correlation", signature("data.table", "data.table"), 
 function(data1, data2, method = c('spearman','pearson'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE)) {
 
