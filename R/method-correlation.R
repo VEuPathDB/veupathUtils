@@ -48,6 +48,9 @@ setMethod("predicateFactory", signature("character", "numeric"), function(predic
 
 })
 
+## look at this cool trick i learned
+setClassUnion("missingOrNULL", c("missing", "NULL"))
+
 #' Correlation
 #'
 #' This function returns correlation coefficients for variables in one dataset against variables in a second dataset
@@ -144,7 +147,8 @@ function(data1, data2, method = c('spearman','pearson'), format = c('ComputeResu
 #' @importFrom SpiecEasi pval.sparccboot
 #' @importFrom SpiecEasi sparccboot
 #' @importFrom SpiecEasi sparcc
-setMethod("correlation", signature("data.table", "missing"), 
+#' @export
+setMethod("correlation", signature("data.table", "missingOrNULL"), 
 function(data1, data2, method = c('spearman','pearson','sparcc'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE)) {
 
   format <- veupathUtils::matchArg(format)
@@ -285,5 +289,5 @@ function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeRes
   method <- veupathUtils::matchArg(method)
   verbose <- veupathUtils::matchArg(verbose)
   
-  correlation(data1 = data, method=method, format = format, verbose=verbose)
+  correlation(data, NULL, method = method, format = format, verbose = verbose)
 })
