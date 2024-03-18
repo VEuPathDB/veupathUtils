@@ -29,3 +29,11 @@ test_that("cut_width splits the first inclusive bin for integers where bin width
   expect_equal(as.character(cut_width(ints, 1, .5)), expectedBins)
   expect_equal(as.character(cut_width(ints,1,boundary=min(ints))), expectedBins) 
 })
+
+test_that("cut_width splits the last inclusive bin for integers where bin width is 1", {
+  ints <- c(0,1,2,2,3,3,3,4,4,4,4)
+  expectedBins <- c("[0,1)","[1,2)","[2,3)","[2,3)","[3,4)","[3,4)","[3,4)","[4,5]","[4,5]","[4,5]","[4,5]")
+  
+  expect_equal(as.character(cut_width(ints, 1, .5, closed = "left")), expectedBins)
+  expect_equal(as.character(cut_width(ints,1,boundary=max(ints),closed = "left")), expectedBins)
+})
