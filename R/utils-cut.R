@@ -77,18 +77,25 @@ cut_width <- function(x, width, center = NULL, boundary = NULL, closed = c("righ
 
   # Determine bins
 
-  # In practice, min_x is always min(x) because cut_width() is only called with
-  # boundary=min(x) and inside find_origin(), shift is always zero, so find_origin()
-  # returns boundary which is min(x).
-  # Perhaps we can rationalise/remove the boundary code if a use-case can't
-  # be described.
+  # Find functional min and max which produces consistently sized bins
+  # its possible we want to do this for ints regardless of the bin width??
   min_x <- find_origin(x_range, width, boundary)
-  # if x are integers and width is 1, make sure min_x is one smaller than the data
-  if (all(x == round(x)) && width == 1) {
-    min_x <- min_x - 1
+  if (closed == "right") {
+    # if x are integers and width is 1, make sure min_x is one smaller than the data
+    # otherwise the first bin will be functionally twice the width
+    if (all(x == round(x)) && width == 1) {
+      min_x <- min_x - 1
+    }
   }
-
+  
   max_x <- max(x, na.rm = TRUE)
+  if (closed == "left") {
+    # if x are integers and width is 1, make sure max_x is one greater than the data
+    # otherwise the last bin will be functionally twice the width
+    if (all(x == round(x)) && width == 1) {
+      max_x <- max_x + 1
+    }
+  }
 
   breaks <- c(seq(min_x, max_x, width))
   last_break = tail(breaks, 1)
