@@ -130,6 +130,7 @@ function(data1, data2, method = c('spearman','pearson'), format = c('ComputeResu
     return(formattedCorrResult)
   } else {
     result <- buildCorrelationComputeResult(formattedCorrResult, data1, data2, method, verbose)
+    result@computationDetails <- 'correlation'
     return(result)
   }
 })
@@ -205,6 +206,7 @@ function(data1, data2, method = c('spearman','pearson','sparcc'), format = c('Co
     return(formattedCorrResult)
   } else {
     result <- buildCorrelationComputeResult(formattedCorrResult, data1, data2, method, verbose)
+    result@computationDetails <- 'selfCorrelation'
     return(result)
   }
 })
