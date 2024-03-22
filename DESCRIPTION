@@ -39,6 +39,8 @@ Suggests:
 Config/testthat/edition: 3
 Collate: 
     'class-Bin.R'
+    'class-SampleMetadata.R'
+    'class-CollectionWithMetadata.R'
     'class-VariableMetadata.R'
     'class-ComputeResult.R'
     'class-CorrelationResult.R'
@@ -48,9 +50,11 @@ Collate:
     'data.R'
     'method-correlation.R'
     'methods-Bin.R'
+    'methods-CollectionWithMetadata.R'
     'methods-VariableMetadata.R'
     'methods-ComputeResult.R'
     'methods-Megastudy.R'
+    'methods-SampleMetadata.R'
     'methods-Statistic.R'
     'utils-classes.R'
     'utils-cut.R'
