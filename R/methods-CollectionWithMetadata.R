@@ -37,8 +37,8 @@ setMethod("getMetadataVariableNames", "CollectionWithMetadata", function(object)
 
 #' Get Sample Metadata Id Column Names
 #' 
-#' Get the names of the record and ancestor id columns in the sample metadata of the Microbiome Dataset.
-#' @param object A Microbiome Dataset, or other object w sample metadata
+#' Get the names of the record and ancestor id columns in the sample metadata of an object.
+#' @param object An object w sample metadata
 #' @return a character vector of id column names
 #' @rdname getSampleMetadataIdColumns
 #' @export

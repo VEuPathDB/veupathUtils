@@ -4,26 +4,6 @@ check_collection_with_metadata <- function(object) {
     record_id_col <- object@recordIdColumn
     ancestor_id_cols <- object@ancestorIdColumns
 
-    # Ensure id columns are valid
-    msg <- validateIdColumns(df, record_id_col, ancestor_id_cols)
-    errors <- c(errors, msg)
-
-    # collection data should all come from the same entity
-    # using the presence of the period to indicate eda services formatted data
-    if (all(grepl(".", names(df), fixed = TRUE))) {
-        if (uniqueN(veupathUtils::strSplit(names(df)[!names(df) %in% ancestor_id_cols], ".", ncol=2, index=1)) > 1) {
-            msg <- paste("All columns must belong to the same entity.")
-            errors <- c(errors, msg)
-        }
-    }
-
-    allDataColsNumeric <- all(unlist(lapply(df[, !(names(df) %in% c(record_id_col, ancestor_id_cols))], is.numeric)))
-    if (inherits(df, 'data.table')) allDataColsNumeric <- all(unlist(lapply(df[, !(names(df) %in% c(record_id_col, ancestor_id_cols)), with=F], is.numeric)))
-    if (!allDataColsNumeric) {
-        msg <- paste("All columns except the ID columns must be numeric.")
-        errors <- c(errors, msg)
-    }
-
     if (!!length(object@sampleMetadata@data)) {
         sampleMetadata <- object@sampleMetadata
 
@@ -54,6 +34,7 @@ check_collection_with_metadata <- function(object) {
 #' measured over a consistent or comparable range of values. Examples include relative abundances of various genera,
 #' or relative expression levels of genes in a gene expression profile.
 #' 
+#' @slot name The name of the collection
 #' @slot data A data.frame of collection values with variables as columns and records as rows
 #' @slot sampleMetadata A SampleMetadata object of metadata about the records where records are rows and metadata variables as columns
 #' @slot recordIdColumn The name of the column containing IDs for the records. 
@@ -63,17 +44,12 @@ check_collection_with_metadata <- function(object) {
 #' @name CollectionWithMetadata-class
 #' @rdname CollectionWithMetadata-class
 #' @include class-SampleMetadata.R
+#' @include class-Collections.R
 #' @export 
 #' @include class-SampleMetadata.R
-CollectionWithMetadata <- setClass("CollectionWithMetadata", representation(
-    data = 'data.frame',
-    sampleMetadata = 'SampleMetadata',
-    recordIdColumn = 'character',
-    ancestorIdColumns = 'character',
-    imputeZero = 'logical',
-    removeEmptyRecords = 'logical'
-), prototype = prototype(
-    recordIdColumn = NA_character_,
-    imputeZero = TRUE,
-    removeEmptyRecords = TRUE
-), validity = check_collection_with_metadata)
+CollectionWithMetadata <- setClass("CollectionWithMetadata", 
+    contains = "Collection",
+    representation = representation(
+        sampleMetadata = 'SampleMetadata'
+    ),
+    validity = check_collection_with_metadata)
