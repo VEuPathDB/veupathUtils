@@ -14,11 +14,11 @@ getSampleMetadataIdColumns(object)
 \S4method{getSampleMetadataIdColumns}{SampleMetadata}(object)
 }
 \arguments{
-\item{object}{A Microbiome Dataset, or other object w sample metadata}
+\item{object}{An object w sample metadata}
 }
 \value{
 a character vector of id column names
 }
 \description{
-Get the names of the record and ancestor id columns in the sample metadata of the Microbiome Dataset.
+Get the names of the record and ancestor id columns in the sample metadata of an object.
 }

@@ -14,6 +14,8 @@ or relative expression levels of genes in a gene expression profile.
 \section{Slots}{
 
 \describe{
+\item{\code{name}}{The name of the collection}
+
 \item{\code{data}}{A data.frame of collection values with variables as columns and records as rows}
 
 \item{\code{sampleMetadata}}{A SampleMetadata object of metadata about the records where records are rows and metadata variables as columns}
@@ -24,6 +26,6 @@ or relative expression levels of genes in a gene expression profile.
 
 \item{\code{imputeZero}}{A logical indicating whether NA/ null values should be replaced with zeros.}
 
-\item{\code{removeEmptySamples}}{A logical indicating whether empty (all NA/ zero) samples should be removed.}
+\item{\code{removeEmptyRecordss}}{A logical indicating whether empty (all NA/ zero) records should be removed.}
 }}
 
