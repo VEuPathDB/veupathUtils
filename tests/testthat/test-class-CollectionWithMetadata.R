@@ -66,12 +66,13 @@ test_that('CollectionWithMetadata validation works', {
 
     df$entity2.notstrings <- NULL
     testing <- CollectionWithMetadata(
+                name = 'testing',
                 data = df,
                 recordIdColumn = c('entity.SampleID'))
 
     ## works w empty sampleMetadata slot
     expect_true(inherits(testing, 'CollectionWithMetadata'))
-    expect_equal(slotNames(testing), c('data', 'sampleMetadata', 'recordIdColumn', 'ancestorIdColumns', 'imputeZero', 'removeEmptyRecords'))
+    expect_equal(slotNames(testing), c('sampleMetadata', 'name', 'data', 'recordIdColumn', 'ancestorIdColumns', 'imputeZero', 'removeEmptyRecords'))
     expect_equal(nrow(testing@data), 200)
     expect_equal(ncol(testing@data), 4)
     expect_equal(testing@recordIdColumn, 'entity.SampleID')
@@ -84,6 +85,7 @@ test_that('CollectionWithMetadata validation works', {
     )
 
     testing <- CollectionWithMetadata(
+                name = 'testing',
                 data = df,
                 sampleMetadata = sampleMetadata,
                 recordIdColumn = 'entity.SampleID'
@@ -91,7 +93,7 @@ test_that('CollectionWithMetadata validation works', {
 
     ## works w filled sampleMetadata slot
     expect_true(inherits(testing, 'CollectionWithMetadata'))
-    expect_equal(slotNames(testing), c('data', 'sampleMetadata', 'recordIdColumn', 'ancestorIdColumns', 'imputeZero', 'removeEmptyRecords'))
+    expect_equal(slotNames(testing), c('sampleMetadata', 'name', 'data', 'recordIdColumn', 'ancestorIdColumns', 'imputeZero', 'removeEmptyRecords'))
     expect_equal(nrow(testing@data), 200)
     expect_equal(ncol(testing@data), 4)
     expect_equal(testing@recordIdColumn, 'entity.SampleID')
@@ -109,6 +111,7 @@ test_that("getCollectionValues works", {
     )
 
     testing <- CollectionWithMetadata(
+        name = 'testing',
         data = df,
         recordIdColumn = 'entity.SampleID'
     )
@@ -126,6 +129,7 @@ test_that("getCollectionValues works", {
     df <- rbind(df,df[nrow(df)+1,])
     df$entity.SampleID[nrow(df)] <- 'im.a.sample'
     testing <- CollectionWithMetadata(
+        name = 'testing',
         data = df,
         recordIdColumn = 'entity.SampleID',
         removeEmptyRecords = TRUE
@@ -145,8 +149,8 @@ test_that("pruneFeatures works", {
         "entity.cont3" = c(rep(0,(nSamples*.75)),rnorm(nSamples*.25))
     )
     
-    
     testing <- CollectionWithMetadata(
+        name = 'testing',
         data = df,
         recordIdColumn = 'entity.SampleID'
     )
