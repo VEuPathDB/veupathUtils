@@ -86,3 +86,37 @@ setMethod("getCollectionData", signature("Collection"), function(object, ignoreI
 
     return(dt)
 })
+
+#' Prune features by predicate
+#' 
+#' Modifies the data slot of a Collection or
+#' CollectionWithMetadata object, to exclude features for which 
+#' the provided predicate function returns FALSE. 
+#' 
+#' @param object Collection
+#' @param predicate Function returning a boolean indicating if a feature should be included (TRUE) or excluded (FALSE)
+#' @param verbose boolean indicating if timed logging is desired
+#' @return Collection with modified data slot
+#' @rdname pruneFeatures
+#' @export
+setGeneric("pruneFeatures",
+    function(object, predicate, verbose = c(TRUE, FALSE)) standardGeneric("pruneFeatures"),
+    signature = c("object")
+)
+
+#' @rdname pruneFeatures
+#' @aliases pruneFeatures,Collection-method 
+setMethod("pruneFeatures", signature("Collection"), function(object, predicate, verbose = c(TRUE, FALSE)) {
+    df <- getCollectionData(object)
+    allIdColumns <- c(object@recordIdColumn, object@ancestorIdColumns)
+
+    # keep columns that pass the predicate, while respecting removeEmptyRecords
+    keepCols <- df[, lapply(.SD, predicate), .SDcols = colnames(df)[!(colnames(df) %in% allIdColumns)]]
+    keepCols <- names(keepCols)[keepCols == TRUE]
+    # df used to find keepCols, but we dont want to modify the rows as well, so we stop using df now
+    # bc df was made by calling getCollectionData which currently pretty religiously respects removeEmptyRecords
+    object@data <- object@data[, c(allIdColumns, keepCols), with = FALSE]
+
+    validObject(object)
+    return(object)
+})
