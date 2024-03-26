@@ -294,7 +294,7 @@ function(data1, data2, method = c('spearman','pearson'), format  = c('ComputeRes
   }
 })
 
-#' @rdname selfCorrelation-methods
+#' @rdname selfCorrelation
 #' @aliases selfCorrelation,CollectionWithMetadata-method
 setMethod("selfCorrelation", signature("CollectionWithMetadata"), 
 function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), proportionNonZeroThreshold = 0.5, varianceThreshold = 0, stdDevThreshold = 0) {
@@ -322,7 +322,7 @@ function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeRes
   }  
 })
 
-#' @rdname selfCorrelation-methods
+#' @rdname selfCorrelation
 #' @aliases selfCorrelation,SampleMetadata-method
 setMethod("selfCorrelation", signature("SampleMetadata"), 
 function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE)) {
@@ -344,7 +344,7 @@ function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeRes
   }
 })
 
-#' @rdname correlation-methods
+#' @rdname correlation
 #' @aliases correlation,CollectionWithMetadata,CollectionWithMetadata-method
 setMethod("correlation", signature("CollectionWithMetadata", "CollectionWithMetadata"), 
 function(data1, data2, method = c('spearman','pearson'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), proportionNonZeroThreshold = 0.5, varianceThreshold = 0, stdDevThreshold = 0) {

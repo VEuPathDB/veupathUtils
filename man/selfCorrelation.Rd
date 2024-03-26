@@ -2,6 +2,9 @@
 % Please edit documentation in R/method-correlation.R
 \name{selfCorrelation}
 \alias{selfCorrelation}
+\alias{selfCorrelation,data.table-method}
+\alias{selfCorrelation,CollectionWithMetadata-method}
+\alias{selfCorrelation,SampleMetadata-method}
 \title{Self Correlation}
 \usage{
 selfCorrelation(
@@ -10,6 +13,30 @@ selfCorrelation(
   format = c("ComputeResult", "data.table"),
   verbose = c(TRUE, FALSE),
   ...
+)
+
+\S4method{selfCorrelation}{data.table}(
+  data,
+  method = c("spearman", "pearson", "sparcc"),
+  format = c("ComputeResult", "data.table"),
+  verbose = c(TRUE, FALSE)
+)
+
+\S4method{selfCorrelation}{CollectionWithMetadata}(
+  data,
+  method = c("spearman", "pearson", "sparcc"),
+  format = c("ComputeResult", "data.table"),
+  verbose = c(TRUE, FALSE),
+  proportionNonZeroThreshold = 0.5,
+  varianceThreshold = 0,
+  stdDevThreshold = 0
+)
+
+\S4method{selfCorrelation}{SampleMetadata}(
+  data,
+  method = c("spearman", "pearson", "sparcc"),
+  format = c("ComputeResult", "data.table"),
+  verbose = c(TRUE, FALSE)
 )
 }
 \arguments{

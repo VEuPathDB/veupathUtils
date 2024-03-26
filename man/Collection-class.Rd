@@ -14,7 +14,7 @@ collection can be expressed on the same theoretical range.
 \section{Slots}{
 
 \describe{
-\item{\code{name}}{The name of the collection}
+\item{\code{name}}{The human-readable name of the collection. This can be anything that helps to identify the collection uniquely to the user.}
 
 \item{\code{data}}{A data.frame of data with samples as rows and variables as columns}
 

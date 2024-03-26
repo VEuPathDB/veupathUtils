@@ -43,7 +43,7 @@ check_collection <- function(object) {
 #' or all pathway abundance data for all samples in a dataset, or something else. The
 #' primary requirement for a collection is that the values of all variables in the
 #' collection can be expressed on the same theoretical range.
-#' @slot name The name of the collection
+#' @slot name The human-readable name of the collection. This can be anything that helps to identify the collection uniquely to the user.
 #' @slot data A data.frame of data with samples as rows and variables as columns
 #' @slot recordIdColumn The name of the column in the data.frame that contains the record id
 #' @slot ancestorIdColumns A character vector of column names representing parent entities of the recordIdColumn
@@ -113,7 +113,7 @@ setClass("Collections",
 #' 
 #' This is a constructor for the Collection class. It creates a Collection
 #' object for use in a Microbiome Dataset. 
-#' @param name The name of the collection
+#' @param name The human-readable name of the collection. This can be anything that helps to identify the collection uniquely to the user.
 #' @param data A data.frame or a character vector representing a file path to a data.frame
 #' @param recordIdColumn The name of the column in the data.frame that contains the record id
 #' @param ancestorIdColumns A character vector of column names representing parent entities of the recordIdColumn

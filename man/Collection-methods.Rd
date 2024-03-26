@@ -22,7 +22,7 @@ Collection(name, data, recordIdColumn, ancestorIdColumns)
 \S4method{Collection}{missing,missing,missing,missing}(name, data, recordIdColumn, ancestorIdColumns)
 }
 \arguments{
-\item{name}{The name of the collection}
+\item{name}{The human-readable name of the collection. This can be anything that helps to identify the collection uniquely to the user.}
 
 \item{data}{A data.frame or a character vector representing a file path to a data.frame}
 

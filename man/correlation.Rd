@@ -2,6 +2,10 @@
 % Please edit documentation in R/method-correlation.R
 \name{correlation}
 \alias{correlation}
+\alias{correlation,data.table,data.table-method}
+\alias{correlation,data.table,missingOrNULL-method}
+\alias{correlation,CollectionWithMetadata,missingOrNULL-method}
+\alias{correlation,CollectionWithMetadata,CollectionWithMetadata-method}
 \title{Correlation}
 \usage{
 correlation(
@@ -11,6 +15,44 @@ correlation(
   format = c("ComputeResult", "data.table"),
   verbose = c(TRUE, FALSE),
   ...
+)
+
+\S4method{correlation}{data.table,data.table}(
+  data1,
+  data2,
+  method = c("spearman", "pearson"),
+  format = c("ComputeResult", "data.table"),
+  verbose = c(TRUE, FALSE)
+)
+
+\S4method{correlation}{data.table,missingOrNULL}(
+  data1,
+  data2,
+  method = c("spearman", "pearson", "sparcc"),
+  format = c("ComputeResult", "data.table"),
+  verbose = c(TRUE, FALSE)
+)
+
+\S4method{correlation}{CollectionWithMetadata,missingOrNULL}(
+  data1,
+  data2,
+  method = c("spearman", "pearson"),
+  format = c("ComputeResult", "data.table"),
+  verbose = c(TRUE, FALSE),
+  proportionNonZeroThreshold = 0.5,
+  varianceThreshold = 0,
+  stdDevThreshold = 0
+)
+
+\S4method{correlation}{CollectionWithMetadata,CollectionWithMetadata}(
+  data1,
+  data2,
+  method = c("spearman", "pearson"),
+  format = c("ComputeResult", "data.table"),
+  verbose = c(TRUE, FALSE),
+  proportionNonZeroThreshold = 0.5,
+  varianceThreshold = 0,
+  stdDevThreshold = 0
 )
 }
 \arguments{
@@ -26,6 +68,8 @@ correlation(
 }
 \value{
 data.frame with correlation coefficients or a ComputeResult object
+
+data.frame with correlation coefficients
 }
 \description{
 This function returns correlation coefficients for variables in one dataset against variables in a second dataset
