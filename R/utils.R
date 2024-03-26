@@ -151,3 +151,7 @@ validateIdColumns <- function(df, record_id_col=character(), ancestor_id_cols=c(
 isNAorZero <- function(x) {
   return(is.na(x) | x == 0)
 }
+
+isNAorNonNegative <- function(x) {
+    return(is.na(x) | x >= 0)
+}

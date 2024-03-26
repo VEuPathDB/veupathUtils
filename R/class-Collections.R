@@ -1,7 +1,3 @@
-isNAorNonNegative <- function(x) {
-    return(is.na(x) | x >= 0)
-}
-
 check_collection <- function(object) {
     errors <- character()
     df <- object@data
