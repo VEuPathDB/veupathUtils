@@ -242,8 +242,9 @@ buildCorrelationComputeResult <- function(corrResult, data1, data2 = NULL, metho
 #'
 #' This function returns correlation coefficients for variables in one dataset against itself
 #' 
-#' @param data first dataset. A data.table
-#' @param method string defining the type of correlation to run. The currently supported values are 'spearman','pearson' and 'sparcc'
+#' @param data first dataset. A data.table or Collection object.
+#' @param method string defining the type of correlation to run. The currently supported values are 'spearman','pearson', 
+#' and for some methods/ data types 'sparcc'.
 #' @param format string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.
 #' @param verbose boolean indicating if timed logging is desired
 #' @return ComputeResult object
@@ -257,7 +258,7 @@ setGeneric("selfCorrelation",
 #' @rdname selfCorrelation
 #' @aliases selfCorrelation,data.table-method
 setMethod("selfCorrelation", signature("data.table"), 
-function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE)) {
+function(data, method = c('spearman','pearson'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE)) {
 
   format <- veupathUtils::matchArg(format)
   method <- veupathUtils::matchArg(method)
@@ -297,7 +298,7 @@ function(data1, data2, method = c('spearman','pearson'), format  = c('ComputeRes
 #' @rdname selfCorrelation
 #' @aliases selfCorrelation,Collection-method
 setMethod("selfCorrelation", signature("Collection"), 
-function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), proportionNonZeroThreshold = 0.5, varianceThreshold = 0, stdDevThreshold = 0) {
+function(data, method = c('spearman','pearson'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), proportionNonZeroThreshold = 0.5, varianceThreshold = 0, stdDevThreshold = 0) {
   
   format <- veupathUtils::matchArg(format)
   method <- veupathUtils::matchArg(method)
@@ -325,7 +326,7 @@ function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeRes
 #' @rdname selfCorrelation
 #' @aliases selfCorrelation,SampleMetadata-method
 setMethod("selfCorrelation", signature("SampleMetadata"), 
-function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE)) {
+function(data, method = c('spearman','pearson'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE)) {
 
   format <- veupathUtils::matchArg(format)
   method <- veupathUtils::matchArg(method)

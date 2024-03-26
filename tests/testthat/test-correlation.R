@@ -266,17 +266,6 @@ test_that("correlation returns an appropriately structured result for assay agai
   expect_equal(as.character(unique(statsData$data1)), names(df)[2:(length(names(df)) - 1)])
   expect_equal(as.character(unique(statsData$data2)), names(df)[3:length(names(df))])
   expect_true(all(!is.na(statsData)))
-
-  # method = sparcc
-  data@data <- abs(data@data) # sparcc doesn't like negative values
-  result <- selfCorrelation(data, method='sparcc', proportionNonZeroThreshold = 0, verbose = FALSE)
-  statsData <- result@statistics@statistics
-  expect_s3_class(statsData, 'data.frame')
-  expect_equal(names(statsData), c('data1','data2','correlationCoef','pValue'))
-  expect_equal(nrow(statsData), 3) # ((3*3)-3)/2
-  expect_equal(as.character(unique(statsData$data1)), names(df)[2:(length(names(df)) - 1)])
-  expect_equal(as.character(unique(statsData$data2)), names(df)[3:length(names(df))])
-  expect_true(all(!is.na(statsData$correlationCoef))) # sparcc returns NA for pvalues sometimes
 })
 
 test_that("correlation returns an appropriately structured result for assay vs assay", {
