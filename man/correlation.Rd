@@ -5,7 +5,7 @@
 \alias{correlation,data.table,data.table-method}
 \alias{correlation,data.table,missingOrNULL-method}
 \alias{correlation,CollectionWithMetadata,missingOrNULL-method}
-\alias{correlation,CollectionWithMetadata,CollectionWithMetadata-method}
+\alias{correlation,Collection,Collection-method}
 \title{Correlation}
 \usage{
 correlation(
@@ -44,7 +44,7 @@ correlation(
   stdDevThreshold = 0
 )
 
-\S4method{correlation}{CollectionWithMetadata,CollectionWithMetadata}(
+\S4method{correlation}{Collection,Collection}(
   data1,
   data2,
   method = c("spearman", "pearson"),

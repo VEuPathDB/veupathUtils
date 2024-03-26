@@ -3,7 +3,7 @@
 \name{selfCorrelation}
 \alias{selfCorrelation}
 \alias{selfCorrelation,data.table-method}
-\alias{selfCorrelation,CollectionWithMetadata-method}
+\alias{selfCorrelation,Collection-method}
 \alias{selfCorrelation,SampleMetadata-method}
 \title{Self Correlation}
 \usage{
@@ -22,7 +22,7 @@ selfCorrelation(
   verbose = c(TRUE, FALSE)
 )
 
-\S4method{selfCorrelation}{CollectionWithMetadata}(
+\S4method{selfCorrelation}{Collection}(
   data,
   method = c("spearman", "pearson", "sparcc"),
   format = c("ComputeResult", "data.table"),

@@ -295,8 +295,8 @@ function(data1, data2, method = c('spearman','pearson'), format  = c('ComputeRes
 })
 
 #' @rdname selfCorrelation
-#' @aliases selfCorrelation,CollectionWithMetadata-method
-setMethod("selfCorrelation", signature("CollectionWithMetadata"), 
+#' @aliases selfCorrelation,Collection-method
+setMethod("selfCorrelation", signature("Collection"), 
 function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), proportionNonZeroThreshold = 0.5, varianceThreshold = 0, stdDevThreshold = 0) {
   
   format <- veupathUtils::matchArg(format)
@@ -345,8 +345,8 @@ function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeRes
 })
 
 #' @rdname correlation
-#' @aliases correlation,CollectionWithMetadata,CollectionWithMetadata-method
-setMethod("correlation", signature("CollectionWithMetadata", "CollectionWithMetadata"), 
+#' @aliases correlation,Collection,Collection-method
+setMethod("correlation", signature("Collection", "Collection"), 
 function(data1, data2, method = c('spearman','pearson'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), proportionNonZeroThreshold = 0.5, varianceThreshold = 0, stdDevThreshold = 0) {
   
   format <- veupathUtils::matchArg(format)
