@@ -101,7 +101,7 @@ test_that('CollectionWithMetadata validation works', {
     expect_true(testing@imputeZero)
 })
 
-test_that("getCollectionValues works", {
+test_that("getCollectionData works", {
     nSamples <- 200
     df <- data.table::data.table(
         "entity.SampleID" = 1:nSamples,
@@ -116,12 +116,12 @@ test_that("getCollectionValues works", {
         recordIdColumn = 'entity.SampleID'
     )
 
-    values <- getCollectionValues(testing)
+    values <- getCollectionData(testing)
     expect_equal(nrow(values), nrow(df))
     expect_equal(ncol(values), ncol(df))
 
     ## remove ids
-    values <- getCollectionValues(testing, includeIds = FALSE)
+    values <- getCollectionData(testing, includeIds = FALSE)
     expect_equal(nrow(values), nrow(df))
     expect_equal(ncol(values), ncol(df) - 1)
 
@@ -135,7 +135,7 @@ test_that("getCollectionValues works", {
         removeEmptyRecords = TRUE
     )
 
-    values <- getCollectionValues(testing)
+    values <- getCollectionData(testing)
     expect_equal(nrow(values), nrow(df) -1)
     expect_equal(ncol(values), ncol(df))
 })

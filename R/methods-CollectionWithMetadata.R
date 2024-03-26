@@ -58,16 +58,16 @@ setMethod("getSampleMetadataIdColumns", "CollectionWithMetadata", function(objec
 #' @param includeIds boolean indicating whether we should include recordIdColumn and ancestorIdColumns
 #' @param verbose boolean indicating if timed logging is desired
 #' @return data.table of values
-#' @rdname getCollectionValues
+#' @rdname getCollectionData
 #' @export
-setGeneric("getCollectionValues",
-    function(object, ignoreImputeZero = c(FALSE, TRUE), includeIds = c(TRUE, FALSE), verbose = c(TRUE, FALSE)) standardGeneric("getCollectionValues"),
+setGeneric("getCollectionData",
+    function(object, ignoreImputeZero = c(FALSE, TRUE), includeIds = c(TRUE, FALSE), verbose = c(TRUE, FALSE)) standardGeneric("getCollectionData"),
     signature = c("object")
 )
 
-#' @rdname getCollectionValues
-#' @aliases getCollectionValues,CollectionWithMetadata-method
-setMethod("getCollectionValues", signature("CollectionWithMetadata"), function(object, ignoreImputeZero = c(FALSE, TRUE), includeIds = c(TRUE, FALSE), verbose = c(TRUE, FALSE)) {
+#' @rdname getCollectionData
+#' @aliases getCollectionData,CollectionWithMetadata-method
+setMethod("getCollectionData", signature("CollectionWithMetadata"), function(object, ignoreImputeZero = c(FALSE, TRUE), includeIds = c(TRUE, FALSE), verbose = c(TRUE, FALSE)) {
     ignoreImputeZero <- veupathUtils::matchArg(ignoreImputeZero)
     includeIds <- veupathUtils::matchArg(includeIds)
     verbose <- veupathUtils::matchArg(verbose)
@@ -140,7 +140,7 @@ setMethod("getSampleMetadata", signature("CollectionWithMetadata"), function(obj
     }
 
     if (object@removeEmptyRecords) {
-        # not using getCollectionValues here bc i want the empty records here
+        # not using getCollectionData here bc i want the empty records here
         abundances <- object@data[, -..allIdColumns]
 
         # Remove metadata for records with NA or 0 in all columns
@@ -180,7 +180,7 @@ setGeneric("removeIncompleteRecords",
 setMethod("removeIncompleteRecords", signature("CollectionWithMetadata"), function(object, colName = character(), verbose = c(TRUE, FALSE)) {
     verbose <- veupathUtils::matchArg(verbose)
 
-    df <- getCollectionValues(object, verbose = verbose)
+    df <- getCollectionData(object, verbose = verbose)
     sampleMetadata <- getSampleMetadata(object)
 
     # Remove Records with NA from data and metadata
@@ -223,7 +223,7 @@ setGeneric("pruneFeatures",
 #' @rdname pruneFeatures
 #' @aliases pruneFeatures,CollectionWithMetadata-method 
 setMethod("pruneFeatures", signature("CollectionWithMetadata"), function(object, predicate, verbose = c(TRUE, FALSE)) {
-    df <- getCollectionValues(object)
+    df <- getCollectionData(object)
     allIdColumns <- c(object@recordIdColumn, object@ancestorIdColumns)
 
     # keep columns that pass the predicate
@@ -232,11 +232,11 @@ setMethod("pruneFeatures", signature("CollectionWithMetadata"), function(object,
     df <- df[, c(allIdColumns, keepCols), with = FALSE]
 
     # LET ME EXPLAIN
-    # since we called getCollectionValues (which removes empty records)..
+    # since we called getCollectionData (which removes empty records)..
     # we need to do the same for sampleMetadata in order to produce a valid object.
     # and, we dont want those empty records influencing which features get pruned, so i think were tied to this.
     # we just need to be sure we ask for the metadata before resetting the abundance data, or else we'll get an error
-    # bc getSampleMetadata also calls getCollectionValues to find which records to remove
+    # bc getSampleMetadata also calls getCollectionData to find which records to remove
     # we could maybe do it better, by introducing a hasSampleMetadata method in here. but i'm not sure if that's worth it.
     if (nrow(object@sampleMetadata@data) > 0) {
         object@sampleMetadata@data <- getSampleMetadata(object)

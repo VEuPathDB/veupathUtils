@@ -280,7 +280,7 @@ function(data1, data2, method = c('spearman','pearson'), format  = c('ComputeRes
   data1 <- pruneFeatures(data1, predicateFactory('variance', varianceThreshold), verbose)
   data1 <- pruneFeatures(data1, predicateFactory('sd', stdDevThreshold), verbose)
   
-  values <- getCollectionValues(data1, FALSE, FALSE, verbose)
+  values <- getCollectionData(data1, FALSE, FALSE, verbose)
   corrResult <- correlation(values, getSampleMetadata(data1, TRUE, FALSE), method = method, format = 'data.table', verbose = verbose)
 
   veupathUtils::logWithTime(paste("Received df table with", nrow(values), "samples and", (ncol(values)-1), "features with values."), verbose)
@@ -308,7 +308,7 @@ function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeRes
   data <- pruneFeatures(data, predicateFactory('variance', varianceThreshold), verbose)
   data <- pruneFeatures(data, predicateFactory('sd', stdDevThreshold), verbose)
 
-  values <- getCollectionValues(data, FALSE, FALSE, verbose)
+  values <- getCollectionData(data, FALSE, FALSE, verbose)
   corrResult <- correlation(values, NULL, method = method, format = 'data.table', verbose = verbose)
 
   veupathUtils::logWithTime(paste("Received df table with", nrow(values), "samples and", (ncol(values)-1), "features with values."), verbose)
@@ -361,10 +361,10 @@ function(data1, data2, method = c('spearman','pearson'), format = c('ComputeResu
   data2 <- pruneFeatures(data2, predicateFactory('variance', varianceThreshold), verbose)
   data2 <- pruneFeatures(data2, predicateFactory('sd', stdDevThreshold), verbose)
   
-  values1 <- getCollectionValues(data1, FALSE, TRUE, verbose)
-  values2 <- getCollectionValues(data2, FALSE, TRUE, verbose)
+  values1 <- getCollectionData(data1, FALSE, TRUE, verbose)
+  values2 <- getCollectionData(data2, FALSE, TRUE, verbose)
 
-  # empty samples removed from data by getCollectionValues, means we need to keep samples common to both datasets and remove ids
+  # empty samples removed from data by getCollectionData, means we need to keep samples common to both datasets and remove ids
   # get id col names
   recordIdColumn <- data1@recordIdColumn
   allIdColumns <- c(recordIdColumn, data1@ancestorIdColumns)
