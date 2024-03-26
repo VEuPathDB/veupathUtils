@@ -331,7 +331,7 @@ function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeRes
   method <- veupathUtils::matchArg(method)
   verbose <- veupathUtils::matchArg(verbose)
   
-  corrResult <- correlation(microbiomeData::getSampleMetadata(data, TRUE, FALSE), NULL, method = method, format = 'data.table', verbose = verbose)
+  corrResult <- correlation(getSampleMetadata(data, TRUE, FALSE), NULL, method = method, format = 'data.table', verbose = verbose)
 
   veupathUtils::logWithTime(paste("Received df table with", nrow(data), "samples and", (ncol(data)-1), "variables."), verbose)
 

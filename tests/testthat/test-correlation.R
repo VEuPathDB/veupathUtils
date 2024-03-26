@@ -112,7 +112,7 @@ test_that('correlation returns an appropriately structured result for abundance 
   )
 
   df <- data.table::data.table(
-    "entity.SampleID" = sampleMetadata$entity.SampleID,
+    "entity.SampleID" = sampleMetadataDT$entity.SampleID,
     "entity.cont1" = rnorm(nSamples),
     "entity.cont2" = rnorm(nSamples),
     "entity.cont3" = rnorm(nSamples)
@@ -130,22 +130,22 @@ test_that('correlation returns an appropriately structured result for abundance 
               recordIdColumn = 'entity.SampleID')
   
   ## All numeric sample variables
-  result <- correlation(data, method='pearson', verbose = FALSE)
+  result <- correlation(data, method='pearson', proportionNonZeroThreshold = 0, verbose = FALSE)
   # Check stats (all correlation outputs)
   statsData <- result@statistics@statistics
   expect_s3_class(statsData, 'data.frame')
   expect_equal(names(statsData), c('data1','data2','correlationCoef','pValue'))
-  expect_equal(nrow(statsData), 36) # Should be number of collection members * number of metadata vars, less pruned collection members
+  expect_equal(nrow(statsData), 9) # Should be number of collection members * number of metadata vars
   expect_true(all(!is.na(statsData)))
 
 
   ## With method = spearman
-  result <- correlation(data, method='spearman', verbose = FALSE)
+  result <- correlation(data, method='spearman', proportionNonZeroThreshold = 0, verbose = FALSE)
   # Check stats (all correlation outputs)
   statsData <- result@statistics@statistics
   expect_s3_class(statsData, 'data.frame')
   expect_equal(names(statsData), c('data1','data2','correlationCoef','pValue'))
-  expect_equal(nrow(statsData), 36) # Should be number of collection members * number of metadata vars, less pruned collection members
+  expect_equal(nrow(statsData), 9) # Should be number of collection members * number of metadata vars
   expect_true(all(!is.na(statsData)))
 
 
@@ -164,12 +164,12 @@ test_that('correlation returns an appropriately structured result for abundance 
               sampleMetadata = sampleMetadata,
               recordIdColumn = 'entity.SampleID')
 
-  result <- correlation(data, method='spearman', verbose = FALSE)
+  result <- correlation(data, method='spearman', proportionNonZeroThreshold = 0, verbose = FALSE)
   # Check stats (all correlation outputs)
   statsData <- result@statistics@statistics
   expect_s3_class(statsData, 'data.frame')
   expect_equal(names(statsData), c('data1','data2','correlationCoef','pValue'))
-  expect_equal(nrow(statsData), 12) # Should be number of collection members * number of metadata vars, less pruned collection members
+  expect_equal(nrow(statsData), 3) # Should be number of collection members * number of metadata vars
   expect_true(all(!is.na(statsData)))
 })
 
@@ -197,7 +197,7 @@ test_that("correlation returns an appropriately structured result for metadata v
   statsData <- result@statistics@statistics
   expect_s3_class(statsData, 'data.frame')
   expect_equal(names(statsData), c('data1','data2','correlationCoef','pValue'))
-  nNumericCols <- length(veupathUtils::findNumericCols(sampleMetadata@data))
+  nNumericCols <- length(veupathUtils::findNumericCols(sampleMetadata@data[,2:ncol(sampleMetadata@data)]))
   expect_equal(nrow(statsData), ((nNumericCols * nNumericCols) - 3)/2) # Should be number of number of numeric vars * number of numeric vars
   expect_equal(as.character(unique(statsData$data1)), c('entity.contA', 'entity.contB'))
   expect_equal(as.character(unique(statsData$data2)), c('entity.contB', 'entity.contC'))
@@ -209,7 +209,7 @@ test_that("correlation returns an appropriately structured result for metadata v
   statsData <- result@statistics@statistics
   expect_s3_class(statsData, 'data.frame')
   expect_equal(names(statsData), c('data1','data2','correlationCoef','pValue'))
-  expect_equal(nrow(statsData), ((nNumericCols * nNumericCols) - 3)/2) # Should be number of taxa * number of metadata vars
+  expect_equal(nrow(statsData), ((nNumericCols * nNumericCols) - 3)/2) # Should be number of collection variables * number of metadata vars
   expect_equal(as.character(unique(statsData$data1)), c('entity.contA', 'entity.contB'))
   expect_equal(as.character(unique(statsData$data2)), c('entity.contB', 'entity.contC'))
   expect_true(all(!is.na(statsData)))
@@ -227,7 +227,7 @@ test_that("correlation returns an appropriately structured result for assay agai
   )
 
   df <- data.table::data.table(
-    "entity.SampleID" = sampleMetadata$entity.SampleID,
+    "entity.SampleID" = sampleMetadataDT$entity.SampleID,
     "entity.cont1" = rnorm(nSamples),
     "entity.cont2" = rnorm(nSamples),
     "entity.cont3" = rnorm(nSamples)
@@ -238,19 +238,13 @@ test_that("correlation returns an appropriately structured result for assay agai
     recordIdColumn = "entity.SampleID"
   )
 
-  #manually prefilter, so we can test on smaller data set w known column names
-  predicate <- predicateFactory('proportionNonZero', 0.5)
-  keepCols <- df[, lapply(.SD, predicate), .SDcols = colnames(df)[!(colnames(df) %in% "entity.SampleID")]]
-  keepCols <- names(keepCols)[keepCols == TRUE]
-  df <- df[, c("entity.SampleID", keepCols), with = FALSE]
-
   data <- CollectionWithMetadata(
               name = 'testing',
               data = df,
               sampleMetadata = sampleMetadata,
               recordIdColumn = 'entity.SampleID')
 
-  result <- selfCorrelation(data, method='pearson', verbose = FALSE)
+  result <- selfCorrelation(data, method='pearson', proportionNonZeroThreshold = 0, verbose = FALSE)
   expect_equal(result@statistics@data1Metadata, 'assay')
   expect_equal(result@statistics@data2Metadata, 'assay')
 
@@ -258,27 +252,28 @@ test_that("correlation returns an appropriately structured result for assay agai
   statsData <- result@statistics@statistics
   expect_s3_class(statsData, 'data.frame')
   expect_equal(names(statsData), c('data1','data2','correlationCoef','pValue'))
-  expect_equal(nrow(statsData), 66) # Should be number of taxa * number of taxa
+  expect_equal(nrow(statsData), 3) # ((3*3)-3)/2
   expect_equal(as.character(unique(statsData$data1)), names(df)[2:(length(names(df))-1)])
   expect_equal(as.character(unique(statsData$data2)), names(df)[3:length(names(df))])
   expect_true(all(!is.na(statsData)))
 
   # method = spearman
-  result <- selfCorrelation(data, method='spearman', verbose = FALSE)
+  result <- selfCorrelation(data, method='spearman', proportionNonZeroThreshold = 0, verbose = FALSE)
   statsData <- result@statistics@statistics
   expect_s3_class(statsData, 'data.frame')
   expect_equal(names(statsData), c('data1','data2','correlationCoef','pValue'))
-  expect_equal(nrow(statsData), 66) # Should be number of taxa * number of taxa, less pruned taxa
+  expect_equal(nrow(statsData), 3) # ((3*3)-3)/2
   expect_equal(as.character(unique(statsData$data1)), names(df)[2:(length(names(df)) - 1)])
   expect_equal(as.character(unique(statsData$data2)), names(df)[3:length(names(df))])
   expect_true(all(!is.na(statsData)))
 
   # method = sparcc
-  result <- selfCorrelation(data, method='sparcc', verbose = FALSE)
+  data@data <- abs(data@data) # sparcc doesn't like negative values
+  result <- selfCorrelation(data, method='sparcc', proportionNonZeroThreshold = 0, verbose = FALSE)
   statsData <- result@statistics@statistics
   expect_s3_class(statsData, 'data.frame')
   expect_equal(names(statsData), c('data1','data2','correlationCoef','pValue'))
-  expect_equal(nrow(statsData), 66) # Should be number of taxa * number of taxa
+  expect_equal(nrow(statsData), 3) # ((3*3)-3)/2
   expect_equal(as.character(unique(statsData$data1)), names(df)[2:(length(names(df)) - 1)])
   expect_equal(as.character(unique(statsData$data2)), names(df)[3:length(names(df))])
   expect_true(all(!is.na(statsData$correlationCoef))) # sparcc returns NA for pvalues sometimes
@@ -295,7 +290,7 @@ test_that("correlation returns an appropriately structured result for assay vs a
   )
 
   df2 <- data.table::data.table(
-    "entity.SampleID" = sampleMetadata$entity.SampleID,
+    "entity.SampleID" = df1$entity.SampleID,
     "entity.cont1" = rnorm(nSamples),
     "entity.cont2" = rnorm(nSamples),
     "entity.cont3" = rnorm(nSamples)
@@ -324,22 +319,22 @@ test_that("correlation returns an appropriately structured result for assay vs a
               recordIdColumn = 'entity.SampleID')
   
   ## All numeric sample variables
-  result <- correlation(data1, data2, method='pearson', verbose = FALSE)
+  result <- correlation(data1, data2, method='pearson', proportionNonZeroThreshold = 0, verbose = FALSE)
   # Check stats (all correlation outputs)
   statsData <- result@statistics@statistics
   expect_s3_class(statsData, 'data.frame')
   expect_equal(names(statsData), c('data1','data2','correlationCoef','pValue'))
-  expect_equal(nrow(statsData), 32) # Should be number of variables in df1 * number of variables in df2, less pruned variables
+  expect_equal(nrow(statsData), 9) # Should be number of variables in df1 * number of variables in df2
   expect_true(all(!is.na(statsData)))
 
 
   ## With method = spearman
-  result <- correlation(data1, data2, method='spearman', verbose = FALSE)
+  result <- correlation(data1, data2, method='spearman', proportionNonZeroThreshold = 0, verbose = FALSE)
   # Check stats (all correlation outputs)
   statsData <- result@statistics@statistics
   expect_s3_class(statsData, 'data.frame')
   expect_equal(names(statsData), c('data1','data2','correlationCoef','pValue'))
-  expect_equal(nrow(statsData), 32) # Should be number of variables in df1 * number of variables in df2, less pruned variables
+  expect_equal(nrow(statsData), 9) # Should be number of variables in df1 * number of variables in df2
 })
 
 test_that("correlation returns a ComputeResult with the correct slots", {
@@ -353,7 +348,7 @@ test_that("correlation returns a ComputeResult with the correct slots", {
   )
 
   df <- data.table::data.table(
-    "entity.SampleID" = sampleMetadata$entity.SampleID,
+    "entity.SampleID" = sampleMetadataDT$entity.SampleID,
     "entity.cont1" = rnorm(nSamples),
     "entity.cont2" = rnorm(nSamples),
     "entity.cont3" = rnorm(nSamples)
@@ -390,7 +385,7 @@ test_that("correlation fails with improper inputs", {
 
   nSamples <- 200
   df <- data.table::data.table(
-    "entity.SampleID" = sampleMetadata$entity.SampleID,
+    "entity.SampleID" = 1:nSamples,
     "entity.cont1" = rnorm(nSamples),
     "entity.cont2" = rnorm(nSamples),
     "entity.cont3" = rnorm(nSamples)
@@ -449,7 +444,7 @@ test_that("toJSON works as expected for the CorrelationResult class", {
   )
 
   df <- data.table::data.table(
-    "entity.SampleID" = sampleMetadata$entity.SampleID,
+    "entity.SampleID" = sampleMetadataDT$entity.SampleID,
     "entity.cont1" = rnorm(nSamples),
     "entity.cont2" = rnorm(nSamples),
     "entity.cont3" = rnorm(nSamples)
