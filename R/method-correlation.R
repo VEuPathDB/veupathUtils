@@ -62,6 +62,7 @@ setClassUnion("missingOrNULL", c("missing", "NULL"))
 #' @param verbose boolean indicating if timed logging is desired
 #' @return data.frame with correlation coefficients or a ComputeResult object
 #' @import data.table
+#' @rdname correlation
 #' @export
 setGeneric("correlation",
   function(data1, data2, method, format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), ...) standardGeneric("correlation"),
@@ -72,18 +73,10 @@ setGeneric("correlation",
 ############          That allows for proper validation of inputs (sparcc is for compositional data for example).        ############
 ############                                 See microbiomeComputations for an example.                                  ############
 
-#' Correlation
-#'
-#' This function returns correlation coefficients for all columns in one data table with all columns in a second data table.
-#' 
-#' @param data1 data.table with columns as variables. All columns must be numeric. One row per sample.
-#' @param data2 data.table with columns as variables. All columns must be numeric. One row per sample. Will correlate all columns of data2 with all columns of data1.
-#' @param method string defining the type of correlation to run. The currently supported values are 'spearman' and 'pearson'
-#' @param format string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.
-#' @param verbose boolean indicating if timed logging is desired
 #' @importFrom Hmisc rcorr
 #' @return data.frame with correlation coefficients
-#' @export
+#' @rdname correlation
+#' @aliases correlation,data.table,data.table-method
 setMethod("correlation", signature("data.table", "data.table"), 
 function(data1, data2, method = c('spearman','pearson'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE)) {
 
@@ -135,20 +128,12 @@ function(data1, data2, method = c('spearman','pearson'), format = c('ComputeResu
   }
 })
 
-#' Correlation
-#'
-#' This function returns correlation coefficients for all columns in one data table against themselves.
-#' 
-#' @param data1 data.table with columns as variables. All columns must be numeric. One row per sample.
-#' @param method string defining the type of correlation to run. The currently supported values are 'spearman', 'pearson' and 'sparcc'
-#' @param format string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.
-#' @param verbose boolean indicating if timed logging is desired
-#' @return data.frame with correlation coefficients
-#' @importFrom Hmisc rcorr
+
 #' @importFrom SpiecEasi pval.sparccboot
 #' @importFrom SpiecEasi sparccboot
 #' @importFrom SpiecEasi sparcc
-#' @export
+#' @rdname correlation
+#' @aliases correlation,data.table,missingOrNULL-method
 setMethod("correlation", signature("data.table", "missingOrNULL"), 
 function(data1, data2, method = c('spearman','pearson','sparcc'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE)) {
 
@@ -212,7 +197,7 @@ function(data1, data2, method = c('spearman','pearson','sparcc'), format = c('Co
 })
 
 getDataMetadataType <- function(data) {
-  if (inherits(data, 'AbundanceData')) {
+  if (inherits(data, 'CollectionWithMetadata')) {
     return('assay')
   } else if (inherits(data, 'SampleMetadata')) {
     return('sampleMetadata')
@@ -247,11 +232,6 @@ buildCorrelationComputeResult <- function(corrResult, data1, data2 = NULL, metho
   result@statistics <- statistics
   result@parameters <- paste0('method = ', method)
 
-  # The resulting data should contain only the samples actually used.
-  # this seems slightly complicated to generalize, and im not sure what we use it for anyhow
-  #result@data <- abundances[, ..allIdColumns]
-  #names(result@data) <- stripEntityIdFromColumnHeader(names(result@data))
-
   validObject(result)
   veupathUtils::logWithTime(paste('Correlation computation completed with parameters recordIdColumn=', recordIdColumn, ', method = ', method), verbose)
   
@@ -262,34 +242,165 @@ buildCorrelationComputeResult <- function(corrResult, data1, data2 = NULL, metho
 #'
 #' This function returns correlation coefficients for variables in one dataset against itself
 #' 
-#' @param data first dataset. A data.table
-#' @param method string defining the type of correlation to run. The currently supported values are 'spearman','pearson' and 'sparcc'
+#' @param data A data.table or Collection object.
+#' @param method string defining the type of correlation to run. The currently supported values are 'spearman','pearson', 
+#' and for some methods/ data types 'sparcc'.
 #' @param format string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.
 #' @param verbose boolean indicating if timed logging is desired
 #' @return ComputeResult object
+#' @rdname selfCorrelation
 #' @export
 setGeneric("selfCorrelation",
   function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), ...) standardGeneric("selfCorrelation"),
   signature = c("data")
 )
 
-#' Self Correlation
-#'
-#' This function returns correlation coefficients for variables in one data.table against itself.
-#' This is essentially an alias to the veupathUtils::correlation function.
-#' 
-#' @param data a data.table
-#' @param method string defining the type of correlation to run. The currently supported values are 'spearman', 'pearson' and 'sparcc'
-#' @param format string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.
-#' @param verbose boolean indicating if timed logging is desired
-#' @return ComputeResult object
-#' @export
+#' @rdname selfCorrelation
+#' @aliases selfCorrelation,data.table-method
 setMethod("selfCorrelation", signature("data.table"), 
-function(data, method = c('spearman','pearson','sparcc'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE)) {
+function(data, method = c('spearman','pearson'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE)) {
 
   format <- veupathUtils::matchArg(format)
   method <- veupathUtils::matchArg(method)
   verbose <- veupathUtils::matchArg(verbose)
   
   correlation(data, NULL, method = method, format = format, verbose = verbose)
+})
+
+#' @rdname correlation
+#' @aliases correlation,CollectionWithMetadata,missingOrNULL-method
+setMethod("correlation", signature("CollectionWithMetadata", "missingOrNULL"), 
+function(data1, data2, method = c('spearman','pearson'), format  = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), proportionNonZeroThreshold = 0.5, varianceThreshold = 0, stdDevThreshold = 0) {
+  
+  format <- veupathUtils::matchArg(format)
+  method <- veupathUtils::matchArg(method)
+  verbose <- veupathUtils::matchArg(verbose)
+  
+  #prefilters applied
+  data1 <- pruneFeatures(data1, predicateFactory('proportionNonZero', proportionNonZeroThreshold), verbose)
+  data1 <- pruneFeatures(data1, predicateFactory('variance', varianceThreshold), verbose)
+  data1 <- pruneFeatures(data1, predicateFactory('sd', stdDevThreshold), verbose)
+  
+  values <- getCollectionData(data1, FALSE, FALSE, verbose)
+  corrResult <- correlation(values, getSampleMetadata(data1, TRUE, FALSE), method = method, format = 'data.table', verbose = verbose)
+
+  veupathUtils::logWithTime(paste("Received df table with", nrow(values), "samples and", (ncol(values)-1), "features with values."), verbose)
+
+  if (format == 'data.table') {
+    return(corrResult)
+  } else {
+    result <- buildCorrelationComputeResult(corrResult, data1, data1@sampleMetadata, method, verbose)
+    result@computationDetails <- 'correlation'
+    return(result)
+  }
+})
+
+#' @rdname selfCorrelation
+#' @aliases selfCorrelation,Collection-method
+setMethod("selfCorrelation", signature("Collection"), 
+function(data, method = c('spearman','pearson'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), proportionNonZeroThreshold = 0.5, varianceThreshold = 0, stdDevThreshold = 0) {
+  
+  format <- veupathUtils::matchArg(format)
+  method <- veupathUtils::matchArg(method)
+  verbose <- veupathUtils::matchArg(verbose)
+
+  #prefilters applied
+  data <- pruneFeatures(data, predicateFactory('proportionNonZero', proportionNonZeroThreshold), verbose)
+  data <- pruneFeatures(data, predicateFactory('variance', varianceThreshold), verbose)
+  data <- pruneFeatures(data, predicateFactory('sd', stdDevThreshold), verbose)
+
+  values <- getCollectionData(data, FALSE, FALSE, verbose)
+  corrResult <- correlation(values, NULL, method = method, format = 'data.table', verbose = verbose)
+
+  veupathUtils::logWithTime(paste("Received df table with", nrow(values), "samples and", (ncol(values)-1), "features with values."), verbose)
+
+  if (format == 'data.table') {
+    return(corrResult)
+  } else {
+    result <- buildCorrelationComputeResult(corrResult, data, NULL, method, verbose)
+    result@computationDetails <- 'selfCorrelation'
+    return(result)
+  }  
+})
+
+#' @rdname selfCorrelation
+#' @aliases selfCorrelation,SampleMetadata-method
+setMethod("selfCorrelation", signature("SampleMetadata"), 
+function(data, method = c('spearman','pearson'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE)) {
+
+  format <- veupathUtils::matchArg(format)
+  method <- veupathUtils::matchArg(method)
+  verbose <- veupathUtils::matchArg(verbose)
+  
+  corrResult <- correlation(getSampleMetadata(data, TRUE, FALSE), NULL, method = method, format = 'data.table', verbose = verbose)
+
+  veupathUtils::logWithTime(paste("Received df table with", nrow(data), "samples and", (ncol(data)-1), "variables."), verbose)
+
+  if (format == 'data.table') {
+    return(corrResult)
+  } else {
+    result <- buildCorrelationComputeResult(corrResult, data, NULL, method, verbose)
+    result@computationDetails <- 'selfCorrelation'
+    return(result)
+  }
+})
+
+#' @rdname correlation
+#' @aliases correlation,Collection,Collection-method
+setMethod("correlation", signature("Collection", "Collection"), 
+function(data1, data2, method = c('spearman','pearson'), format = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), proportionNonZeroThreshold = 0.5, varianceThreshold = 0, stdDevThreshold = 0) {
+  
+  format <- veupathUtils::matchArg(format)
+  method <- veupathUtils::matchArg(method)
+  verbose <- veupathUtils::matchArg(verbose)
+  
+  #prefilters applied
+  data1 <- pruneFeatures(data1, predicateFactory('proportionNonZero', proportionNonZeroThreshold), verbose)
+  data1 <- pruneFeatures(data1, predicateFactory('variance', varianceThreshold), verbose)
+  data1 <- pruneFeatures(data1, predicateFactory('sd', stdDevThreshold), verbose)
+  data2 <- pruneFeatures(data2, predicateFactory('proportionNonZero', proportionNonZeroThreshold), verbose)
+  data2 <- pruneFeatures(data2, predicateFactory('variance', varianceThreshold), verbose)
+  data2 <- pruneFeatures(data2, predicateFactory('sd', stdDevThreshold), verbose)
+  
+  values1 <- getCollectionData(data1, FALSE, TRUE, verbose)
+  values2 <- getCollectionData(data2, FALSE, TRUE, verbose)
+
+  veupathUtils::logWithTime(paste("Received first df table with", nrow(values1), "samples and", (ncol(values1)-1), "features with values."), verbose)
+  veupathUtils::logWithTime(paste("Received second df table with", nrow(values2), "samples and", (ncol(values2)-1), "features with values."), verbose)
+
+  # empty samples removed from data by getCollectionData, means we need to keep samples common to both datasets and remove ids
+  # get id col names
+  recordIdColumn <- data1@recordIdColumn
+  allIdColumns <- c(recordIdColumn, data1@ancestorIdColumns)
+  # should we verify that ids are the same in both datasets?
+
+  data2IdColumns <- c(data2@recordIdColumn, data2@ancestorIdColumns)
+  if (!all(allIdColumns %in% data2IdColumns)) {
+    stop('All id columns from data1 must be present in data2')
+  }
+
+  # remove samples that are not common
+  commonSamples <- intersect(values1[[recordIdColumn]], values2[[recordIdColumn]])
+  if (length(commonSamples) == 0) {
+    stop('No samples in common between data1 and data2')
+  } else {
+    veupathUtils::logWithTime(paste("Found", length(commonSamples), "samples in common between data1 and data2. Only these samples will be used."), verbose)
+  }
+
+  values1 <- values1[values1[[recordIdColumn]] %in% commonSamples, ]
+  values2 <- values2[values2[[recordIdColumn]] %in% commonSamples, ]
+
+  # remove ids
+  values1 <- values1[, -..allIdColumns]
+  values2 <- values2[, -..allIdColumns]  
+
+  corrResult <- veupathUtils::correlation(values1, values2, method = method, format = 'data.table', verbose = verbose)
+
+  if (format == 'data.table') {
+    return(corrResult)
+  } else {
+    result <- veupathUtils::buildCorrelationComputeResult(corrResult, data1, data2, method, verbose)
+    result@computationDetails <- 'correlation'
+    return(result)
+  } 
 })

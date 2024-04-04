@@ -2,6 +2,9 @@
 % Please edit documentation in R/method-correlation.R
 \name{selfCorrelation}
 \alias{selfCorrelation}
+\alias{selfCorrelation,data.table-method}
+\alias{selfCorrelation,Collection-method}
+\alias{selfCorrelation,SampleMetadata-method}
 \title{Self Correlation}
 \usage{
 selfCorrelation(
@@ -11,11 +14,36 @@ selfCorrelation(
   verbose = c(TRUE, FALSE),
   ...
 )
+
+\S4method{selfCorrelation}{data.table}(
+  data,
+  method = c("spearman", "pearson"),
+  format = c("ComputeResult", "data.table"),
+  verbose = c(TRUE, FALSE)
+)
+
+\S4method{selfCorrelation}{Collection}(
+  data,
+  method = c("spearman", "pearson"),
+  format = c("ComputeResult", "data.table"),
+  verbose = c(TRUE, FALSE),
+  proportionNonZeroThreshold = 0.5,
+  varianceThreshold = 0,
+  stdDevThreshold = 0
+)
+
+\S4method{selfCorrelation}{SampleMetadata}(
+  data,
+  method = c("spearman", "pearson"),
+  format = c("ComputeResult", "data.table"),
+  verbose = c(TRUE, FALSE)
+)
 }
 \arguments{
-\item{data}{first dataset. A data.table}
+\item{data}{A data.table or Collection object.}
 
-\item{method}{string defining the type of correlation to run. The currently supported values are 'spearman','pearson' and 'sparcc'}
+\item{method}{string defining the type of correlation to run. The currently supported values are 'spearman','pearson',
+and for some methods/ data types 'sparcc'.}
 
 \item{format}{string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.}
 
