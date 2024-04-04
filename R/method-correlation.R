@@ -242,7 +242,7 @@ buildCorrelationComputeResult <- function(corrResult, data1, data2 = NULL, metho
 #'
 #' This function returns correlation coefficients for variables in one dataset against itself
 #' 
-#' @param data first dataset. A data.table or Collection object.
+#' @param data A data.table or Collection object.
 #' @param method string defining the type of correlation to run. The currently supported values are 'spearman','pearson', 
 #' and for some methods/ data types 'sparcc'.
 #' @param format string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.
@@ -365,14 +365,28 @@ function(data1, data2, method = c('spearman','pearson'), format = c('ComputeResu
   values1 <- getCollectionData(data1, FALSE, TRUE, verbose)
   values2 <- getCollectionData(data2, FALSE, TRUE, verbose)
 
+  veupathUtils::logWithTime(paste("Received first df table with", nrow(values1), "samples and", (ncol(values1)-1), "features with values."), verbose)
+  veupathUtils::logWithTime(paste("Received second df table with", nrow(values2), "samples and", (ncol(values2)-1), "features with values."), verbose)
+
   # empty samples removed from data by getCollectionData, means we need to keep samples common to both datasets and remove ids
   # get id col names
   recordIdColumn <- data1@recordIdColumn
   allIdColumns <- c(recordIdColumn, data1@ancestorIdColumns)
   # should we verify that ids are the same in both datasets?
 
+  data2IdColumns <- c(data2@recordIdColumn, data2@ancestorIdColumns)
+  if (!all(allIdColumns %in% data2IdColumns)) {
+    stop('All id columns from data1 must be present in data2')
+  }
+
   # remove samples that are not common
   commonSamples <- intersect(values1[[recordIdColumn]], values2[[recordIdColumn]])
+  if (length(commonSamples) == 0) {
+    stop('No samples in common between data1 and data2')
+  } else {
+    veupathUtils::logWithTime(paste("Found", length(commonSamples), "samples in common between data1 and data2. Only these samples will be used."), verbose)
+  }
+
   values1 <- values1[values1[[recordIdColumn]] %in% commonSamples, ]
   values2 <- values2[values2[[recordIdColumn]] %in% commonSamples, ]
 
@@ -381,9 +395,6 @@ function(data1, data2, method = c('spearman','pearson'), format = c('ComputeResu
   values2 <- values2[, -..allIdColumns]  
 
   corrResult <- veupathUtils::correlation(values1, values2, method = method, format = 'data.table', verbose = verbose)
-
-  veupathUtils::logWithTime(paste("Received first df table with", nrow(values1), "samples and", (ncol(values1)-1), "features with values."), verbose)
-  veupathUtils::logWithTime(paste("Received second df table with", nrow(values2), "samples and", (ncol(values2)-1), "features with values."), verbose)
 
   if (format == 'data.table') {
     return(corrResult)

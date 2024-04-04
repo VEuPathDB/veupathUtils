@@ -40,7 +40,7 @@ selfCorrelation(
 )
 }
 \arguments{
-\item{data}{first dataset. A data.table or Collection object.}
+\item{data}{A data.table or Collection object.}
 
 \item{method}{string defining the type of correlation to run. The currently supported values are 'spearman','pearson',
 and for some methods/ data types 'sparcc'.}

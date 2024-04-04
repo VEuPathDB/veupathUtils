@@ -424,7 +424,8 @@ test_that("correlation fails with improper inputs", {
 })
 
 test_that("toJSON works as expected for the CorrelationResult class", {
-  
+
+  nSamples <- 200 
   sampleMetadataDT <- data.table::data.table(
       "entity.SampleID" = 1:nSamples,
       "entity.contA" = rnorm(nSamples),
