@@ -1,5 +1,7 @@
-##### some helpers for building Collections objects from various data sources #####
+#####      some helpers for building Collections objects from various data sources       #####
+##### these are not intended to be used outside of this package or the mbio main package #####
 
+#' @export
 findCollectionId <- function(dataColName) {
     # this is the case where the id columns follow no format and the data columns follow `Name [CollectionId_VariableId]` format (downloads)
     if (grepl("\\[", dataColName)) {
@@ -18,6 +20,7 @@ findCollectionId <- function(dataColName) {
     stop((sprintf("Could not find collection id for column: %s. Unrecognized format.", dataColName)))
 }
 
+#' @export
 findCollectionIds <- function(dataColNames) {
     recordIdColumn <- findRecordIdColumn(dataColNames)
     ancestorIdColumns <- findAncestorIdColumns(dataColNames)
@@ -26,12 +29,14 @@ findCollectionIds <- function(dataColNames) {
     return(unique(unlist(sapply(variableColNames, findCollectionId))))
 }
 
+#' @export
 findRecordIdColumn <- function(dataColNames) {
     # for now assume were working w bulk download files, which means its the first column
     allIdColumns <- dataColNames[grepl("_Id", dataColNames, fixed=TRUE)]
     return(allIdColumns[1])
 }
 
+#' @export
 findAncestorIdColumns <- function(dataColNames) {
     # for now assume were working w bulk download files, which means they have '_Id'
     allIdColumns <- dataColNames[grepl("_Id", dataColNames, fixed=TRUE)]
@@ -42,6 +47,7 @@ findAncestorIdColumns <- function(dataColNames) {
     return(allIdColumns[2:length(allIdColumns)])
 }
 
+#' @export
 clean_names <- function(names, makeUnique = FALSE) {
     # remove everything after the last opening square bracket to get rid of IRIs
     names <- gsub("\\[.*$", "", names)
@@ -72,6 +78,7 @@ clean_names <- function(names, makeUnique = FALSE) {
 ## its intended to be used for reading in variable collections from the EDA full-dataset download files
 ## keepIdsAndNumbersOnly will ignore things like presence/absence of a bug on the assay entities
 ## cleanColumnNames will clean up the column names to make them valid column names in R, and hopefully improve consistncy of labels as well
+#' @export
 getDataFromSource <- function(dataSource, keepIdsAndNumbersOnly = c(TRUE, FALSE), cleanColumnNames = c(FALSE, TRUE)) {
     keepIdsAndNumbersOnly <- veupathUtils::matchArg(keepIdsAndNumbersOnly)
     cleanColumnNames <- veupathUtils::matchArg(cleanColumnNames)
@@ -102,10 +109,12 @@ getDataFromSource <- function(dataSource, keepIdsAndNumbersOnly = c(TRUE, FALSE)
     return(dt)
 }
 
+#' @export
 findCollectionDataColumns <- function(dataColNames, collectionId) {
     return(dataColNames[grepl(collectionId, dataColNames, fixed=TRUE)])
 }
 
+#' @export
 getCollectionName <- function(collectionId, dataSourceName, ontology = NULL) {
     if (grepl("16S", dataSourceName, fixed=TRUE)) {
         dataSourceName <- "16S"
@@ -136,6 +145,7 @@ getCollectionName <- function(collectionId, dataSourceName, ontology = NULL) {
 
 # so i considered that these should be constructors or something maybe.. 
 # but i mean them to only ever be used internally so im not going to worry about it until something forces me to
+#' @export
 collectionBuilder <- function(collectionId, dt, ontology = NULL) {
     dataColNames <- names(dt)
     collectionColumns <- findCollectionDataColumns(dataColNames, collectionId)
@@ -152,6 +162,7 @@ collectionBuilder <- function(collectionId, dt, ontology = NULL) {
     return(collection)
 }
 
+#' @export
 getCollectionsList <- function(dataSource, ontology = NULL) {
     if (inherits(dataSource, "Collection")) return(dataSource)
 
@@ -164,6 +175,7 @@ getCollectionsList <- function(dataSource, ontology = NULL) {
     return(collections)
 }
 
+#' @export
 collectionsBuilder <- function(dataSources, ontology = NULL) {
     collectionsLists <- lapply(dataSources, getCollectionsList, ontology)
     collections <- unlist(collectionsLists, recursive = FALSE)
