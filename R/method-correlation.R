@@ -270,11 +270,22 @@ function(data, method = c('spearman','pearson'), format = c('ComputeResult', 'da
 #' @rdname correlation
 #' @aliases correlation,CollectionWithMetadata,missingOrNULL-method
 setMethod("correlation", signature("CollectionWithMetadata", "missingOrNULL"), 
-function(data1, data2, method = c('spearman','pearson'), format  = c('ComputeResult', 'data.table'), verbose = c(TRUE, FALSE), proportionNonZeroThreshold = 0.5, varianceThreshold = 0, stdDevThreshold = 0) {
+function(
+  data1, 
+  data2, 
+  method = c('spearman','pearson'), 
+  format  = c('ComputeResult', 'data.table'), 
+  verbose = c(TRUE, FALSE), 
+  proportionNonZeroThreshold = 0.5, 
+  varianceThreshold = 0, 
+  stdDevThreshold = 0, 
+  metadataIsFirst = c(FALSE,TRUE)
+) {
   
   format <- veupathUtils::matchArg(format)
   method <- veupathUtils::matchArg(method)
   verbose <- veupathUtils::matchArg(verbose)
+  metadataIsFirst <- veupathUtils::matchArg(metadataIsFirst)
   
   #prefilters applied
   data1 <- pruneFeatures(data1, predicateFactory('proportionNonZero', proportionNonZeroThreshold), verbose)
@@ -282,7 +293,11 @@ function(data1, data2, method = c('spearman','pearson'), format  = c('ComputeRes
   data1 <- pruneFeatures(data1, predicateFactory('sd', stdDevThreshold), verbose)
   
   values <- getCollectionData(data1, FALSE, FALSE, verbose)
-  corrResult <- correlation(values, getSampleMetadata(data1, TRUE, FALSE), method = method, format = 'data.table', verbose = verbose)
+  if (metadataIsFirst) {
+    corrResult <- correlation(getSampleMetadata(data1, TRUE, FALSE), values, method = method, format = 'data.table', verbose = verbose)
+  } else {
+    corrResult <- correlation(values, getSampleMetadata(data1, TRUE, FALSE), method = method, format = 'data.table', verbose = verbose)
+  }
 
   veupathUtils::logWithTime(paste("Received df table with", nrow(values), "samples and", (ncol(values)-1), "features with values."), verbose)
 
