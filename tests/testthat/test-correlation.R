@@ -131,12 +131,18 @@ test_that('correlation returns an appropriately structured result for abundance 
   
   ## All numeric sample variables
   result <- correlation(data, method='pearson', proportionNonZeroThreshold = 0, verbose = FALSE)
+  expect_equal(result@statistics@data1Metadata, 'assay')
+  expect_equal(result@statistics@data2Metadata, 'sampleMetadata')
   # Check stats (all correlation outputs)
   statsData <- result@statistics@statistics
   expect_s3_class(statsData, 'data.frame')
   expect_equal(names(statsData), c('data1','data2','correlationCoef','pValue'))
   expect_equal(nrow(statsData), 9) # Should be number of collection members * number of metadata vars
   expect_true(all(!is.na(statsData)))
+  # if metadataIsFirst is true, data1 and data2 are switched
+  result <- correlation(data, method='pearson', proportionNonZeroThreshold = 0, verbose = FALSE, metadataIsFirst = TRUE)
+  expect_equal(result@statistics@data1Metadata, 'sampleMetadata')
+  expect_equal(result@statistics@data2Metadata, 'assay')
 
 
   ## With method = spearman
