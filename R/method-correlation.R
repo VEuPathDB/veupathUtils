@@ -304,7 +304,11 @@ function(
   if (format == 'data.table') {
     return(corrResult)
   } else {
-    result <- buildCorrelationComputeResult(corrResult, data1, data1@sampleMetadata, method, verbose)
+    if (metadataIsFirst) {
+      result <- buildCorrelationComputeResult(corrResult, data1@sampleMetadata, data1, method, verbose)
+    } else {
+      result <- buildCorrelationComputeResult(corrResult, data1, data1@sampleMetadata, method, verbose)
+    }
     result@computationDetails <- 'correlation'
     return(result)
   }
