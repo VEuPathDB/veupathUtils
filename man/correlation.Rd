@@ -41,7 +41,8 @@ correlation(
   verbose = c(TRUE, FALSE),
   proportionNonZeroThreshold = 0.5,
   varianceThreshold = 0,
-  stdDevThreshold = 0
+  stdDevThreshold = 0,
+  metadataIsFirst = c(FALSE, TRUE)
 )
 
 \S4method{correlation}{Collection,Collection}(
