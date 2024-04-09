@@ -27,7 +27,7 @@ selfCorrelation(
   method = c("spearman", "pearson"),
   format = c("ComputeResult", "data.table"),
   verbose = c(TRUE, FALSE),
-  proportionNonZeroThreshold = 0.5,
+  proportionNonZeroThreshold = 0.05,
   varianceThreshold = 0,
   stdDevThreshold = 0
 )
@@ -42,10 +42,12 @@ selfCorrelation(
 \arguments{
 \item{data}{A data.table or Collection object.}
 
-\item{method}{string defining the type of correlation to run. The currently supported values are 'spearman','pearson',
+\item{method}{string defining the type of correlation to run.
+The currently supported values are 'spearman','pearson',
 and for some methods/ data types 'sparcc'.}
 
-\item{format}{string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.}
+\item{format}{string defining the desired format of the result.
+The currently supported values are 'data.table' and 'ComputeResult'.}
 
 \item{verbose}{boolean indicating if timed logging is desired}
 }

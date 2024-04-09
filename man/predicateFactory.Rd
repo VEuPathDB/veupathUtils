@@ -7,7 +7,8 @@
 predicateFactory(predicateType, threshold)
 }
 \arguments{
-\item{predicateType}{string defining the type of predicate to run. The currently supported values are 'proportionNonZero', 'variance' and 'sd'}
+\item{predicateType}{string defining the type of predicate to run.
+The currently supported values are 'proportionNonZero', 'variance' and 'sd'}
 
 \item{threshold}{numeric value associated with the predicate type}
 }

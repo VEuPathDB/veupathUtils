@@ -39,9 +39,10 @@ correlation(
   method = c("spearman", "pearson"),
   format = c("ComputeResult", "data.table"),
   verbose = c(TRUE, FALSE),
-  proportionNonZeroThreshold = 0.5,
+  proportionNonZeroThreshold = 0.05,
   varianceThreshold = 0,
-  stdDevThreshold = 0
+  stdDevThreshold = 0,
+  metadataIsFirst = c(FALSE, TRUE)
 )
 
 \S4method{correlation}{Collection,Collection}(
@@ -50,7 +51,7 @@ correlation(
   method = c("spearman", "pearson"),
   format = c("ComputeResult", "data.table"),
   verbose = c(TRUE, FALSE),
-  proportionNonZeroThreshold = 0.5,
+  proportionNonZeroThreshold = 0.05,
   varianceThreshold = 0,
   stdDevThreshold = 0
 )
@@ -60,9 +61,11 @@ correlation(
 
 \item{data2}{second dataset. A data.table}
 
-\item{method}{string defining the type of correlation to run. The currently supported values are specific to the class of data1 and data2.}
+\item{method}{string defining the type of correlation to run.
+The currently supported values are specific to the class of data1 and data2.}
 
-\item{format}{string defining the desired format of the result. The currently supported values are 'data.table' and 'ComputeResult'.}
+\item{format}{string defining the desired format of the result.
+The currently supported values are 'data.table' and 'ComputeResult'.}
 
 \item{verbose}{boolean indicating if timed logging is desired}
 }
