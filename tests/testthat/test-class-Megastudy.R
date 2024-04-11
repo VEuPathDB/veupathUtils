@@ -13,6 +13,10 @@ megastudyDT <- data.table('study.id'=c('a','a','a','b','b','b'),
                           'assay.pathogen3_presence'=c('No','Yes','No','Yes','No','Yes'),
                           'assay.weighting_variable'=c(5,10,15,20,25,30))
 
+collectionsDT <- data.table(
+  'study.id' = c('a', 'a', 'a','b', 'b', 'b', 'b'),
+  'collection.id' = c(1, 2, 3, 1, 2, 3, 4))
+
 sexVocabs.dt <- data.table::data.table(
   'study.id' = c('a', 'a', 'a', 'a', 'a', 'b', 'b'),
   'sample.sex' = c('female', 'male', 'non-binary', 'other', 'do not wish to specify', 'male', 'female'))
@@ -156,6 +160,48 @@ test_that("imputeZeroes method is sane", {
                  studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs, sexVocabs)))
 
   # case where neither study nor collection vars in the plot
+  variables <- new("VariableMetadataList", SimpleList(
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'species', entityId = 'sample'),
+      plotReference = new("PlotReference", value = 'xAxis'),
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
+      hasStudyDependentVocabulary = TRUE),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'specimen_count', entityId = 'sample'),
+      plotReference = new("PlotReference", value = 'yAxis'),
+      dataType = new("DataType", value = 'NUMBER'),
+      dataShape = new("DataShape", value = 'CONTINUOUS')),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'sex', entityId = 'sample'),
+      # empty plotReference means that it is not plotted
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
+      hasStudyDependentVocabulary = TRUE)
+  ))
+
+  imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
+  # result has the columns needed to build a plot, based on variables AND the correct number of rows/ zeroes
+  expect_equal(all(c("sample.species","sample.specimen_count") %in% names(imputedDT)), TRUE)
+  # 5 sexes * 3 species in study A (15) + 2 sexes * 3 species in study B (6) * 2 collections per study = 42
+  expect_equal(nrow(imputedDT), 42)
+  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 36)
+
+  # case where some collection ids are missing
+  # in real life, we have some collections where all samples are 0 and so not loaded
+  # in this case, the collection ids are missing from the data table R gets handed. 
+  # we want to impute zeroes for their samples anyhow.
+  m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.sex', 'sample.species', 'collection.attractant', 'study.author'), with=FALSE],
+                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id'),
+                  studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs, sexVocabs)),
+                  collectionIdColumn='collection.id',
+                  collectionsDT=collectionsDT)
+
   variables <- new("VariableMetadataList", SimpleList(
     new("VariableMetadata",
       variableClass = new("VariableClass", value = 'native'),
