@@ -260,14 +260,16 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
 
   # make all possible variable value combinations table
-  #vocabDTs <- lapply(variableSpecsToImputeZeroesFor, makeVocabDT)
+  studyEntityIdColName <- upstreamEntityIdColNames[1] # still working off the assumption theyre ordered
   vocabDTs <- lapply(vocabs, function(x) {x@studyVocab})
-  allCombinations.dt <- purrr::reduce(vocabDTs, merge, allow.cartesian=TRUE, all=TRUE)
+  vocabDTs <- lapply(vocabDTs, function(x) { merge(x, object@collectionsDT, by=studyEntityIdColName, all=TRUE, allow.cartesian=TRUE) })
+  allCombinations.dt <- purrr::reduce(vocabDTs, merge, by = upstreamEntityIdColNames, allow.cartesian=TRUE, all=TRUE)
 
   # find which ones we need to add
   presentCombinations.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE])
   # need upstream entity ids for all combinations in order to properly find and merge missing values
-  allCombinations.dt <- merge(allCombinations.dt, upstreamEntityVariables.dt, allow.cartesian=TRUE)
+  allCombinations.dt <- merge(allCombinations.dt, upstreamEntityVariables.dt, by = upstreamEntityIdColNames, all = TRUE, allow.cartesian=TRUE)
+  ## TODO figure how to populate study and collection entity variable values based on ids
   # NOTE: we're assuming if a value was explicitly filtered against that its not in the vocab
   addCombinations.dt <- allCombinations.dt[!presentCombinations.dt, on=c(upstreamEntityIdColNames, varSpecColNames)]
 
@@ -284,6 +286,6 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   # bind them to the existing rows
   .dt <- data.table::rbindlist(list(.dt, addCombinations.dt), use.names=TRUE)
   veupathUtils::logWithTime("Added imputed values to existing table. Finished imputing zeroes.", verbose)
- 
+
   return(.dt)
 })
