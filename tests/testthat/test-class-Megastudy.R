@@ -83,7 +83,7 @@ test_that("Megastudy and associated validation works", {
                  ancestorIdColumns=c('study.id', 'collection.id'),
                  studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs)))
 
-  expect_equal(slotNames(m), c('data','ancestorIdColumns','studySpecificVocabularies'))
+  expect_equal(slotNames(m), c('data','ancestorIdColumns','studySpecificVocabularies','collectionsDT'))
   expect_equal(length(m@studySpecificVocabularies), 1)
   expect_equal(data.table::uniqueN(m@studySpecificVocabularies[[1]]@studyVocab[,1]), 2)
   expect_equal(slotNames(m@studySpecificVocabularies[[1]]), c("studyIdColumnName","variableSpec","studyVocab"))    
@@ -93,7 +93,7 @@ test_that("Megastudy and associated validation works", {
                  ancestorIdColumns=c('study.id', 'collection.id'),
                  studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs, sexVocabs)))
 
-  expect_equal(slotNames(m), c('data','ancestorIdColumns','studySpecificVocabularies'))
+  expect_equal(slotNames(m), c('data','ancestorIdColumns','studySpecificVocabularies','collectionsDT'))
   expect_equal(length(m@studySpecificVocabularies), 2)
   expect_equal(data.table::uniqueN(m@studySpecificVocabularies[[2]]@studyVocab[,1]), 2)
   expect_equal(slotNames(m@studySpecificVocabularies[[2]]), c("studyIdColumnName","variableSpec","studyVocab"))              
@@ -199,7 +199,6 @@ test_that("imputeZeroes method is sane", {
   m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.sex', 'sample.species', 'collection.attractant', 'study.author'), with=FALSE],
                   ancestorIdColumns=c('study.id', 'collection.id', 'sample.id'),
                   studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs, sexVocabs)),
-                  collectionIdColumn='collection.id',
                   collectionsDT=collectionsDT)
 
   variables <- new("VariableMetadataList", SimpleList(
