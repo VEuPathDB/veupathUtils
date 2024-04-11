@@ -255,6 +255,16 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   }
   studyEntityIdColName <- upstreamEntityIdColNames[1] # still working off the assumption theyre ordered
 
+  # variables that are from the upstream entities need to be in collectionsDT
+  # otherwise we erroneously try to impute values for those variables too, rather than only the weighting variable
+  
+  if (!!length(collectionsDT)) {
+    upstreamEntityVariableColNames <- findColNamesByPredicate(variables, function(x) { x@variableSpec@entityId %in% upstreamEntityIdColNames })
+    if (!all(upstreamEntityVariableColNames %in% names(collectionsDT))) {
+      stop("All variables from the upstream entities must be in collectionsDT.")
+    }
+  }
+
   # for upstream entities data
   upstreamEntityVariables.dt <- .dt[, -c(weightingVarColName, varSpecColNames), with=FALSE]
   upstreamEntityVariables.dt[[varSpecEntityIdColName]] <- NULL
@@ -282,7 +292,6 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   presentCombinations.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE])
   # need upstream entity ids for all combinations in order to properly find and merge missing values
   allCombinations.dt <- merge(allCombinations.dt, upstreamEntityVariables.dt, by = mergeBy, all = TRUE, allow.cartesian=TRUE)
-  ## TODO figure how to populate study and collection entity variable values based on ids
   # NOTE: we're assuming if a value was explicitly filtered against that its not in the vocab
   addCombinations.dt <- allCombinations.dt[!presentCombinations.dt, on=c(upstreamEntityIdColNames, varSpecColNames)]
 
