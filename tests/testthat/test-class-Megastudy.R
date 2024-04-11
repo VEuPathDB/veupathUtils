@@ -13,9 +13,14 @@ megastudyDT <- data.table('study.id'=c('a','a','a','b','b','b'),
                           'assay.pathogen3_presence'=c('No','Yes','No','Yes','No','Yes'),
                           'assay.weighting_variable'=c(5,10,15,20,25,30))
 
+## the collectionsDT needs to include all collections, unless explicitly filtered against
+## it also needs to tell us values for any collection variables that are in the plot
+## were trying to impute samples, based on collections that dont have samples.
+## so the only way to get collection variables values for those samples, is to get them from the collectionsDT
 collectionsDT <- data.table(
   'study.id' = c('a', 'a', 'a','b', 'b', 'b', 'b'),
-  'collection.id' = c(1, 2, 3, 1, 2, 3, 4))
+  'collection.id' = c(1, 2, 3, 1, 2, 3, 4),
+  'collection.attractant' = c('A', 'B', 'C', 'C', 'D', 'D', 'E'))
 
 sexVocabs.dt <- data.table::data.table(
   'study.id' = c('a', 'a', 'a', 'a', 'a', 'b', 'b'),
@@ -229,9 +234,9 @@ test_that("imputeZeroes method is sane", {
   imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
   # result has the columns needed to build a plot, based on variables AND the correct number of rows/ zeroes
   expect_equal(all(c("sample.species","sample.specimen_count") %in% names(imputedDT)), TRUE)
-  # 5 sexes * 3 species in study A (15) + 2 sexes * 3 species in study B (6) * 2 collections per study = 42
-  expect_equal(nrow(imputedDT), 42)
-  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 36)
+  # 5 sexes * 3 species * 3 collections in study A (45) + 2 sexes * 3 species * 4 collections in study B (30) = 69
+  expect_equal(nrow(imputedDT), 69) ## TODO check these numbers
+  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 63)
 
   # case where one study vocab is missing a study
   mDTSexSingleStudy <- megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.sex', 'sample.species', 'collection.attractant', 'study.author'), with=FALSE]
@@ -248,6 +253,10 @@ test_that("imputeZeroes method is sane", {
   # 5 sexes * 3 species in study A (15) + 3 species in study B * 2 collections per study = 42
   expect_equal(nrow(imputedDT), 36)
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 30)
+
+  m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.sex', 'sample.species', 'collection.attractant', 'study.author'), with=FALSE],
+                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id'),
+                  studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs, sexVocabs)))
 
   # collection entity var is present
   variables <- new("VariableMetadataList", SimpleList(

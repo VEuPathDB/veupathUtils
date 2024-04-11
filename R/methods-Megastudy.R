@@ -209,6 +209,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   # it seems a lot of this validation could belong to some custom obj w both a megastudy and vm slot.. but what is that? a MegastudyPlot?
   # plus going that route means using this class in plot.data means an api change for plot.data
   # that api change might be worth making in any case, but not doing it now
+  ## TODO validate that any collections variables are present in collectionsDT
   variableMetadataNeedingStudyVocabularies <- findStudyDependentVocabularyVariableMetadata(variables)
   variableSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, "Never")
   variableCollectionSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, "Always")
@@ -261,16 +262,17 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   veupathUtils::logWithTime(paste("Found", nrow(upstreamEntityVariables.dt), "unique existing upstream variable value combinations."), verbose)
   if (!!length(collectionsDT)) {
     upstreamEntityVariables.dt <- merge(upstreamEntityVariables.dt, collectionsDT, by=studyEntityIdColName, all=TRUE, allow.cartesian=TRUE)
-    upstreamEntityVariables.dt[[which(grepl('.x',names(upstreamEntityVariables.dt),fixed=T))]] <- NULL
-    collectionEntityColumnIndex <- which(grepl('.y',names(upstreamEntityVariables.dt),fixed=T))
-    names(upstreamEntityVariables.dt)[collectionEntityColumnIndex] <- gsub('.y', '', names(upstreamEntityVariables.dt)[collectionEntityColumnIndex], fixed=T)
+  upstreamEntityVariables.dt <- upstreamEntityVariables.dt[, -which(grepl('.x',names(upstreamEntityVariables.dt),fixed=T)), with=FALSE]
+    collectionEntityColumnIndices <- which(grepl('.y',names(upstreamEntityVariables.dt),fixed=T))
+    names(upstreamEntityVariables.dt)[collectionEntityColumnIndices] <- gsub('.y', '', names(upstreamEntityVariables.dt)[collectionEntityColumnIndices], fixed=T)
+    upstreamEntityVariables.dt <- unique(upstreamEntityVariables.dt)
   }
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
 
   # make all possible variable value combinations table
   vocabDTs <- lapply(vocabs, function(x) {x@studyVocab})
   if (!!length(collectionsDT)) {
-    vocabDTs <- lapply(vocabDTs, function(x) { merge(x, collectionsDT, by=studyEntityIdColName, all=TRUE, allow.cartesian=TRUE) })
+    vocabDTs <- lapply(vocabDTs, function(x) { merge(x, collectionsDT[, upstreamEntityIdColNames], by=studyEntityIdColName, all=TRUE, allow.cartesian=TRUE) })
   }
   mergeBy <- studyEntityIdColName
   if (!!length(collectionsDT)) mergeBy <- upstreamEntityIdColNames
