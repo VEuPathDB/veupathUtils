@@ -295,7 +295,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
 
   # go ahead and add them, first filling in values for all columns
   addCombinations.dt[[weightingVarColName]] <- 0  
-  addCombinations.dt[[varSpecEntityIdColName]] <- apply(addCombinations.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo="md5")
+  addCombinations.dt[[varSpecEntityIdColName]] <- stringi::stri_rand_strings(nrow(addCombinations.dt), 10)
   # bind them to the existing rows
   .dt <- data.table::rbindlist(list(.dt, addCombinations.dt), use.names=TRUE)
   veupathUtils::logWithTime("Added imputed values to existing table. Finished imputing zeroes.", verbose)
