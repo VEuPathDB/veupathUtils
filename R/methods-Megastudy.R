@@ -204,6 +204,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   veupathUtils::logWithTime(paste0("Imputing zeroes for data.table with ", ncol(.dt), " columns and ", nrow(.dt), " rows"), verbose)
   allEntityIdColumns <- object@ancestorIdColumns
   vocabs <- object@studySpecificVocabularies
+  collectionsDT <- object@collectionsDT
 
   # it seems a lot of this validation could belong to some custom obj w both a megastudy and vm slot.. but what is that? a MegastudyPlot?
   # plus going that route means using this class in plot.data means an api change for plot.data
@@ -251,24 +252,34 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     veupathUtils::logWithTime("Downstream entities present. No imputation will be done (for now... mwahahaha).", verbose)
     return(.dt)
   }
+  studyEntityIdColName <- upstreamEntityIdColNames[1] # still working off the assumption theyre ordered
 
   # for upstream entities data
-  upstreamEntityVariables.dt <- unique(.dt[, -c(weightingVarColName, varSpecColNames), with=FALSE])
+  upstreamEntityVariables.dt <- .dt[, -c(weightingVarColName, varSpecColNames), with=FALSE]
   upstreamEntityVariables.dt[[varSpecEntityIdColName]] <- NULL
   upstreamEntityVariables.dt <- unique(upstreamEntityVariables.dt)
   veupathUtils::logWithTime(paste("Found", nrow(upstreamEntityVariables.dt), "unique existing upstream variable value combinations."), verbose)
+  if (!!length(collectionsDT)) {
+    upstreamEntityVariables.dt <- merge(upstreamEntityVariables.dt, collectionsDT, by=studyEntityIdColName, all=TRUE, allow.cartesian=TRUE)
+    upstreamEntityVariables.dt[[which(grepl('.x',names(upstreamEntityVariables.dt),fixed=T))]] <- NULL
+    collectionEntityColumnIndex <- which(grepl('.y',names(upstreamEntityVariables.dt),fixed=T))
+    names(upstreamEntityVariables.dt)[collectionEntityColumnIndex] <- gsub('.y', '', names(upstreamEntityVariables.dt)[collectionEntityColumnIndex], fixed=T)
+  }
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
 
   # make all possible variable value combinations table
-  studyEntityIdColName <- upstreamEntityIdColNames[1] # still working off the assumption theyre ordered
   vocabDTs <- lapply(vocabs, function(x) {x@studyVocab})
-  vocabDTs <- lapply(vocabDTs, function(x) { merge(x, object@collectionsDT, by=studyEntityIdColName, all=TRUE, allow.cartesian=TRUE) })
-  allCombinations.dt <- purrr::reduce(vocabDTs, merge, by = upstreamEntityIdColNames, allow.cartesian=TRUE, all=TRUE)
+  if (!!length(collectionsDT)) {
+    vocabDTs <- lapply(vocabDTs, function(x) { merge(x, collectionsDT, by=studyEntityIdColName, all=TRUE, allow.cartesian=TRUE) })
+  }
+  mergeBy <- studyEntityIdColName
+  if (!!length(collectionsDT)) mergeBy <- upstreamEntityIdColNames
+  allCombinations.dt <- purrr::reduce(vocabDTs, merge, by = mergeBy, allow.cartesian=TRUE, all=TRUE)
 
   # find which ones we need to add
   presentCombinations.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE])
   # need upstream entity ids for all combinations in order to properly find and merge missing values
-  allCombinations.dt <- merge(allCombinations.dt, upstreamEntityVariables.dt, by = upstreamEntityIdColNames, all = TRUE, allow.cartesian=TRUE)
+  allCombinations.dt <- merge(allCombinations.dt, upstreamEntityVariables.dt, by = mergeBy, all = TRUE, allow.cartesian=TRUE)
   ## TODO figure how to populate study and collection entity variable values based on ids
   # NOTE: we're assuming if a value was explicitly filtered against that its not in the vocab
   addCombinations.dt <- allCombinations.dt[!presentCombinations.dt, on=c(upstreamEntityIdColNames, varSpecColNames)]
