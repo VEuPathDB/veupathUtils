@@ -272,7 +272,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   veupathUtils::logWithTime(paste("Found", nrow(upstreamEntityVariables.dt), "unique existing upstream variable value combinations."), verbose)
   if (!!length(collectionsDT)) {
     upstreamEntityVariables.dt <- merge(upstreamEntityVariables.dt, collectionsDT, by=studyEntityIdColName, all=TRUE, allow.cartesian=TRUE)
-  upstreamEntityVariables.dt <- upstreamEntityVariables.dt[, -which(grepl('.x',names(upstreamEntityVariables.dt),fixed=T)), with=FALSE]
+    upstreamEntityVariables.dt <- upstreamEntityVariables.dt[, -which(grepl('.x',names(upstreamEntityVariables.dt),fixed=T)), with=FALSE]
     collectionEntityColumnIndices <- which(grepl('.y',names(upstreamEntityVariables.dt),fixed=T))
     names(upstreamEntityVariables.dt)[collectionEntityColumnIndices] <- gsub('.y', '', names(upstreamEntityVariables.dt)[collectionEntityColumnIndices], fixed=T)
     upstreamEntityVariables.dt <- unique(upstreamEntityVariables.dt)
