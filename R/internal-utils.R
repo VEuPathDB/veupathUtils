@@ -117,7 +117,7 @@ findCollectionDataColumns <- function(dataColNames, collectionId) {
 #' @export
 getCollectionName <- function(collectionId, dataSourceName, ontology = NULL) {
     if (grepl("16S", dataSourceName, fixed=TRUE)) {
-        dataSourceName <- "16S"
+        dataSourceName <- paste("16S", regmatches(dataSourceName,regexpr("(\\(.*?)\\)",dataSourceName)))
     }
 
     if (grepl("Metagenomic", dataSourceName, fixed=TRUE)) {
