@@ -201,7 +201,9 @@ test_that("imputeZeroes method is sane", {
   # in real life, we have some collections where all samples are 0 and so not loaded
   # in this case, the collection ids are missing from the data table R gets handed. 
   # we want to impute zeroes for their samples anyhow.
-  m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.sex', 'sample.species', 'collection.attractant', 'study.author'), with=FALSE],
+
+  # in this version, some collection level variables are in both data and collectionsDT
+  m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.sex', 'sample.species', 'collection.attractant'), with=FALSE],
                   ancestorIdColumns=c('study.id', 'collection.id', 'sample.id'),
                   studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs, sexVocabs)),
                   collectionsDT=collectionsDT)
@@ -237,6 +239,47 @@ test_that("imputeZeroes method is sane", {
   # 5 sexes * 3 species * 3 collections in study A (45) + 2 sexes * 3 species * 4 collections in study B (30) = 69
   expect_equal(nrow(imputedDT), 69) ## TODO check these numbers
   expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 63)
+
+  # in this version, collection level variables are only in collectionsDT
+  m <- Megastudy(data=megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.sex', 'sample.species'), with=FALSE],
+                  ancestorIdColumns=c('study.id', 'collection.id', 'sample.id'),
+                  studySpecificVocabularies=StudySpecificVocabulariesByVariableList(S4Vectors::SimpleList(speciesVocabs, sexVocabs)),
+                  collectionsDT=collectionsDT)
+
+  variables <- new("VariableMetadataList", SimpleList(
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'species', entityId = 'sample'),
+      plotReference = new("PlotReference", value = 'xAxis'),
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
+      hasStudyDependentVocabulary = TRUE),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'specimen_count', entityId = 'sample'),
+      plotReference = new("PlotReference", value = 'yAxis'),
+      dataType = new("DataType", value = 'NUMBER'),
+      dataShape = new("DataShape", value = 'CONTINUOUS')),
+    new("VariableMetadata",
+      variableClass = new("VariableClass", value = 'native'),
+      variableSpec = new("VariableSpec", variableId = 'sex', entityId = 'sample'),
+      # empty plotReference means that it is not plotted
+      dataType = new("DataType", value = 'STRING'),
+      dataShape = new("DataShape", value = 'CATEGORICAL'),
+      weightingVariableSpec = VariableSpec(variableId='specimen_count',entityId='sample'),
+      hasStudyDependentVocabulary = TRUE)
+  ))
+
+  imputedDT <- getDTWithImputedZeroes(m, variables, FALSE)
+  # result has the columns needed to build a plot, based on variables AND the correct number of rows/ zeroes
+  expect_equal(all(c("sample.species","sample.specimen_count") %in% names(imputedDT)), TRUE)
+  # 5 sexes * 3 species * 3 collections in study A (45) + 2 sexes * 3 species * 4 collections in study B (30) = 69
+  expect_equal(nrow(imputedDT), 69) ## TODO check these numbers
+  expect_equal(nrow(imputedDT[imputedDT$sample.specimen_count == 0]), 63)
+
+  #################################################################################################################
+
 
   # case where one study vocab is missing a study
   mDTSexSingleStudy <- megastudyDT[, c('study.id', 'collection.id', 'sample.id', 'sample.specimen_count', 'sample.sex', 'sample.species', 'collection.attractant', 'study.author'), with=FALSE]

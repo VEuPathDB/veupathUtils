@@ -257,9 +257,9 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
 
   # variables that are from the upstream entities need to be in collectionsDT
   # otherwise we erroneously try to impute values for those variables too, rather than only the weighting variable
-  
+  upstreamEntities <- veupathUtils::strSplit(upstreamEntityIdColNames, ".", 2, 1)
   if (!!length(collectionsDT)) {
-    upstreamEntityVariableColNames <- findColNamesByPredicate(variables, function(x) { x@variableSpec@entityId %in% upstreamEntityIdColNames })
+    upstreamEntityVariableColNames <- findColNamesByPredicate(variables, function(x) { x@variableSpec@entityId %in% upstreamEntities })
     if (!all(upstreamEntityVariableColNames %in% names(collectionsDT))) {
       stop("All variables from the upstream entities must be in collectionsDT.")
     }
@@ -271,11 +271,7 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   upstreamEntityVariables.dt <- unique(upstreamEntityVariables.dt)
   veupathUtils::logWithTime(paste("Found", nrow(upstreamEntityVariables.dt), "unique existing upstream variable value combinations."), verbose)
   if (!!length(collectionsDT)) {
-    upstreamEntityVariables.dt <- merge(upstreamEntityVariables.dt, collectionsDT, by=studyEntityIdColName, all=TRUE, allow.cartesian=TRUE)
-  upstreamEntityVariables.dt <- upstreamEntityVariables.dt[, -which(grepl('.x',names(upstreamEntityVariables.dt),fixed=T)), with=FALSE]
-    collectionEntityColumnIndices <- which(grepl('.y',names(upstreamEntityVariables.dt),fixed=T))
-    names(upstreamEntityVariables.dt)[collectionEntityColumnIndices] <- gsub('.y', '', names(upstreamEntityVariables.dt)[collectionEntityColumnIndices], fixed=T)
-    upstreamEntityVariables.dt <- unique(upstreamEntityVariables.dt)
+    upstreamEntityVariables.dt <- collectionsDT
   }
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
 
@@ -306,6 +302,10 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   addCombinations.dt[[weightingVarColName]] <- 0  
   addCombinations.dt[[varSpecEntityIdColName]] <- stringi::stri_rand_strings(nrow(addCombinations.dt), 10)
   # bind them to the existing rows
+  upstreamVariablesInCollectionsDT <- names(collectionsDT)[!names(collectionsDT) %in% upstreamEntityIdColNames]
+  if (!!length(collectionsDT) & !all(upstreamVariablesInCollectionsDT %in% names(.dt))) {
+    .dt <- merge(.dt, upstreamEntityVariables.dt)
+  }
   .dt <- data.table::rbindlist(list(.dt, addCombinations.dt), use.names=TRUE)
   veupathUtils::logWithTime("Added imputed values to existing table. Finished imputing zeroes.", verbose)
 
