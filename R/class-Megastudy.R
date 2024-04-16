@@ -94,7 +94,8 @@ check_megastudy <- function(object) {
 #' @slot data A data.table
 #' @slot ancestorIdColumns A character vector of column names representing parent entities of the recordIdColumn.
 #' @slot studySpecificVocabularies veupathUtils::StudySpecificVocabulariesByVariableList
-#' @slot collectionIds A character vector of collection ids we expect. If none provided, they will be inferred from those present.
+#' @slot collectionIds A data.table including collection ids and any variables of interest for the collection entity.
+#' If none provided, the collection ids will be inferred from those present in `data`.
 #' 
 #' @name Megastudy-class
 #' @rdname Megastudy-class

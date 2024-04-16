@@ -16,6 +16,11 @@ that data.
 \describe{
 \item{\code{data}}{A data.table}
 
+\item{\code{ancestorIdColumns}}{A character vector of column names representing parent entities of the recordIdColumn.}
+
 \item{\code{studySpecificVocabularies}}{veupathUtils::StudySpecificVocabulariesByVariableList}
+
+\item{\code{collectionIds}}{A data.table including collection ids and any variables of interest for the collection entity.
+If none provided, the collection ids will be inferred from those present in \code{data}.}
 }}
 
