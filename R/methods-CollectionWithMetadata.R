@@ -35,6 +35,35 @@ setGeneric("getMetadataVariableNames", function(object) standardGeneric("getMeta
 #' @aliases getMetadataVariableNames,CollectionWithMetadata-method
 setMethod("getMetadataVariableNames", "CollectionWithMetadata", function(object) return(names(object@sampleMetadata@data)))
 
+
+#' Get Summary of Metadata Variables
+#' 
+#' Get a summary of the requested metadata variable in an object containing sample metadata.
+#' @param object An object with a slot containing sampleMetadata
+#' @param variable A character vector representing the name of the metadata variable to summarize
+#' @return a table summarizing the values of the requested metadata variable
+#' @rdname getMetadataVariableSummary
+#' @export
+setGeneric("getMetadataVariableSummary", function(object, variable) standardGeneric("getMetadataVariableSummary"), signature= c("object"))
+
+#' @rdname getMetadataVariableSummary
+#' @aliases getMetadataVariableSummary,CollectionWithMetadata-method
+setMethod("getMetadataVariableSummary", "CollectionWithMetadata", function(object, variable) {
+    if (!variable %in% getMetadataVariableNames(object)) {
+        stop("Variable ", variable, " not found in sample metadata. Available variables: ", paste(getMetadataVariableNames(object), collapse = ", "))
+    }
+
+    varData <- object@sampleMetadata@data[[variable]]
+
+    if (class(varData) %in% c('factor','character')) {
+        out <- table(varData)
+        dimnames(out) <- unname(dimnames(out))
+        return(out)
+    } else {
+        return(summary(varData))
+    }
+})
+
 #' Get Sample Metadata Id Column Names
 #' 
 #' Get the names of the record and ancestor id columns in the sample metadata of an object.
