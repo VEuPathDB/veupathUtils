@@ -32,14 +32,14 @@ findCollectionIds <- function(dataColNames) {
 #' @export
 findRecordIdColumn <- function(dataColNames) {
     # for now assume were working w bulk download files, which means its the first column
-    allIdColumns <- dataColNames[grepl("_Id", dataColNames, fixed=TRUE)]
+    allIdColumns <- dataColNames[grepl("_Id$", dataColNames)]
     return(allIdColumns[1])
 }
 
 #' @export
 findAncestorIdColumns <- function(dataColNames) {
     # for now assume were working w bulk download files, which means they have '_Id'
-    allIdColumns <- dataColNames[grepl("_Id", dataColNames, fixed=TRUE)]
+    allIdColumns <- dataColNames[grepl("_Id$", dataColNames)]
     if (length(allIdColumns) == 1) {
         return(character(0))
     }
@@ -117,7 +117,7 @@ findCollectionDataColumns <- function(dataColNames, collectionId) {
 #' @export
 getCollectionName <- function(collectionId, dataSourceName, ontology = NULL) {
     if (grepl("16S", dataSourceName, fixed=TRUE)) {
-        dataSourceName <- "16S"
+        dataSourceName <- paste("16S", regmatches(dataSourceName,regexpr("(\\(.*?)\\)",dataSourceName)))
     }
 
     if (grepl("Metagenomic", dataSourceName, fixed=TRUE)) {
