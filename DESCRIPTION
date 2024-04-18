@@ -1,6 +1,6 @@
 Package: veupathUtils
 Title: General Helper Functions for VEuPathDB Projects
-Version: 2.6.2
+Version: 2.6.3
 Authors@R: 
     c(person(given = "Danielle",
            family = "Callan",
