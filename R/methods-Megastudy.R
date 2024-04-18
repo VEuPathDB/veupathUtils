@@ -204,10 +204,12 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
   veupathUtils::logWithTime(paste0("Imputing zeroes for data.table with ", ncol(.dt), " columns and ", nrow(.dt), " rows"), verbose)
   allEntityIdColumns <- object@ancestorIdColumns
   vocabs <- object@studySpecificVocabularies
+  collectionsDT <- object@collectionsDT
 
   # it seems a lot of this validation could belong to some custom obj w both a megastudy and vm slot.. but what is that? a MegastudyPlot?
   # plus going that route means using this class in plot.data means an api change for plot.data
   # that api change might be worth making in any case, but not doing it now
+  ## TODO validate that any collections variables are present in collectionsDT
   variableMetadataNeedingStudyVocabularies <- findStudyDependentVocabularyVariableMetadata(variables)
   variableSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, "Never")
   variableCollectionSpecsWithStudyVocabs <- findVariableSpecsFromStudyVocabulary(vocabs, variables, "Always")
@@ -251,23 +253,41 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
     veupathUtils::logWithTime("Downstream entities present. No imputation will be done (for now... mwahahaha).", verbose)
     return(.dt)
   }
+  studyEntityIdColName <- upstreamEntityIdColNames[1] # still working off the assumption theyre ordered
+
+  # variables that are from the upstream entities need to be in collectionsDT
+  # otherwise we erroneously try to impute values for those variables too, rather than only the weighting variable
+  upstreamEntities <- veupathUtils::strSplit(upstreamEntityIdColNames, ".", 2, 1)
+  if (!!length(collectionsDT)) {
+    upstreamEntityVariableColNames <- findColNamesByPredicate(variables, function(x) { x@variableSpec@entityId %in% upstreamEntities })
+    if (!all(upstreamEntityVariableColNames %in% names(collectionsDT))) {
+      stop("All variables from the upstream entities must be in collectionsDT.")
+    }
+  }
 
   # for upstream entities data
-  upstreamEntityVariables.dt <- unique(.dt[, -c(weightingVarColName, varSpecColNames), with=FALSE])
+  upstreamEntityVariables.dt <- .dt[, -c(weightingVarColName, varSpecColNames), with=FALSE]
   upstreamEntityVariables.dt[[varSpecEntityIdColName]] <- NULL
   upstreamEntityVariables.dt <- unique(upstreamEntityVariables.dt)
   veupathUtils::logWithTime(paste("Found", nrow(upstreamEntityVariables.dt), "unique existing upstream variable value combinations."), verbose)
+  if (!!length(collectionsDT)) {
+    upstreamEntityVariables.dt <- collectionsDT
+  }
   entityIds.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecEntityIdColName), with=FALSE])
 
   # make all possible variable value combinations table
-  #vocabDTs <- lapply(variableSpecsToImputeZeroesFor, makeVocabDT)
   vocabDTs <- lapply(vocabs, function(x) {x@studyVocab})
-  allCombinations.dt <- purrr::reduce(vocabDTs, merge, allow.cartesian=TRUE, all=TRUE)
+  if (!!length(collectionsDT)) {
+    vocabDTs <- lapply(vocabDTs, function(x) { merge(x, collectionsDT[, upstreamEntityIdColNames], by=studyEntityIdColName, all=TRUE, allow.cartesian=TRUE) })
+  }
+  mergeBy <- studyEntityIdColName
+  if (!!length(collectionsDT)) mergeBy <- upstreamEntityIdColNames
+  allCombinations.dt <- purrr::reduce(vocabDTs, merge, by = mergeBy, allow.cartesian=TRUE, all=TRUE)
 
   # find which ones we need to add
   presentCombinations.dt <- unique(.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE])
   # need upstream entity ids for all combinations in order to properly find and merge missing values
-  allCombinations.dt <- merge(allCombinations.dt, upstreamEntityVariables.dt, allow.cartesian=TRUE)
+  allCombinations.dt <- merge(allCombinations.dt, upstreamEntityVariables.dt, by = mergeBy, all = TRUE, allow.cartesian=TRUE)
   # NOTE: we're assuming if a value was explicitly filtered against that its not in the vocab
   addCombinations.dt <- allCombinations.dt[!presentCombinations.dt, on=c(upstreamEntityIdColNames, varSpecColNames)]
 
@@ -280,10 +300,14 @@ setMethod('getDTWithImputedZeroes', signature = c('Megastudy', 'VariableMetadata
 
   # go ahead and add them, first filling in values for all columns
   addCombinations.dt[[weightingVarColName]] <- 0  
-  addCombinations.dt[[varSpecEntityIdColName]] <- apply(addCombinations.dt[, c(upstreamEntityIdColNames, varSpecColNames), with=FALSE], 1, digest::digest, algo="md5")
+  addCombinations.dt[[varSpecEntityIdColName]] <- stringi::stri_rand_strings(nrow(addCombinations.dt), 10)
   # bind them to the existing rows
+  upstreamVariablesInCollectionsDT <- names(collectionsDT)[!names(collectionsDT) %in% upstreamEntityIdColNames]
+  if (!!length(collectionsDT) & !all(upstreamVariablesInCollectionsDT %in% names(.dt))) {
+    .dt <- merge(.dt, upstreamEntityVariables.dt)
+  }
   .dt <- data.table::rbindlist(list(.dt, addCombinations.dt), use.names=TRUE)
   veupathUtils::logWithTime("Added imputed values to existing table. Finished imputing zeroes.", verbose)
- 
+
   return(.dt)
 })

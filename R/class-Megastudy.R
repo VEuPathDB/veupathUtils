@@ -74,6 +74,13 @@ check_megastudy <- function(object) {
     errors <- c(errors, msg)
   }
 
+  if (!!length(object@collectionsDT)) {
+    if (!all(ancestor_id_cols[1:length(ancestor_id_cols)-1] %in% names(object@collectionsDT))) {
+      msg <- paste("Not all ancestor ID columns are present in collection data.frame")
+      errors <- c(errors, msg)
+    }
+  }
+
   return(if (length(errors) == 0) TRUE else errors)
 }
 
@@ -85,7 +92,10 @@ check_megastudy <- function(object) {
 #' that data.
 #' 
 #' @slot data A data.table
+#' @slot ancestorIdColumns A character vector of column names representing parent entities of the recordIdColumn.
 #' @slot studySpecificVocabularies veupathUtils::StudySpecificVocabulariesByVariableList
+#' @slot collectionIds A data.table including collection ids and any variables of interest for the collection entity.
+#' If none provided, the collection ids will be inferred from those present in `data`.
 #' 
 #' @name Megastudy-class
 #' @rdname Megastudy-class
@@ -93,5 +103,6 @@ check_megastudy <- function(object) {
 Megastudy <- setClass("Megastudy", representation(
     data = 'data.table',
     ancestorIdColumns = 'character',
-    studySpecificVocabularies = 'StudySpecificVocabulariesByVariableList'
+    studySpecificVocabularies = 'StudySpecificVocabulariesByVariableList',
+    collectionsDT = 'data.frame'
 ), validity = check_megastudy)
