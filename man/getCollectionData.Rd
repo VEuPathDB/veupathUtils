@@ -7,6 +7,7 @@
 \usage{
 getCollectionData(
   object,
+  variableNames = NULL,
   ignoreImputeZero = c(FALSE, TRUE),
   includeIds = c(TRUE, FALSE),
   verbose = c(TRUE, FALSE)
@@ -14,6 +15,7 @@ getCollectionData(
 
 \S4method{getCollectionData}{Collection}(
   object,
+  variableNames = NULL,
   ignoreImputeZero = c(FALSE, TRUE),
   includeIds = c(TRUE, FALSE),
   verbose = c(TRUE, FALSE)
@@ -21,6 +23,9 @@ getCollectionData(
 }
 \arguments{
 \item{object}{Collection}
+
+\item{variableNames}{A character vector representing the name of the variables to return.
+If NULL, returns all variables}
 
 \item{ignoreImputeZero}{boolean indicating whether we should respect the imputeZero slot}
 
