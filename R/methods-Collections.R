@@ -36,10 +36,11 @@ setMethod("getCollectionNames", "Collections", function(object) return(sapply(ob
 #' 
 #' Get the names of the variables in the Collection
 #' @param object A Collection
+#' @param ... Additional arguments
 #' @return A character vector of variable names
 #' @export
 #' @rdname getCollectionVariableNames
-setGeneric("getCollectionVariableNames", function(object) standardGeneric("getCollectionVariableNames"))
+setGeneric("getCollectionVariableNames", function(object, ...) standardGeneric("getCollectionVariableNames"))
 
 #' @rdname getCollectionVariableNames
 #' @aliases getCollectionVariableNames,Collection-method
@@ -88,12 +89,12 @@ function(
     includeIds <- veupathUtils::matchArg(includeIds)
     verbose <- veupathUtils::matchArg(verbose)
 
+    allIdColumns <- getIdColumns(object)
     if (is.null(variableNames)) {
         dt <- object@data
     } else {
-        dt <- object@data[, variableNames, with = FALSE]
+        dt <- object@data[, c(allIdColumns, variableNames), with = FALSE]
     }
-    allIdColumns <- getIdColumns(object)
 
     # Check that incoming dt meets requirements
     if (!inherits(dt, 'data.table')) {
@@ -155,4 +156,35 @@ setMethod("pruneFeatures", signature("Collection"), function(object, predicate, 
 
     validObject(object)
     return(object)
+})
+
+#' Is One to Many With Ancestor
+#' 
+#' Determines if the collection is one-to-many with its ancestor(s).
+#' Importantly, if there are no ancestors, this function returns FALSE.
+#' @param object Collection
+#' @param verbose boolean indicating if timed logging is desired
+#' @return boolean
+#' @rdname isOneToManyWithAncestor
+#' @export
+setGeneric("isOneToManyWithAncestor",
+    function(object, verbose = c(TRUE, FALSE)) standardGeneric("isOneToManyWithAncestor"),
+    signature = c("object")
+)
+
+#' @rdname isOneToManyWithAncestor
+#' @aliases isOneToManyWithAncestor,Collection-method
+setMethod("isOneToManyWithAncestor", signature("Collection"), function(object, verbose = c(TRUE, FALSE)) {
+    ancestorIdColumns <- object@ancestorIdColumns
+
+    if (length(ancestorIdColumns) == 0) return(FALSE)
+
+    # if count of unique ancestors are the same as ancestors, then its one-to-one
+    uniqueAncestors <- unique(object@data[, ..ancestorIdColumns])
+
+    if (nrow(uniqueAncestors) == nrow(object@data)) {
+        return(FALSE)
+    } else {
+        return(TRUE)
+    }   
 })
