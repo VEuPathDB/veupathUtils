@@ -350,7 +350,7 @@ function(
   data1 <- pruneFeatures(data1, predicateFactory('variance', varianceThreshold), verbose)
   data1 <- pruneFeatures(data1, predicateFactory('sd', stdDevThreshold), verbose)
   
-  values <- getCollectionData(data1, FALSE, FALSE, verbose)
+  values <- getCollectionData(data1, variableNames = NULL, ignoreImputeZero = FALSE, includeIds = FALSE, verbose = verbose)
   if (metadataIsFirst) {
     corrResult <- correlation(
       getSampleMetadata(data1, TRUE, FALSE), 
