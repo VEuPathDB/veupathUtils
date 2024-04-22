@@ -49,7 +49,7 @@ check_collection_with_metadata <- function(object) {
 #' @include class-SampleMetadata.R
 CollectionWithMetadata <- setClass("CollectionWithMetadata", 
     contains = "Collection",
-    representation = representation(
+    slots = list(
         sampleMetadata = 'SampleMetadata'
     ),
     validity = check_collection_with_metadata)
