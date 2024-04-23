@@ -32,12 +32,32 @@ setGeneric("getCollectionNames", function(object) standardGeneric("getCollection
 #' @aliases getCollectionNames,Collections-method
 setMethod("getCollectionNames", "Collections", function(object) return(sapply(object, name)))
 
+#' Get Collection Variable Names
+#' 
+#' Get the names of the variables in the Collection
+#' @param object A Collection
+#' @param ... Additional arguments
+#' @return A character vector of variable names
+#' @export
+#' @rdname getCollectionVariableNames
+setGeneric("getCollectionVariableNames", function(object, ...) standardGeneric("getCollectionVariableNames"))
+
+#' @rdname getCollectionVariableNames
+#' @aliases getCollectionVariableNames,Collection-method
+setMethod("getCollectionVariableNames", "Collection", function(object) {
+    allIdColumns <- getIdColumns(object)
+
+    return(colnames(object@data)[!(colnames(object@data) %in% allIdColumns)])
+})
+
 #' Get data.table of values from Collection
 #'
 #' Returns a data.table of collection values, respecting the
 #' `imputeZero` slot.
 #' 
 #' @param object Collection
+#' @param variableNames A character vector representing the name of the variables to return.
+#' If NULL, returns all variables
 #' @param ignoreImputeZero boolean indicating whether we should respect the imputeZero slot
 #' @param includeIds boolean indicating whether we should include recordIdColumn and ancestorIdColumns
 #' @param verbose boolean indicating if timed logging is desired
@@ -45,19 +65,36 @@ setMethod("getCollectionNames", "Collections", function(object) return(sapply(ob
 #' @rdname getCollectionData
 #' @export
 setGeneric("getCollectionData",
-    function(object, ignoreImputeZero = c(FALSE, TRUE), includeIds = c(TRUE, FALSE), verbose = c(TRUE, FALSE)) standardGeneric("getCollectionData"),
+    function(
+        object, 
+        variableNames = NULL,
+        ignoreImputeZero = c(FALSE, TRUE), 
+        includeIds = c(TRUE, FALSE), 
+        verbose = c(TRUE, FALSE)
+    ) standardGeneric("getCollectionData"),
     signature = c("object")
 )
 
 #' @rdname getCollectionData
 #' @aliases getCollectionData,Collection-method
-setMethod("getCollectionData", signature("Collection"), function(object, ignoreImputeZero = c(FALSE, TRUE), includeIds = c(TRUE, FALSE), verbose = c(TRUE, FALSE)) {
+setMethod("getCollectionData", signature("Collection"), 
+function(
+    object, 
+    variableNames = NULL,
+    ignoreImputeZero = c(FALSE, TRUE), 
+    includeIds = c(TRUE, FALSE), 
+    verbose = c(TRUE, FALSE)
+) {
     ignoreImputeZero <- veupathUtils::matchArg(ignoreImputeZero)
     includeIds <- veupathUtils::matchArg(includeIds)
     verbose <- veupathUtils::matchArg(verbose)
 
-    dt <- object@data
     allIdColumns <- getIdColumns(object)
+    if (is.null(variableNames)) {
+        dt <- object@data
+    } else {
+        dt <- object@data[, c(allIdColumns, variableNames), with = FALSE]
+    }
 
     # Check that incoming dt meets requirements
     if (!inherits(dt, 'data.table')) {
@@ -119,4 +156,35 @@ setMethod("pruneFeatures", signature("Collection"), function(object, predicate, 
 
     validObject(object)
     return(object)
+})
+
+#' Is One to Many With Ancestor
+#' 
+#' Determines if the collection is one-to-many with its ancestor(s).
+#' Importantly, if there are no ancestors, this function returns FALSE.
+#' @param object Collection
+#' @param verbose boolean indicating if timed logging is desired
+#' @return boolean
+#' @rdname isOneToManyWithAncestor
+#' @export
+setGeneric("isOneToManyWithAncestor",
+    function(object, verbose = c(TRUE, FALSE)) standardGeneric("isOneToManyWithAncestor"),
+    signature = c("object")
+)
+
+#' @rdname isOneToManyWithAncestor
+#' @aliases isOneToManyWithAncestor,Collection-method
+setMethod("isOneToManyWithAncestor", signature("Collection"), function(object, verbose = c(TRUE, FALSE)) {
+    ancestorIdColumns <- object@ancestorIdColumns
+
+    if (length(ancestorIdColumns) == 0) return(FALSE)
+
+    # if count of unique ancestors are the same as ancestors, then its one-to-one
+    uniqueAncestors <- unique(object@data[, ..ancestorIdColumns])
+
+    if (nrow(uniqueAncestors) == nrow(object@data)) {
+        return(FALSE)
+    } else {
+        return(TRUE)
+    }   
 })

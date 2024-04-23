@@ -350,7 +350,7 @@ function(
   data1 <- pruneFeatures(data1, predicateFactory('variance', varianceThreshold), verbose)
   data1 <- pruneFeatures(data1, predicateFactory('sd', stdDevThreshold), verbose)
   
-  values <- getCollectionData(data1, FALSE, FALSE, verbose)
+  values <- getCollectionData(data1, variableNames = NULL, ignoreImputeZero = FALSE, includeIds = FALSE, verbose = verbose)
   if (metadataIsFirst) {
     corrResult <- correlation(
       getSampleMetadata(data1, TRUE, FALSE), 
@@ -413,7 +413,7 @@ function(
   data <- pruneFeatures(data, predicateFactory('variance', varianceThreshold), verbose)
   data <- pruneFeatures(data, predicateFactory('sd', stdDevThreshold), verbose)
 
-  values <- getCollectionData(data, FALSE, FALSE, verbose)
+  values <- getCollectionData(data, variableNames = NULL, ignoreImputeZero = FALSE, includeIds = FALSE, verbose = verbose)
   corrResult <- correlation(values, NULL, method = method, format = 'data.table', verbose = verbose)
 
   veupathUtils::logWithTime(
@@ -499,8 +499,8 @@ function(
   data2 <- pruneFeatures(data2, predicateFactory('variance', varianceThreshold), verbose)
   data2 <- pruneFeatures(data2, predicateFactory('sd', stdDevThreshold), verbose)
   
-  values1 <- getCollectionData(data1, FALSE, TRUE, verbose)
-  values2 <- getCollectionData(data2, FALSE, TRUE, verbose)
+  values1 <- getCollectionData(data1, variableNames = NULL, ignoreImputeZero = FALSE, includeIds = TRUE, verbose = verbose)
+  values2 <- getCollectionData(data2, variableNames = NULL, ignoreImputeZero = FALSE, includeIds = TRUE, verbose = verbose)
 
   veupathUtils::logWithTime(
     paste(
