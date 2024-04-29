@@ -85,7 +85,7 @@ getDataFromSource <- function(dataSource, keepIdsAndNumbersOnly = c(TRUE, FALSE)
 
     if (inherits(dataSource, "character")) {
         veupathUtils::logWithTime(sprintf("Attempting to read file: %s", dataSource), verbose = TRUE)
-        dt <- data.table::fread(dataSource)
+        dt <- data.table::fread(dataSource, na.strings=c(''))
     } else if (inherits(dataSource, "data.frame")) {
         dt <- data.table::as.data.table(dataSource)        
     }
@@ -93,6 +93,9 @@ getDataFromSource <- function(dataSource, keepIdsAndNumbersOnly = c(TRUE, FALSE)
     dataColNames <- names(dt)
     recordIdColumn <- findRecordIdColumn(dataColNames)
     ancestorIdColumns <- findAncestorIdColumns(dataColNames)
+
+    # keep only rows that have values for id cols
+    dt <- dt[!is.na(dt[[recordIdColumn]])]
 
     # theres probably a better way to do this..
     # the idea is that some assay entities have things like presence/ absence of a bug. 
@@ -121,7 +124,7 @@ getCollectionName <- function(collectionId, dataSourceName, ontology = NULL) {
     }
 
     if (grepl("Metagenomic", dataSourceName, fixed=TRUE)) {
-        dataSourceName <- "WGS"
+        dataSourceName <- "Shotgun metagenomics"
     }
 
     if (grepl("Mass_spectrometry", dataSourceName, fixed=TRUE)) {
@@ -140,7 +143,7 @@ getCollectionName <- function(collectionId, dataSourceName, ontology = NULL) {
         }
     }
 
-    return(paste(dataSourceName, collectionId))
+    return(paste(dataSourceName, collectionId, sep=": "))
 }
 
 # so i considered that these should be constructors or something maybe.. 
