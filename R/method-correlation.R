@@ -114,11 +114,17 @@ function(
   if (!identical(veupathUtils::findNumericCols(data1), names(data1))) { 
     warning("All columns in data1 are not numeric. Only numeric columns will be used.")
     keepCols <- veupathUtils::findNumericCols(data1)
+    if (length(keepCols) == 0) {
+      stop("No numeric columns found in data1.")
+    }
     data1 <- data1[, ..keepCols]
   }
   if (!identical(veupathUtils::findNumericCols(data2), names(data2))) { 
     warning("All columns in data2 are not numeric. Only numeric columns will be used.")
     keepCols <- veupathUtils::findNumericCols(data2)
+    if (length(keepCols) == 0) {
+      stop("No numeric columns found in data2.")
+    }
     data2 <- data2[, ..keepCols]
   }
 
@@ -186,6 +192,9 @@ function(
   if (!identical(veupathUtils::findNumericCols(data1), names(data1))) { 
     warning("All columns in data1 are not numeric. Only numeric columns will be used.")
     keepCols <- veupathUtils::findNumericCols(data1)
+    if (length(keepCols) == 0) {
+      stop("No numeric columns found in data1.")
+    }
     data1 <- data1[, ..keepCols]
   }
 
