@@ -429,6 +429,49 @@ test_that("correlation fails with improper inputs", {
   expect_error(corrleation(data, verbose=F))
 })
 
+test_that("correlation succeeds w a mix of cat and cont metadata", {
+  nSamples <- 200
+  df <- data.table::data.table(
+    "entity.SampleID" = 1:nSamples,
+    "entity.cont1" = rnorm(nSamples),
+    "entity.cont2" = rnorm(nSamples),
+    "entity.cont3" = rnorm(nSamples)
+  )
+  
+  counts <- round(df[, -c("entity.SampleID")]*1000) # make into "counts"
+  counts[ ,entity.SampleID:= df$entity.SampleID]
+
+  sampleMetadata <- SampleMetadata(
+    data = data.frame(list(
+      "entity.SampleID" = df[["entity.SampleID"]],
+      "entity.binA" = sample(c("binA_a", "binA_b"), nSamples, replace=T),
+      "entity.cat2" = sample(c("cat2_a", "cat2_b"), nSamples, replace=T),
+      "entity.cat3" = sample(paste0("cat3_", letters[1:3]), nSamples, replace=T),
+      "entity.cat4" = sample(paste0("cat4_", letters[1:4]), nSamples, replace=T),
+      "entity.cont1" = rnorm(nSamples),
+      "entity.cont2" = rnorm(nSamples),
+      "entity.cont3" = rnorm(nSamples)
+      )),
+    recordIdColumn = "entity.SampleID"
+  )
+
+  data <- CollectionWithMetadata(
+              name = 'testing',
+              data = counts,
+              sampleMetadata = sampleMetadata,
+              recordIdColumn = 'entity.SampleID')
+
+  data@sampleMetadata <- sampleMetadata
+
+  result <- correlation(data, method='pearson', proportionNonZeroThreshold = 0, verbose = FALSE)
+  # Check stats (all correlation outputs)
+  statsData <- result@statistics@statistics
+  expect_s3_class(statsData, 'data.frame')
+  expect_equal(names(statsData), c('data1','data2','correlationCoef','pValue'))
+  expect_equal(nrow(statsData), 9) # Should be number of variables in df1 * number of variables in df2
+  expect_true(all(!is.na(statsData)))
+})
+
 test_that("toJSON works as expected for the CorrelationResult class", {
 
   nSamples <- 200 
