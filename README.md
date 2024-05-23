@@ -1,3 +1,10 @@
+> [!CAUTION]
+> Maintenance of this repository was moved to [microbiomeDB](https://github.com/microbiomeDB) on 23 May 2024.
+> Please see the [new location](https://github.com/microbiomeDB/veupathUtils) for the most recent version.
+
+
+
+
 # veupathUtils
 
 veupathUtils is an R package which provides helper functions for solving common problems in the VEuPathDB project.
