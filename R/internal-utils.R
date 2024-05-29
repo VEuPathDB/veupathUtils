@@ -135,7 +135,10 @@ getCollectionName <- function(collectionId, dataSourceName, ontology = NULL) {
         # this assumes were getting one of our own ontology download files
         # w columns like `iri` and `label`
         collectionLabel <- unique(ontology$label[ontology$iri == collectionId])
-        collectionLabel <- paste(collectionLabel, "(", ontology$parentlabel[ontology$iri == collectionId], ")")
+    	if (collectionLabel %in% c('Kingdom','Phylum','Class','Order','Family','Genus','Species')) {
+          collectionLabel <- unique(paste(collectionLabel, paste0("(", ontology$parentlabel[ontology$iri == collectionId], ")")))
+	}
+	print(collectionLabel)
 
         if (length(collectionLabel) == 1) {
             return(paste(dataSourceName, collectionLabel))
