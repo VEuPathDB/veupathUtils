@@ -1,3 +1,7 @@
+<!-- badges: start -->
+  [![R-CMD-check](https://github.com/microbiomeDB/veupathUtils/workflows/R-CMD-check/badge.svg)](https://github.com/microbiomeDB/veupathUtils/actions)
+  <!-- badges: end -->
+
 # veupathUtils
 
 veupathUtils is an R package which provides helper functions for solving common problems in the MicrobiomeDB project.
@@ -24,7 +28,9 @@ or if they mean to also develop veupathUtils simultaneously, can use ```devtools
 their R session.
 
 ## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are welcome and should be made to the **dev** branch. 
+
+For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
 
@@ -32,8 +38,3 @@ As a general policy, we're exporting every function that gets added here. So unl
 
 ## License
 [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt)
-
-## Github Actions
-<!-- badges: start -->
-  [![R-CMD-check](https://github.com/microbiomeDB/veupathUtils/workflows/R-CMD-check/badge.svg)](https://github.com/microbiomeDB/veupathUtils/actions)
-  <!-- badges: end -->
