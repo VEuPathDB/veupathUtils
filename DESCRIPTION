@@ -29,7 +29,7 @@ Remotes:
 URL: https://github.com/microbiomeDB/veupathUtils
 BugReports: https://github.com/microbiomeDB/veupathUtils/issues
 Description: veupathUtils contains various R helper functions intended to be useful across a variety of projects, including the plot.data and microbiomeComputations packages.
-License: Apache License (= 2.0)
+License: Apache License (>= 2)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
