@@ -136,9 +136,8 @@ getCollectionName <- function(collectionId, dataSourceName, ontology = NULL) {
         # w columns like `iri` and `label`
         collectionLabel <- unique(ontology$label[ontology$iri == collectionId])
     	if (collectionLabel %in% c('Kingdom','Phylum','Class','Order','Family','Genus','Species')) {
-          collectionLabel <- unique(paste(collectionLabel, paste0("(", ontology$parentlabel[ontology$iri == collectionId], ")")))
-	}
-	print(collectionLabel)
+            collectionLabel <- unique(paste(collectionLabel, paste0("(", ontology$parentlabel[ontology$iri == collectionId], ")")))
+	    }
 
         if (length(collectionLabel) == 1) {
             return(paste(dataSourceName, collectionLabel))
