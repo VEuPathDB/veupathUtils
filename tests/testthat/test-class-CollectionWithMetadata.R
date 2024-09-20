@@ -160,3 +160,43 @@ test_that("pruneFeatures works", {
     expect_equal(nrow(testing@data), 200)
     expect_equal(ncol(testing@data), 3)
 })
+
+test_that("removeIncompleteRecords removes records from both metadata and data", {
+    nSamples <- 200
+    sampleMetadataDT <- data.table::data.table(
+        "entity.SampleID" = 1:nSamples,
+        "entity.contA" = rnorm(nSamples),
+        "entity.contB" = rnorm(nSamples),
+        "entity.contC" = rnorm(nSamples)
+    )
+    # set first 5 rows to NA
+    sampleMetadataDT[1:5, 2:ncol(sampleMetadataDT) ] <- NA
+
+    df <- data.table::data.table(
+        "entity.SampleID" = sampleMetadataDT$entity.SampleID,
+        "entity.cont1" = rnorm(nSamples),
+        "entity.cont2" = rnorm(nSamples),
+        "entity.cont3" = rnorm(nSamples)
+    )
+    # Set second 5 rows to NA
+    df[6:10, 2:ncol(df) ] <- NA
+
+    sampleMetadata <- SampleMetadata(
+        data = sampleMetadataDT,
+        recordIdColumn = 'entity.SampleID'
+    )
+
+    test_collection <- CollectionWithMetadata(
+        name = 'test',
+        data = df,
+        sampleMetadata = sampleMetadata,
+        recordIdColumn = 'entity.SampleID'
+    )
+
+    result <- removeIncompleteRecords(test_collection, 'entity.contA', verbose=F)
+    expect_equal(nrow(result@data), nSamples-10)
+    expect_equal(ncol(result@data), 4)
+    expect_equal(nrow(result@sampleMetadata@data), nSamples-10)
+    expect_equal(ncol(result@sampleMetadata@data), 4)
+
+})
