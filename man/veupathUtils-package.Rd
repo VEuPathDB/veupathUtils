@@ -4,15 +4,15 @@
 \name{veupathUtils-package}
 \alias{veupathUtils}
 \alias{veupathUtils-package}
-\title{veupathUtils: General Helper Functions for VEuPathDB Projects}
+\title{veupathUtils: General Helper Functions for MicrobiomeDB Projects}
 \description{
 veupathUtils contains various R helper functions intended to be useful across a variety of projects, including the plot.data and microbiomeComputations packages.
 }
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/VEuPathDB/veupathUtils}
-  \item Report bugs at \url{https://github.com/VEuPathDB/veupathUtils/issues}
+  \item \url{https://github.com/microbiomeDB/veupathUtils}
+  \item Report bugs at \url{https://github.com/microbiomeDB/veupathUtils/issues}
 }
 
 }
