@@ -1,17 +1,17 @@
 <!-- badges: start -->
-  [![R-CMD-check](https://github.com/microbiomeDB/veupathUtils/workflows/R-CMD-check/badge.svg)](https://github.com/microbiomeDB/veupathUtils/actions)
+  [![R-CMD-check](https://github.com/VEuPathDB/veupathUtils/workflows/R-CMD-check/badge.svg)](https://github.com/VEuPathDB/veupathUtils/actions)
   <!-- badges: end -->
 
 # veupathUtils
 
-veupathUtils is an R package which provides helper functions for solving common problems in the MicrobiomeDB project.
+veupathUtils is an R package which provides helper functions for solving common problems in the VEuPathDB project.
 
 ## Installation
 
 Use the R package [remotes](https://cran.r-project.org/web/packages/remotes/index.html) to install veupathUtils. From the R command prompt:
 
 ```R
-remotes::install_github('microbiomeDB/veupathUtils')
+remotes::install_github('VEuPathDB/veupathUtils')
 ```
 
 ## Usage
@@ -19,7 +19,7 @@ This package is primarily intended for use as a dependency in other R packages. 
 dependent package must follow these steps:
 1. add ```veupathUtils``` to the ```Imports``` section of the dependent package's ```DESCRIPTION``` file.
 2. add a ```Remotes``` section to the dependent package's ```DESCRIPTION``` file.
-3. add ```microbiomeDB/veupathUtils``` to the ```Remotes``` section of the dependent package's ```DESCRIPTION``` file.
+3. add ```VEuPathDB/veupathUtils``` to the ```Remotes``` section of the dependent package's ```DESCRIPTION``` file.
 4. add ```#' @import veupathUtils``` to the dependent package's package-level documentation file (usually called ```{mypackage}-package.R```).
 5. run ```devtools::document()```.
 

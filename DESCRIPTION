@@ -1,5 +1,5 @@
 Package: veupathUtils
-Title: General Helper Functions for MicrobiomeDB Projects
+Title: General Helper Functions for VEuPathDB Projects
 Version: 2.6.7
 Authors@R: 
     c(person(given = "Danielle",
@@ -26,8 +26,8 @@ Depends:
     jsonlite
 Remotes:
     zdk123/SpiecEasi
-URL: https://github.com/microbiomeDB/veupathUtils
-BugReports: https://github.com/microbiomeDB/veupathUtils/issues
+URL: https://github.com/VEuPathDB/veupathUtils
+BugReports: https://github.com/VEuPathDB/veupathUtils/issues
 Description: veupathUtils contains various R helper functions intended to be useful across a variety of projects, including the plot.data and microbiomeComputations packages.
 License: Apache License (>= 2)
 Encoding: UTF-8
