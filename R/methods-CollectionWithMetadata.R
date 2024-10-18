@@ -153,9 +153,10 @@ setGeneric("removeIncompleteRecords",
 #' @aliases removeIncompleteRecords,CollectionWithMetadata-method
 setMethod("removeIncompleteRecords", signature("CollectionWithMetadata"), function(object, colName = character(), verbose = c(TRUE, FALSE)) {
     verbose <- veupathUtils::matchArg(verbose)
-
     df <- getCollectionData(object, verbose = verbose)
     sampleMetadata <- getSampleMetadata(object)
+    # df may have had rows removed due to getCollectionData behavior. Subset sampleMetadata to match
+    sampleMetadata <- sampleMetadata[sampleMetadata[[object@sampleMetadata@recordIdColumn]] %in% df[[object@recordIdColumn]], ]
 
     # Remove Records with NA from data and metadata
     if (any(is.na(sampleMetadata[[colName]]))) {
@@ -171,6 +172,7 @@ setMethod("removeIncompleteRecords", signature("CollectionWithMetadata"), functi
             data = sampleMetadata,
             recordIdColumn = object@sampleMetadata@recordIdColumn
         )
+        
         validObject(object)
     }
 

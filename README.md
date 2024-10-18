@@ -1,9 +1,6 @@
-> [!CAUTION]
-> Maintenance of this repository was moved to [microbiomeDB](https://github.com/microbiomeDB) on 23 May 2024.
-> Please see the [new location](https://github.com/microbiomeDB/veupathUtils) for the most recent version.
-
-
-
+<!-- badges: start -->
+  [![R-CMD-check](https://github.com/VEuPathDB/veupathUtils/workflows/R-CMD-check/badge.svg)](https://github.com/VEuPathDB/veupathUtils/actions)
+  <!-- badges: end -->
 
 # veupathUtils
 
@@ -31,7 +28,9 @@ or if they mean to also develop veupathUtils simultaneously, can use ```devtools
 their R session.
 
 ## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are welcome and should be made to the **dev** branch. 
+
+For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
 
@@ -39,8 +38,3 @@ As a general policy, we're exporting every function that gets added here. So unl
 
 ## License
 [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt)
-
-## Github Actions
-<!-- badges: start -->
-  [![R-CMD-check](https://github.com/VEuPathDB/veupathUtils/workflows/R-CMD-check/badge.svg)](https://github.com/VEuPathDB/veupathUtils/actions)
-  <!-- badges: end -->
