@@ -27,4 +27,7 @@ test_that('CountDataCollection validation works', {
               recordIdColumn = c('entity.SampleID'),
               name='testCountData'
               ))
+
+
+  
 })

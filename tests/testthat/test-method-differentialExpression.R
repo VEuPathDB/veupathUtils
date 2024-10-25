@@ -1,16 +1,9 @@
-# Tests for differential abundance methods
+# Tests for differential expression methods
 
-test_that('differentialAbundance returns a correctly formatted data.table', {
+test_that('differentialExpression returns a correctly formatted data.table', {
 
-  # df <- testCountsData 
-  # Create a data frame of counts
-  nSamples <- 1200
-  nGenes <- 100
-  set.seed(123)
-  df <- data.frame(matrix(rpois(nSamples*nGenes, 10), nrow=nSamples))
-  colnames(df) <- c(paste0("gene", 1:nGenes))
-  df$entity.SampleID <- paste0("sample", 1:nSamples)
-
+  df <- testCountData 
+  nSamples <- dim(df)[1]
   testSampleMetadata <- data.frame(list(
     "entity.SampleID" = df[["entity.SampleID"]],
     "entity.binA" = rep(c("binA_a", "binA_b"), nSamples/2, replace=T),
@@ -20,13 +13,13 @@ test_that('differentialAbundance returns a correctly formatted data.table', {
     "entity.dateA" = sample(seq(as.Date('1988/01/01'), as.Date('2000/01/01'), by="day"), nSamples)
     ))
 
-
-  testData <- veupathUtils::CountDataCollection(
-              data = counts,
+  testCollection <- veupathUtils::CountDataCollection(
+              data = df,
               sampleMetadata = SampleMetadata(
                 data = testSampleMetadata,
                 recordIdColumn = "entity.SampleID"
               ),
+              name = 'test',
               recordIdColumn = 'entity.SampleID')
 
 
@@ -56,7 +49,7 @@ test_that('differentialAbundance returns a correctly formatted data.table', {
                           )
   )
 
-  result <- differentialAbundance(testData, comparator=comparatorVariable, method='DESeq', verbose=F)
+  result <- differentialExpression(testCollection, comparator=comparatorVariable, method='DESeq', verbose=F)
   expect_equal(length(result@droppedColumns), 182)
   dt <- result@data
   expect_equal(names(dt), c('SampleID'))
@@ -128,7 +121,7 @@ test_that('differentialAbundance returns a correctly formatted data.table', {
                           groupB = groupBBins
   )
 
-  result <- differentialAbundance(testData, comparator=comparatorVariable, method='DESeq', verbose=F)
+  result <- differentialExpression(testData, comparator=comparatorVariable, method='DESeq', verbose=F)
   dt <- result@data
   expect_equal(names(dt), c('SampleID'))
   expect_s3_class(dt, 'data.table')
@@ -159,7 +152,7 @@ test_that('differentialAbundance returns a correctly formatted data.table', {
                           groupB = groupBBins
   )
 
-  result <- differentialAbundance(testData, comparator=comparatorVariable, method='DESeq', verbose=F)
+  result <- differentialExpression(testData, comparator=comparatorVariable, method='DESeq', verbose=F)
   dt <- result@data
   expect_equal(names(dt), c('SampleID'))
   expect_s3_class(dt, 'data.table')
@@ -172,7 +165,7 @@ test_that('differentialAbundance returns a correctly formatted data.table', {
 
 })
 
-test_that("differentialAbundance can handle messy inputs", {
+test_that("differentialExpression can handle messy inputs", {
 
   df <- testOTU
   counts <- round(df[, -c("entity.SampleID")]*1000) # make into "counts"
@@ -228,7 +221,7 @@ test_that("differentialAbundance can handle messy inputs", {
                           )
   )
 
-  result <- differentialAbundance(testDataMessy, comparator=comparatorVariable, method='DESeq', verbose=F)
+  result <- differentialExpression(testDataMessy, comparator=comparatorVariable, method='DESeq', verbose=F)
   dt <- result@data
   expect_equal(names(dt), c('SampleID'))
   expect_s3_class(dt, 'data.table')
@@ -262,7 +255,7 @@ test_that("differentialAbundance can handle messy inputs", {
                           groupB = groupBBins
   )
 
-  result <- differentialAbundance(testDataMessy, comparator=comparatorVariable, method='DESeq', verbose=F)
+  result <- differentialExpression(testDataMessy, comparator=comparatorVariable, method='DESeq', verbose=F)
   dt <- result@data
   expect_equal(names(dt), c('SampleID'))
   expect_s3_class(dt, 'data.table')
@@ -293,7 +286,7 @@ test_that("differentialAbundance can handle messy inputs", {
                           groupA = groupABins,
                           groupB = groupBBins
   )
-  result <- differentialAbundance(testDataMessy, comparator=comparatorVariable, method='DESeq', verbose=T)
+  result <- differentialExpression(testDataMessy, comparator=comparatorVariable, method='DESeq', verbose=T)
   dt <- result@data
   expect_equal(names(dt), c('SampleID'))
   expect_s3_class(dt, 'data.table')
@@ -308,7 +301,7 @@ test_that("differentialAbundance can handle messy inputs", {
 })
 
 
-test_that("differentialAbundance returns a ComputeResult with the correct slots" , {
+test_that("differentialExpression returns a ComputeResult with the correct slots" , {
 
   df <- testOTU
   counts <- round(df[, -c("entity.SampleID")]*1000) # make into "counts"
@@ -355,13 +348,13 @@ test_that("differentialAbundance returns a ComputeResult with the correct slots"
                           )
   )
 
-  result <- differentialAbundance(testData, comparator=comparatorVariable, method='DESeq', verbose=F)
+  result <- differentialExpression(testData, comparator=comparatorVariable, method='DESeq', verbose=F)
   expect_equal(result@parameters, 'recordIdColumn = entity.SampleID, comparatorColName = entity.binA, method = DESeq, groupA =binA_a, groupB = binA_b')
   expect_equal(result@recordIdColumn, 'entity.SampleID')
   expect_equal(class(result@droppedColumns), 'character')
 })
 
-test_that("differentialAbundance fails with improper inputs", {
+test_that("differentialExpression fails with improper inputs", {
 
   df <- testOTU
   counts <- round(df[, -c("entity.SampleID")]*1000) # make into "counts"
@@ -406,11 +399,11 @@ test_that("differentialAbundance fails with improper inputs", {
                           groupB = groupBBins
   )
 
-  expect_error(differentialAbundance(testData, comparator=comparisonVariable, method='DESeq', verbose=F))
+  expect_error(differentialExpression(testData, comparator=comparisonVariable, method='DESeq', verbose=F))
 
 })
 
-test_that("differentialAbundance catches deseq errors", {
+test_that("differentialExpression catches deseq errors", {
 
   df <- testOTU
   counts <- round(df[, -c("entity.SampleID")]*1000) # make into "counts"
@@ -454,86 +447,13 @@ test_that("differentialAbundance catches deseq errors", {
               sampleMetadata = sampleMetadata,
               recordIdColumn = 'entity.SampleID')
 
-  expect_error(differentialAbundance(testData, comparator=comparisonVariable, method='DESeq', verbose=T))
+  expect_error(differentialExpression(testData, comparator=comparisonVariable, method='DESeq', verbose=T))
 
 
 })
 
-# test_that("differentialAbundance method Maaslin does stuff",{
-#     df <- testOTU
-#   counts <- round(df[, -c("entity.SampleID")]*1000)
-#   counts[ ,entity.SampleID:= df$entity.SampleID]
-#   nSamples <- dim(df)[1]
-#   testSampleMetadata <- SampleMetadata(
-#     data = data.frame(list(
-#     "entity.SampleID" = df[["entity.SampleID"]],
-#     "entity.binA" = rep(c("binA_a", "binA_b"), nSamples/2, replace=T),
-#     "entity.cat3" = rep(paste0("cat3_", letters[1:3]), nSamples/3, replace=T),
-#     "entity.cat4" = rep(paste0("cat4_", letters[1:4]), nSamples/4, replace=T),
-#     "entity.contA" = rnorm(nSamples, sd=5)
-#     )),
-#     recordIdColumn ="entity.SampleID"
-#   )
 
-
-#   testCountsData <- veupathUtils::AbsoluteAbundanceData(
-#               data = counts,
-#               sampleMetadata = testSampleMetadata,
-#               recordIdColumn = 'entity.SampleID')
-
-#   testData <- veupathUtils::AbundanceData(
-#     data = df,
-#     sampleMetadata = testSampleMetadata,
-#     recordIdColumn = 'entity.SampleID'
-#   )
-
-#   comparatorVariable <- veupathUtils::Comparator(
-#                           variable = veupathUtils::VariableMetadata(
-#                             variableSpec = VariableSpec(
-#                               variableId = 'cat4',
-#                               entityId = 'entity'
-#                             ),
-#                             dataShape = veupathUtils::DataShape(value="CATEGORICAL")
-#                           ),
-#                           groupA = veupathUtils::BinList(
-#                             S4Vectors::SimpleList(
-#                               c(veupathUtils::Bin(
-#                                 binLabel="cat4_a"
-#                               ))
-#                             )
-#                           ),
-#                           groupB = veupathUtils::BinList(
-#                             S4Vectors::SimpleList(
-#                               c(veupathUtils::Bin(
-#                                 binLabel="cat4_b"
-#                               ))
-#                             )
-#                           )
-#   )
-
-#   result <- differentialAbundance(testData,
-#               comparator = comparatorVariable,
-#               method='Maaslin',
-#               verbose=F)
-#   dt <- result@data
-#   stats <- result@statistics@statistics
-
-
-#   resultCounts <- differentialAbundance(testCountsData,
-#               comparator = comparatorVariable,
-#               method='Maaslin',
-#               verbose=F)
-#   dtCounts <- result@data
-#   statsCounts <- result@statistics@statistics
-
-#   expect_equal(dt, dtCounts)
-#   expect_equal(result@statistics@effectSizeLabel, 'Model Coefficient (Effect Size)')
-#   expect_true(length(stats$pointID) > 0)
-#   expect_true(length(statsCounts$pointID) > 0)
-#   expect_equal(stats, statsCounts)
-# })
-
-test_that("toJSON for DifferentialAbundanceResult works",{
+test_that("toJSON for differentialExpressionResult works",{
   df <- testOTU
   nSamples <- dim(df)[1]
   df$entity.wowtaxa <- rep(c(0.01, 0.99), nSamples/2, replace=T) # will 'wow' us with its significance
@@ -576,7 +496,7 @@ test_that("toJSON for DifferentialAbundanceResult works",{
                           )
   )
 
-  result <- differentialAbundance(testData,
+  result <- differentialExpression(testData,
               comparator = comparatorVariable,
               method='Maaslin',
               verbose=F)
@@ -640,29 +560,29 @@ test_that("The smallest pvalue we can get is our p value floor", {
   )
 
   # Try with different p value floors
-  result <- differentialAbundance(testData, comparator=comparatorVariable, method='DESeq', pValueFloor = 0, verbose=F)
+  result <- differentialExpression(testData, comparator=comparatorVariable, method='DESeq', pValueFloor = 0, verbose=F)
   expect_equal(min(result@statistics@statistics$pValue), 0)
   expect_equal(min(result@statistics@statistics$adjustedPValue, na.rm=T), 0) # Confirmed NAs are for pvalue=1
 
-  result <- differentialAbundance(testData, comparator=comparatorVariable, method='DESeq', pValueFloor = P_VALUE_FLOOR, verbose=F)
+  result <- differentialExpression(testData, comparator=comparatorVariable, method='DESeq', pValueFloor = P_VALUE_FLOOR, verbose=F)
   expect_equal(min(result@statistics@statistics$pValue), P_VALUE_FLOOR)
   expect_equal(min(result@statistics@statistics$adjustedPValue, na.rm=T), result@statistics@adjustedPValueFloor) # Confirmed NAs are for pvalue=1
 
 
 
   # Repeat with Maaslin
-  result <- differentialAbundance(testData, comparator=comparatorVariable, method='Maaslin', pValueFloor = 0, verbose=F)
+  result <- differentialExpression(testData, comparator=comparatorVariable, method='Maaslin', pValueFloor = 0, verbose=F)
   expect_equal(min(result@statistics@statistics$pValue), 0)
   expect_equal(min(result@statistics@statistics$adjustedPValue), 0)
 
-  result <- differentialAbundance(testData, comparator=comparatorVariable, method='Maaslin', pValueFloor = P_VALUE_FLOOR, verbose=F)
+  result <- differentialExpression(testData, comparator=comparatorVariable, method='Maaslin', pValueFloor = P_VALUE_FLOOR, verbose=F)
   expect_equal(min(result@statistics@statistics$pValue), P_VALUE_FLOOR)
   expect_equal(min(result@statistics@statistics$adjustedPValue), result@statistics@adjustedPValueFloor)
 
 
 })
 
-test_that("differentialAbundance fails if comparator has one value", {
+test_that("differentialExpression fails if comparator has one value", {
 
   df <- testOTU
   
@@ -692,6 +612,6 @@ test_that("differentialAbundance fails if comparator has one value", {
     groupB = veupathUtils::BinList(S4Vectors::SimpleList(c(veupathUtils::Bin(binLabel="binB"))))
   )
 
-  expect_error(differentialAbundance(testData, comparator=comparatorVariable, method='DESeq', verbose=F))
-  expect_error(differentialAbundance(testData, comparator=comparatorVariable, method='Maaslin', verbose=F))
+  expect_error(differentialExpression(testData, comparator=comparatorVariable, method='DESeq', verbose=F))
+  expect_error(differentialExpression(testData, comparator=comparatorVariable, method='Maaslin', verbose=F))
 })

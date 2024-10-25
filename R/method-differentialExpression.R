@@ -1,15 +1,15 @@
 # a helper, to reuse and separate some logic
-cleanComparatorVariable <- function(data, comparator, verbose = c(TRUE, FALSE)) {
-  if (!inherits(data, 'AbundanceData')) stop("data must be of the AbundanceData class.")
+cleanComparatorVariable <- function(collection, comparator, verbose = c(TRUE, FALSE)) {
+  if (!inherits(collection, 'CountDataCollection')) stop("collection must be of the CountDataCollection class.")
   if (!inherits(comparator, 'Comparator')) stop("comparator must be of the Comparator class.")
 
   comparatorColName <- veupathUtils::getColName(comparator@variable@variableSpec)
-  data <- removeIncompleteSamples(data, comparatorColName, verbose)
-  abundances <- getAbundances(data, verbose = verbose)
-  sampleMetadata <- getSampleMetadata(data)
-  recordIdColumn <- data@recordIdColumn
+  cleanCollection <- removeIncompleteRecords(collection, comparatorColName, verbose)
+  data <- getCollectionData(cleanCollection, verbose = verbose)
+  sampleMetadata <- getSampleMetadata(cleanCollection)
+  recordIdColumn <- cleanCollection@recordIdColumn
 
-  veupathUtils::logWithTime(paste("Received abundance table with", nrow(abundances), "samples and", (ncol(abundances)-1), "taxa."), verbose)
+  veupathUtils::logWithTime(paste("Received abundance table with", nrow(data), "samples and", (ncol(data)-1), "taxa."), verbose)
 
   # Subset to only include samples with metadata defined in groupA and groupB
     if (identical(comparator@variable@dataShape@value, "CONTINUOUS")) {
@@ -71,20 +71,20 @@ cleanComparatorVariable <- function(data, comparator, verbose = c(TRUE, FALSE)) 
     veupathUtils::logWithTime(paste0("Found ",length(keepSamples)," samples with a value for ", comparatorColName, " in either groupA or groupB. The calculation will continue with only these samples."), verbose)
 
     # Subset the abundance data based on the kept samples
-    abundances <- abundances[get(recordIdColumn) %in% keepSamples, ]
+    data <- data[get(recordIdColumn) %in% keepSamples, ]
 
-    data@data <- abundances
-    data@sampleMetadata <- SampleMetadata(
+    cleanCollection@data <- data
+    cleanCollection@sampleMetadata <- SampleMetadata(
       data = sampleMetadata,
-      recordIdColumn = data@sampleMetadata@recordIdColumn
+      recordIdColumn = cleanCollection@sampleMetadata@recordIdColumn
     )
-    validObject(data)
+    validObject(cleanCollection)
 
-    return(data)
+    return(cleanCollection)
 }
 
 #' @export
-DifferentialAbundanceResult <- setClass("DifferentialAbundanceResult", representation(
+DifferentialExpressionResult <- setClass("DifferentialExpressionResult", representation(
     effectSizeLabel = 'character',
     statistics = 'data.frame',
     pValueFloor = 'numeric',
@@ -99,29 +99,28 @@ DifferentialAbundanceResult <- setClass("DifferentialAbundanceResult", represent
 
 
 setGeneric("deseq",
-  function(data, comparator, verbose = c(TRUE, FALSE)) standardGeneric("deseq"),
-  signature = c("data", "comparator")
+  function(collection, comparator, verbose = c(TRUE, FALSE)) standardGeneric("deseq"),
+  signature = c("collection", "comparator")
 )
 
-setMethod("deseq", signature("AbsoluteAbundanceData", "Comparator"), function(data, comparator, verbose = c(TRUE, FALSE)) {
-  recordIdColumn <- data@recordIdColumn
-  ancestorIdColumns <- data@ancestorIdColumns
+setMethod("deseq", signature("CountDataCollection", "Comparator"), function(collection, comparator, verbose = c(TRUE, FALSE)) {
+  recordIdColumn <- collection@recordIdColumn
+  ancestorIdColumns <- collection@ancestorIdColumns
   allIdColumns <- c(recordIdColumn, ancestorIdColumns)
-  sampleMetadata <- getSampleMetadata(data)
+  sampleMetadata <- getSampleMetadata(collection)
   comparatorColName <- veupathUtils::getColName(comparator@variable@variableSpec)
 
   # First, remove id columns and any columns that are all 0s.
-  cleanedData <- purrr::discard(data@data[, -..allIdColumns], function(col) {identical(union(unique(col), c(0, NA)), c(0, NA))})
+  cleanedData <- purrr::discard(collection@data[, -..allIdColumns], function(col) {identical(union(unique(col), c(0, NA)), c(0, NA))})
   # Next, transpose abundance data to get a counts matrix with taxa as rows and samples as columns
   counts <- data.table::transpose(cleanedData)
   rownames(counts) <- names(cleanedData)
-  colnames(counts) <- data@data[[recordIdColumn]]
+  colnames(counts) <- collection@data[[recordIdColumn]]
 
   # Then, format metadata. Recall samples are rows and variables are columns
   rownames(sampleMetadata) <- sampleMetadata[[recordIdColumn]]
   
-  # Finally, check to ensure samples are in the same order in counts and metadata. Both DESeq
-  # and ANCOMBC expect the order to match, and will not perform this check.
+  # Finally, check to ensure samples are in the same order in counts and metadata. DESeq expects this but will not perform the check.
   if (!identical(rownames(sampleMetadata), colnames(counts))){
     # Reorder sampleMetadata to match counts
     veupathUtils::logWithTime("Sample order differs between data and metadata. Reordering data based on the metadata sample order.", verbose)
@@ -158,64 +157,20 @@ setMethod("deseq", signature("AbsoluteAbundanceData", "Comparator"), function(da
                            adjustedPValue = deseq_results$padj,
                            pointID = rownames(counts))
 
-  result <- DifferentialAbundanceResult('effectSizeLabel' = 'log2(Fold Change)', 'statistics' = statistics)
+  result <- DifferentialExpressionResult('effectSizeLabel' = 'log2(Fold Change)', 'statistics' = statistics)
 
   return(result)
 })
 
-setMethod("deseq", signature("AbundanceData", "Comparator"), function(data, comparator, verbose = c(TRUE, FALSE)) {
-  stop("Please use the AbsoluteAbundanceData class with DESeq2.")
+setMethod("deseq", signature("CollectionWithMetadata", "Comparator"), function(collection, comparator, verbose = c(TRUE, FALSE)) {
+  stop("Please use the CountDataCollection class with DESeq2.")
 })
 
-setGeneric("maaslin",
-  function(data, comparator, verbose = c(TRUE, FALSE)) standardGeneric("maaslin"),
-  signature = c("data", "comparator")
-)
-
-# this leaves room for us to grow into dedicated params (normalization and analysis method etc) for counts if desired
-setMethod("maaslin", signature("AbundanceData", "Comparator"), function(data, comparator, verbose = c(TRUE, FALSE)) {
-  recordIdColumn <- data@recordIdColumn
-  ancestorIdColumns <- data@ancestorIdColumns
-  allIdColumns <- c(recordIdColumn, ancestorIdColumns)
-  sampleMetadata <- getSampleMetadata(data)
-  comparatorColName <- veupathUtils::getColName(comparator@variable@variableSpec)
-  abundances <- data@data
-
-  # First, remove id columns and any columns that are all 0s.
-  cleanedData <- purrr::discard(abundances[, -..allIdColumns], function(col) {identical(union(unique(col), c(0, NA)), c(0, NA))})
-  rownames(cleanedData) <- abundances[[recordIdColumn]]
-  rownames(sampleMetadata) <- sampleMetadata[[recordIdColumn]]
-
-  maaslinOutput <- Maaslin2::Maaslin2(
-        input_data = cleanedData, 
-        input_metadata = sampleMetadata,
-        output = tempfile("maaslin"),
-        #min_prevalence = 0,
-        fixed_effects = c(comparatorColName),
-        analysis_method = "LM", # default LM
-        normalization = "TSS", # default TSS
-        transform = "LOG", # default LOG
-        plot_heatmap = F,
-        plot_scatter = F)
-
-      # NOTE!!!! Coefficient in place of Log2FC only makes sense for LM
-      # see https://forum.biobakery.org/t/trying-to-understand-coef-column-and-how-to-convert-it-to-fold-change/3136/8
-
-      statistics <- data.frame(effectSize = maaslinOutput$results$coef,
-                          pValue = maaslinOutput$results$pval,
-                          adjustedPValue = maaslinOutput$results$qval,
-                          pointID = maaslinOutput$results$feature)
-
-      result <- DifferentialAbundanceResult('effectSizeLabel' = 'Model Coefficient (Effect Size)', 'statistics' = statistics)
-
-  return(result)
-})
-
-#' Differential abundance
+#' Differential expression
 #'
-#' This function returns the fold change and associated p value for a differential abundance analysis comparing samples in two groups.
+#' This function returns the fold change and associated p value for a differential expression analysis comparing samples in two groups.
 #' 
-#' @param data AbsoluteAbundanceData object
+#' @param collection CollectionWithMetadata object
 #' @param comparator Comparator object specifying the variable and values or bins to be used in dividing samples into groups.
 #' @param method string defining the the differential abundance method. Accepted values are 'DESeq2' and 'Maaslin2'.
 #' @param pValueFloor numeric value that indicates the smallest p value that should be returned. 
@@ -223,25 +178,22 @@ setMethod("maaslin", signature("AbundanceData", "Comparator"), function(data, co
 #' The default value uses the P_VALUE_FLOOR=1e-200 constant defined in this package.
 #' @param verbose boolean indicating if timed logging is desired
 #' @return ComputeResult object
-#' @import veupathUtils
 #' @import data.table
 #' @import DESeq2
-#' @importFrom Maaslin2 Maaslin2
 #' @importFrom purrr none
 #' @importFrom purrr discard
-#' @useDynLib microbiomeComputations
 #' @export
-setGeneric("differentialAbundance",
-  function(data, comparator, method = c('DESeq', 'Maaslin'), pValueFloor = P_VALUE_FLOOR, verbose = c(TRUE, FALSE)) standardGeneric("differentialAbundance"),
-  signature = c("data", "comparator")
+setGeneric("differentialExpression",
+  function(collection, comparator, method = c('DESeq'), pValueFloor = P_VALUE_FLOOR, verbose = c(TRUE, FALSE)) standardGeneric("differentialExpression"),
+  signature = c("collection", "comparator")
 )
 
-# this is consistent regardless of rel vs abs abund. the statistical methods will differ depending on that. 
+# This main function stays consistent regardless of the type of data we give to it. For example, in case we add non-counts data in the future.
 #'@export
-setMethod("differentialAbundance", signature("AbundanceData", "Comparator"), function(data, comparator, method = c('DESeq', 'Maaslin'), pValueFloor = P_VALUE_FLOOR, verbose = c(TRUE, FALSE)) {
-    data <- cleanComparatorVariable(data, comparator, verbose)
-    recordIdColumn <- data@recordIdColumn
-    ancestorIdColumns <- data@ancestorIdColumns
+setMethod("differentialExpression", signature("CollectionWithMetadata", "Comparator"), function(collection, comparator, method = c('DESeq'), pValueFloor = P_VALUE_FLOOR, verbose = c(TRUE, FALSE)) {
+    cleanCollection <- cleanComparatorVariable(collection, comparator, verbose)
+    recordIdColumn <- cleanCollection@recordIdColumn
+    ancestorIdColumns <- cleanCollection@ancestorIdColumns
     allIdColumns <- c(recordIdColumn, ancestorIdColumns)
     comparatorColName <- veupathUtils::getColName(comparator@variable@variableSpec)
 
@@ -252,22 +204,9 @@ setMethod("differentialAbundance", signature("AbundanceData", "Comparator"), fun
     
     ## Compute differential abundance
     if (identical(method, 'DESeq')) {
-      statistics <- deseq(data, comparator, verbose)
-#    } else if (identical(method, 'ANCOMBC')) {
-#
-#      se <- TreeSummarizedExperiment::TreeSummarizedExperiment(list(counts = counts), colData = sampleMetadata)
-#
-#      # Currently getting this error: Error in is.infinite(o1) : default method not implemented for type 'list'
-#      # Ignoring for now.
-#      output_abs = ANCOMBC::ancombc2(data = se, assay_name = "counts", tax_level = NULL,
-#                  fix_formula = comparatorColName, rand_formula = NULL,
-#                  p_adj_method = "holm", prv_cut=0,
-#                  group = comparatorColName)
-#
-    } else if (identical(method, 'Maaslin')) {
-      statistics <- maaslin(data, comparator, verbose)
+      statistics <- deseq(cleanCollection, comparator, verbose)
     } else {
-      stop('Unaccepted differential abundance method. Accepted methods are "DESeq" and "Maaslin".')
+      stop('Unaccepted differential abundance method. Accepted methods are "DESeq".')
     }
     veupathUtils::logWithTime(paste0('Completed method=',method,'. Formatting results.'), verbose)
 
@@ -294,12 +233,12 @@ setMethod("differentialAbundance", signature("AbundanceData", "Comparator"), fun
     statistics@adjustedPValueFloor <- adjustedPValueFloor
 
     
-    # this is droppedTaxa, or pathways etc ?? can we rename it?
-    droppedColumns <- setdiff(names(data@data[, -..allIdColumns, with=FALSE]), statistics@statistics$pointID)
+    # Record columns that were dropped due to data cleaning.
+    droppedColumns <- setdiff(names(cleanCollection@data[, -..allIdColumns, with=FALSE]), statistics@statistics$pointID)
 
     ## Construct the ComputeResult
     result <- new("ComputeResult")
-    result@name <- 'differentialAbundance'
+    result@name <- 'differentialExpression'
     result@recordIdColumn <- recordIdColumn
     result@ancestorIdColumns <- ancestorIdColumns
     result@statistics <- statistics
@@ -308,12 +247,12 @@ setMethod("differentialAbundance", signature("AbundanceData", "Comparator"), fun
 
 
     # The resulting data should contain only the samples actually used.
-    result@data <- data@data[, ..allIdColumns]
+    result@data <- cleanCollection@data[, ..allIdColumns]
     names(result@data) <- veupathUtils::stripEntityIdFromColumnHeader(names(result@data))
 
 
     validObject(result)
-    veupathUtils::logWithTime(paste('Differential abundance computation completed with parameters recordIdColumn = ', recordIdColumn,", comparatorColName = ", comparatorColName, ', method = ', method, ', groupA =', getGroupLabels(comparator, "groupA"), ', groupB = ', getGroupLabels(comparator, "groupB")), verbose)
+    veupathUtils::logWithTime(paste('Differential expression computation completed with parameters recordIdColumn = ', recordIdColumn,", comparatorColName = ", comparatorColName, ', method = ', method, ', groupA =', getGroupLabels(comparator, "groupA"), ', groupB = ', getGroupLabels(comparator, "groupB")), verbose)
     
     return(result)
 })

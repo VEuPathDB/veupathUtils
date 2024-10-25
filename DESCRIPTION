@@ -57,6 +57,7 @@ Collate:
     'methods-Bin.R'
     'methods-CollectionWithMetadata.R'
     'methods-Collections.R'
+    'methods-Comparator.R'
     'methods-VariableMetadata.R'
     'methods-ComputeResult.R'
     'methods-Megastudy.R'
