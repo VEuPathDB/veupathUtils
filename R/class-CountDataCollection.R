@@ -5,11 +5,24 @@ check_count_data_collection <- function(object) {
     ancestor_id_cols <- object@ancestorIdColumns
     all_id_cols <- c(record_id_col, ancestor_id_cols)
 
+
+    allDataColsNumeric <- all(unlist(lapply(df[, !(names(df) %in% c(record_id_col, ancestor_id_cols))], is.numeric)))
+    if (inherits(df, 'data.table')) allDataColsNumeric <- all(unlist(lapply(df[, !(names(df) %in% c(record_id_col, ancestor_id_cols)), with=F], is.numeric)))
+    if (!allDataColsNumeric) {
+      msg <- paste("All columns except the ID columns must be numeric.")
+      errors <- c(errors, msg)
+    }
+
     numeric_data <- df[, !(names(df) %in% all_id_cols)]
     if (inherits(df, 'data.table')) numeric_data <- df[, !(names(df) %in% all_id_cols), with=F]
 
     if (!identical(numeric_data, round(numeric_data))) {
-      msg <- "Absolute abundance data must be integer numbers."
+      msg <- "Count data must be integer numbers."
+      errors <- c(errors, msg)
+    }
+
+    if (any(df < 0, na.rm=TRUE)) {
+      msg <- paste("Count data cannot contain negative values.")
       errors <- c(errors, msg)
     }
     
@@ -17,7 +30,7 @@ check_count_data_collection <- function(object) {
     return(if (length(errors) == 0) TRUE else errors)
 }
 
-#' Counts Data
+#' Count Data
 #' 
 #' A class for working with count data, including microbial or genetic assays.
 #' 

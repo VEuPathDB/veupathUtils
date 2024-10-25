@@ -229,7 +229,7 @@ setMethod("maaslin", signature("AbundanceData", "Comparator"), function(data, co
 #' @importFrom Maaslin2 Maaslin2
 #' @importFrom purrr none
 #' @importFrom purrr discard
-# ' @useDynLib microbiomeComputations ANN WHAT DOES THIS MEAN
+#' @useDynLib microbiomeComputations
 #' @export
 setGeneric("differentialAbundance",
   function(data, comparator, method = c('DESeq', 'Maaslin'), pValueFloor = P_VALUE_FLOOR, verbose = c(TRUE, FALSE)) standardGeneric("differentialAbundance"),

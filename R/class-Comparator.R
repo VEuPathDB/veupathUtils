@@ -66,6 +66,7 @@ check_comparator <- function(object) {
 #' @slot groupB BinList
 #' @name Comparator-class
 #' @rdname Comparator-class
+#' @include class-VariableMetadata.R
 #' @export
 Comparator <- setClass("Comparator", representation(
     variable = 'VariableMetadata',
