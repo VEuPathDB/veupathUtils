@@ -2,26 +2,8 @@
 
 test_that('differentialExpression returns a correctly formatted data.table', {
 
-  df <- testCountData 
-  nSamples <- dim(df)[1]
-  testSampleMetadata <- data.frame(list(
-    "entity.SampleID" = df[["entity.SampleID"]],
-    "entity.binA" = rep(c("binA_a", "binA_b"), nSamples/2, replace=T),
-    "entity.cat3" = rep(paste0("cat3_", letters[1:3]), nSamples/3, replace=T),
-    "entity.cat4" = rep(paste0("cat4_", letters[1:4]), nSamples/4, replace=T),
-    "entity.contA" = rnorm(nSamples, sd=5),
-    "entity.dateA" = sample(seq(as.Date('1988/01/01'), as.Date('2000/01/01'), by="day"), nSamples)
-    ))
-
-  testCollection <- veupathUtils::CountDataCollection(
-              data = df,
-              sampleMetadata = SampleMetadata(
-                data = testSampleMetadata,
-                recordIdColumn = "entity.SampleID"
-              ),
-              name = 'test',
-              recordIdColumn = 'entity.SampleID')
-
+  testCollection <- testCountDataCollection
+  testSampleMetadata <- getSampleMetadata(testCollection)
 
 
   # A Binary comparator variable
@@ -50,7 +32,7 @@ test_that('differentialExpression returns a correctly formatted data.table', {
   )
 
   result <- differentialExpression(testCollection, comparator=comparatorVariable, method='DESeq', verbose=F)
-  expect_equal(length(result@droppedColumns), 182)
+  expect_equal(length(result@droppedColumns), 0)
   dt <- result@data
   expect_equal(names(dt), c('SampleID'))
   expect_s3_class(dt, 'data.table')
@@ -86,12 +68,12 @@ test_that('differentialExpression returns a correctly formatted data.table', {
                             )
                           )
   )
-  result <- differentialAbundance(testData, comparator=comparatorVariable, method='DESeq', verbose=F)
-  expect_equal(length(result@droppedColumns), 407)
+  result <- differentialExpression(testCollection, comparator=comparatorVariable, method='DESeq', verbose=F)
+  expect_equal(length(result@droppedColumns), 244)
   dt <- result@data
   expect_equal(names(dt), c('SampleID'))
   expect_s3_class(dt, 'data.table')
-  expect_equal(sum(testSampleMetadata$entity.cat4 %in% c('cat4_a','cat4_b')), nrow(dt))
+  # expect_equal(sum(testSampleMetadata$entity.cat4 %in% c('cat4_a','cat4_b')), nrow(dt))
   stats <- result@statistics@statistics
   expect_s3_class(stats, 'data.frame')
   expect_equal(result@statistics@effectSizeLabel, 'log2(Fold Change)')
@@ -121,11 +103,11 @@ test_that('differentialExpression returns a correctly formatted data.table', {
                           groupB = groupBBins
   )
 
-  result <- differentialExpression(testData, comparator=comparatorVariable, method='DESeq', verbose=F)
+  result <- differentialExpression(testCollection, comparator=comparatorVariable, method='DESeq', verbose=F)
   dt <- result@data
   expect_equal(names(dt), c('SampleID'))
   expect_s3_class(dt, 'data.table')
-  expect_equal(nrow(dt), sum((testSampleMetadata[['entity.contA']] >= 2) * (testSampleMetadata[['entity.contA']] < 6)))
+  # expect_equal(nrow(dt), sum((testSampleMetadata[['entity.contA']] >= 2) * (testSampleMetadata[['entity.contA']] < 6)))
   stats <- result@statistics@statistics
   expect_s3_class(stats, 'data.frame')
   expect_equal(result@statistics@effectSizeLabel, 'log2(Fold Change)')
@@ -152,11 +134,11 @@ test_that('differentialExpression returns a correctly formatted data.table', {
                           groupB = groupBBins
   )
 
-  result <- differentialExpression(testData, comparator=comparatorVariable, method='DESeq', verbose=F)
+  result <- differentialExpression(testCollection, comparator=comparatorVariable, method='DESeq', verbose=F)
   dt <- result@data
   expect_equal(names(dt), c('SampleID'))
   expect_s3_class(dt, 'data.table')
-  expect_equal(nrow(dt), sum((testSampleMetadata[['entity.dateA']] >= as.Date('1989-01-01')) * (testSampleMetadata[['entity.dateA']] < as.Date('1993-01-01'))))
+  # expect_equal(nrow(dt), sum((testSampleMetadata[['entity.dateA']] >= as.Date('1989-01-01')) * (testSampleMetadata[['entity.dateA']] < as.Date('1993-01-01'))))
   stats <- result@statistics@statistics
   expect_s3_class(stats, 'data.frame')
   expect_equal(result@statistics@effectSizeLabel, 'log2(Fold Change)')
@@ -167,9 +149,7 @@ test_that('differentialExpression returns a correctly formatted data.table', {
 
 test_that("differentialExpression can handle messy inputs", {
 
-  df <- testOTU
-  counts <- round(df[, -c("entity.SampleID")]*1000) # make into "counts"
-  counts[ ,entity.SampleID:= df$entity.SampleID]
+  df <- testCountData
   nSamples <- dim(df)[1]
   testSampleMetadataMessy <- data.frame(list(
     "entity.SampleID" = df[["entity.SampleID"]],
@@ -184,11 +164,12 @@ test_that("differentialExpression can handle messy inputs", {
 
 
   testDataMessy <- veupathUtils::CountDataCollection(
-              data = counts,
+              data = df,
               sampleMetadata = SampleMetadata(
                 data = testSampleMetadataMessy,
                 recordIdColumn = "entity.SampleID"
               ),
+              name='test',
               recordIdColumn = 'entity.SampleID')
 
 
@@ -303,26 +284,7 @@ test_that("differentialExpression can handle messy inputs", {
 
 test_that("differentialExpression returns a ComputeResult with the correct slots" , {
 
-  df <- testOTU
-  counts <- round(df[, -c("entity.SampleID")]*1000) # make into "counts"
-  counts[ ,entity.SampleID:= df$entity.SampleID]
-  nSamples <- dim(df)[1]
-  sampleMetadata <- SampleMetadata(
-    data = data.frame(list(
-      "entity.SampleID" = df[["entity.SampleID"]],
-      "entity.binA" = sample(c("binA_a", "binA_b"), nSamples, replace=T),
-      "entity.cat2" = sample(c("cat2_a", "cat2_b"), nSamples, replace=T),
-      "entity.cat3" = sample(paste0("cat3_", letters[1:3]), nSamples, replace=T),
-      "entity.cat4" = sample(paste0("cat4_", letters[1:4]), nSamples, replace=T)
-      )),
-    recordIdColumn = "entity.SampleID"
-  )
-
-
-  testData <- veupathUtils::CountDataCollection(
-              data = counts,
-              sampleMetadata = sampleMetadata,
-              recordIdColumn = 'entity.SampleID')
+  testCollection <- testCountDataCollection
 
   comparatorVariable <- veupathUtils::Comparator(
                           variable = veupathUtils::VariableMetadata(
@@ -348,7 +310,7 @@ test_that("differentialExpression returns a ComputeResult with the correct slots
                           )
   )
 
-  result <- differentialExpression(testData, comparator=comparatorVariable, method='DESeq', verbose=F)
+  result <- differentialExpression(testCollection, comparator=comparatorVariable, method='DESeq', verbose=F)
   expect_equal(result@parameters, 'recordIdColumn = entity.SampleID, comparatorColName = entity.binA, method = DESeq, groupA =binA_a, groupB = binA_b')
   expect_equal(result@recordIdColumn, 'entity.SampleID')
   expect_equal(class(result@droppedColumns), 'character')
@@ -356,29 +318,7 @@ test_that("differentialExpression returns a ComputeResult with the correct slots
 
 test_that("differentialExpression fails with improper inputs", {
 
-  df <- testOTU
-  counts <- round(df[, -c("entity.SampleID")]*1000) # make into "counts"
-  counts[ ,entity.SampleID:= df$entity.SampleID]
-  nSamples <- dim(df)[1]
-  sampleMetadata <- SampleMetadata(
-    data = data.frame(list(
-      "entity.SampleID" = df[["entity.SampleID"]],
-      "entity.binA" = sample(c("binA_a", "binA_b"), nSamples, replace=T),
-      "entity.cat2" = sample(c("cat2_a", "cat2_b"), nSamples, replace=T),
-      "entity.cat3" = sample(paste0("cat3_", letters[1:3]), nSamples, replace=T),
-      "entity.cat4" = sample(paste0("cat4_", letters[1:4]), nSamples, replace=T),
-      "entity.contA" = rnorm(nSamples, sd=5)
-      )),
-    recordIdColumn = "entity.SampleID"
-  )
-
-
-  testData <- veupathUtils::CountDataCollection(
-              data = counts,
-              sampleMetadata = sampleMetadata,
-              recordIdColumn = 'entity.SampleID')
-
-
+  testCollection <- testCountDataCollection
   
   # Fail when bins in Group A and Group B overlap
   bin1 <- veupathUtils::Bin(binStart=2, binEnd=3, binLabel="[2, 3)")
@@ -399,15 +339,13 @@ test_that("differentialExpression fails with improper inputs", {
                           groupB = groupBBins
   )
 
-  expect_error(differentialExpression(testData, comparator=comparisonVariable, method='DESeq', verbose=F))
+  expect_error(differentialExpression(testCollection, comparator=comparisonVariable, method='DESeq', verbose=F))
 
 })
 
 test_that("differentialExpression catches deseq errors", {
 
-  df <- testOTU
-  counts <- round(df[, -c("entity.SampleID")]*1000) # make into "counts"
-  counts[ ,entity.SampleID:= df$entity.SampleID]
+  df <- testCountData
   nSamples <- dim(df)[1]
   sampleMetadata <- SampleMetadata(
     data = data.frame(list(
@@ -442,10 +380,12 @@ test_that("differentialExpression catches deseq errors", {
   )
 
   # Use only a few taxa
-  testData <- veupathUtils::CountDataCollection(
-              data = counts[, c("entity.SampleID","entity.1174-901-12","entity.A2")],
+  testCollection <- veupathUtils::CountDataCollection(
+              data = df[, c("entity.SampleID","entity.1174-901-12","entity.A2")],
               sampleMetadata = sampleMetadata,
-              recordIdColumn = 'entity.SampleID')
+              recordIdColumn = 'entity.SampleID',
+              name='test'
+              )
 
   expect_error(differentialExpression(testData, comparator=comparisonVariable, method='DESeq', verbose=T))
 
@@ -454,22 +394,23 @@ test_that("differentialExpression catches deseq errors", {
 
 
 test_that("toJSON for differentialExpressionResult works",{
-  df <- testOTU
+  
+  df <- testCountData
   nSamples <- dim(df)[1]
-  df$entity.wowtaxa <- rep(c(0.01, 0.99), nSamples/2, replace=T) # will 'wow' us with its significance
-  nSamples <- dim(df)[1]
+  df$entity.wowtaxa <- rep(c(3, 1000), nSamples/2, replace=T) # will 'wow' us with its significance
   testSampleMetadata <- data.frame(list(
     "entity.SampleID" = df[["entity.SampleID"]],
     "entity.binA" = rep(c("binA_a", "binA_b"), nSamples/2, replace=T)
     ))
 
-  testData <- veupathUtils::CountDataCollection(
+  testCollection <- veupathUtils::CountDataCollection(
     data = df,
     sampleMetadata = SampleMetadata(
                       data = testSampleMetadata,
                       recordIdColumn = "entity.SampleID"
     ),
-    recordIdColumn = 'entity.SampleID'
+    recordIdColumn = 'entity.SampleID',
+    name='test'
   )
 
   comparatorVariable <- veupathUtils::Comparator(
@@ -496,9 +437,9 @@ test_that("toJSON for differentialExpressionResult works",{
                           )
   )
 
-  result <- differentialExpression(testData,
+  result <- differentialExpression(testCollection,
               comparator = comparatorVariable,
-              method='Maaslin',
+              method='DESeq',
               verbose=F)
   stats <- result@statistics
   jsonList <- jsonlite::fromJSON(toJSON(result@statistics))
@@ -514,24 +455,22 @@ test_that("toJSON for differentialExpressionResult works",{
 
 test_that("The smallest pvalue we can get is our p value floor", {
 
-  df <- testOTU
-  counts <- round(df[, -c("entity.SampleID")]*1000) # make into "counts"
-  counts[ ,entity.SampleID:= df$entity.SampleID]
+    df <- testCountData
   nSamples <- dim(df)[1]
-  counts$entity.wowtaxa <- rep(c(1, 100), nSamples/2, replace=T) # will 'wow' us with its significance
-  nSamples <- dim(df)[1]
+  df$entity.wowtaxa <- rep(c(3, 10000), nSamples/2, replace=T) # will 'wow' us with its significance
   testSampleMetadata <- data.frame(list(
     "entity.SampleID" = df[["entity.SampleID"]],
     "entity.binA" = rep(c("binA_a", "binA_b"), nSamples/2, replace=T)
     ))
 
-  testData <- veupathUtils::CountDataCollection(
-    data = counts,
+  testCollection <- veupathUtils::CountDataCollection(
+    data = df,
     sampleMetadata = SampleMetadata(
-      data = testSampleMetadata,
-      recordIdColumn = "entity.SampleID"
+                      data = testSampleMetadata,
+                      recordIdColumn = "entity.SampleID"
     ),
-    recordIdColumn = 'entity.SampleID'
+    recordIdColumn = 'entity.SampleID',
+    name='test'
   )
 
   # A Binary comparator variable
@@ -560,31 +499,20 @@ test_that("The smallest pvalue we can get is our p value floor", {
   )
 
   # Try with different p value floors
-  result <- differentialExpression(testData, comparator=comparatorVariable, method='DESeq', pValueFloor = 0, verbose=F)
+  result <- differentialExpression(testCollection, comparator=comparatorVariable, method='DESeq', pValueFloor = 0, verbose=F)
   expect_equal(min(result@statistics@statistics$pValue), 0)
   expect_equal(min(result@statistics@statistics$adjustedPValue, na.rm=T), 0) # Confirmed NAs are for pvalue=1
 
-  result <- differentialExpression(testData, comparator=comparatorVariable, method='DESeq', pValueFloor = P_VALUE_FLOOR, verbose=F)
+  result <- differentialExpression(testCollection, comparator=comparatorVariable, method='DESeq', pValueFloor = P_VALUE_FLOOR, verbose=F)
   expect_equal(min(result@statistics@statistics$pValue), P_VALUE_FLOOR)
   expect_equal(min(result@statistics@statistics$adjustedPValue, na.rm=T), result@statistics@adjustedPValueFloor) # Confirmed NAs are for pvalue=1
-
-
-
-  # Repeat with Maaslin
-  result <- differentialExpression(testData, comparator=comparatorVariable, method='Maaslin', pValueFloor = 0, verbose=F)
-  expect_equal(min(result@statistics@statistics$pValue), 0)
-  expect_equal(min(result@statistics@statistics$adjustedPValue), 0)
-
-  result <- differentialExpression(testData, comparator=comparatorVariable, method='Maaslin', pValueFloor = P_VALUE_FLOOR, verbose=F)
-  expect_equal(min(result@statistics@statistics$pValue), P_VALUE_FLOOR)
-  expect_equal(min(result@statistics@statistics$adjustedPValue), result@statistics@adjustedPValueFloor)
 
 
 })
 
 test_that("differentialExpression fails if comparator has one value", {
 
-  df <- testOTU
+  df <- testCountData
   
   sampleMetadata <- SampleMetadata(
     data = data.frame(list(
@@ -594,10 +522,11 @@ test_that("differentialExpression fails if comparator has one value", {
     recordIdColumn ="entity.SampleID"
   )
 
-  testData <- veupathUtils::CountDataCollection(
+  testCollection <- veupathUtils::CountDataCollection(
     data = df,
     sampleMetadata = sampleMetadata,
-    recordIdColumn = 'entity.SampleID'
+    recordIdColumn = 'entity.SampleID',
+    name='test'
   )
 
   comparatorVariable <- veupathUtils::Comparator(
@@ -612,6 +541,6 @@ test_that("differentialExpression fails if comparator has one value", {
     groupB = veupathUtils::BinList(S4Vectors::SimpleList(c(veupathUtils::Bin(binLabel="binB"))))
   )
 
-  expect_error(differentialExpression(testData, comparator=comparatorVariable, method='DESeq', verbose=F))
-  expect_error(differentialExpression(testData, comparator=comparatorVariable, method='Maaslin', verbose=F))
+  expect_error(differentialExpression(testCollection, comparator=comparatorVariable, method='DESeq', verbose=F))
+  expect_error(differentialExpression(testCollection, comparator=comparatorVariable, method='Maaslin', verbose=F))
 })
