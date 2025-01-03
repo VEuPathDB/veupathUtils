@@ -5,7 +5,7 @@
 #' @param nPCs Number of principal components to return. Default 10
 #' @param ntop Use the top ntop genes with the highest variance for the pca computation. Mirrors the deseq2 plotPCA argument. Default 500.
 #' @param verbose Boolean indicating if extra messaging should be printed.
-#' @return A data frame with the first two principal components
+#' @return A data table with the id columns and the first nPCs principal components.
 #' @export
 setGeneric("pca",
   function(collection, nPCs = 10, ntop = 500, verbose = c(TRUE, FALSE)) standardGeneric("pca"),
@@ -16,57 +16,36 @@ setGeneric("pca",
 setMethod(pca, "Collection",
   function(collection, nPCs = 10, ntop = 500, verbose = c(TRUE, FALSE)) {
     
-    # Get the assay data
+    verbose <- veupathUtils::matchArg(verbose)
     assay <- getCollectionData(collection)
     recordIdColumn <- collection@recordIdColumn
     ancestorIdColumns <- collection@ancestorIdColumns
     allIdColumns <- c(recordIdColumn, ancestorIdColumns)
-    # remove id columns
-    features <- assay[, -..allIdColumns]
-    # Currently taxa/genes are columns and samples are rows
+    
+    # Remove id columns from the assay to get only the features.
+    features <- assay[, -..allIdColumns] # features has samples as rows.
 
-    # From deseq plotpca, 
-    rv <- matrixStats::rowVars(t(as.matrix(features)))
-    # Now we have a vector of variances for each gene
-    select <- order(rv, decreasing=TRUE)[seq_len(min(ntop, length(rv)))]
-    pca <- prcomp(features[, ..select])
+    # Update ntop if it's too large.
+    if (ntop > ncol(features)) {
+      if (verbose) {
+        message("ntop is larger than the number of features. Using all features.")
+      }
+      ntop <- min(ntop, ncol(features))
+    }
+
+    # Use prcomp to perform PCA. 
+    # The following is heavily borrowed from the deseq2 plotPCA function.
+    rowVariances <- matrixStats::rowVars(t(as.matrix(features)))
+    print(length(rowVariances))
+    keepFeatures <- order(rowVariances, decreasing=TRUE)[seq_len(ntop)]
+    pcaResult <- prcomp(features[, ..keepFeatures])
 
 
-    # assemble data frame
+    # Assemble output data
     dt <- assay[, ..allIdColumns]
-    # combine with the first 20 columns of pca$x
-    dt <- cbind(dt, pca$x[, 1:20]) # this works fine even with one id column
+    # The PCA results are in pcaResult$x. Keep the first nPCs PCS.
+    dt <- cbind(dt, pcaResult$x[, 1:nPCs]) # this works fine even with one id column
 
-    # Then we send to plot.data?
-    # have to merge with overlay variable
     return(dt)
   }
 )
-
-# assay <- getCollectionData(testData)
-# recordIdColumn <- testData@recordIdColumn
-# ancestorIdColumns <- testData@ancestorIdColumns
-# allIdColumns <- c(recordIdColumn, ancestorIdColumns)
-# # remove id columns
-# features <- assay[, -..allIdColumns]
-# # Currently taxa/genes are columns and samples are rows
-
-# # From deseq plotpca, 
-# rv <- matrixStats::rowVars(t(as.matrix(features)))
-# # Now we have a vector of variances for each gene
-# ntop = 500 # Default value. Should we make this a variable?
-# select <- order(rv, decreasing=TRUE)[seq_len(min(ntop, length(rv)))]
-# pca <- prcomp(features[, ..select])
-
-# # The good stuff is in pca$x
-# x <- pca$x[, 1]
-# y <- pca$x[, 2]
-
-# # assemble data frame
-# dt <- assay[, ..allIdColumns]
-# # combine with the first 20 columns of pca$x
-# dt <- cbind(dt, pca$x[, 1:20]) # this works fine even with one id column
-
-# # Then we send to plot.data?
-# # have to merge with overlay variable
-

@@ -54,6 +54,7 @@ Collate:
     'data.R'
     'method-correlation.R'
     'method-differentialExpression.R'
+    'method-pca.R'
     'methods-Bin.R'
     'methods-CollectionWithMetadata.R'
     'methods-Collections.R'
