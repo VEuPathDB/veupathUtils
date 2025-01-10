@@ -33,10 +33,14 @@ setMethod(pca, "Collection",
       ntop <- min(ntop, ncol(features))
     }
 
+    # Ensure ntop is at least 1.
+    if (ntop <= 1) {
+      stop("ntop must be at least 2.")
+    }
+
     # Use prcomp to perform PCA. 
     # The following is heavily borrowed from the deseq2 plotPCA function.
     rowVariances <- matrixStats::rowVars(t(as.matrix(features)))
-    print(length(rowVariances))
     keepFeatures <- order(rowVariances, decreasing=TRUE)[seq_len(ntop)]
     pcaResult <- prcomp(features[, ..keepFeatures])
 
