@@ -5,7 +5,7 @@
 #' @param nPCs Number of principal components to return. Default 10
 #' @param ntop Use the top ntop genes with the highest variance for the pca computation. Mirrors the deseq2 plotPCA argument. Default 500.
 #' @param verbose Boolean indicating if extra messaging should be printed.
-#' @return A data table with the id columns and the first nPCs principal components.
+#' @return A ComputeResult object. The data slot contains a data.table with the id columns and the first nPCs principal components.
 #' @export
 setGeneric("pca",
   function(collection, nPCs = 10, ntop = 500, verbose = c(TRUE, FALSE)) standardGeneric("pca"),
@@ -45,11 +45,31 @@ setMethod(pca, "Collection",
     pcaResult <- prcomp(features[, ..keepFeatures])
 
 
-    # Assemble output data
+    # Assemble the output ComputeResult data and variable metadata.
     dt <- assay[, ..allIdColumns]
     # The PCA results are in pcaResult$x. Keep the first nPCs PCS.
     dt <- cbind(dt, pcaResult$x[, 1:nPCs]) # this works fine even with one id column
 
-    return(dt)
+    variableMetadataList <- lapply(1:nPCs, function(i) {
+          veupathUtils::VariableMetadata(
+                 variableClass = veupathUtils::VariableClass(value = "computed"),
+                 variableSpec = veupathUtils::VariableSpec(variableId = paste0("PC",i), entityId = ''), # computed var so not assinging entity.
+                 displayName = paste0("PC ",i),
+                 displayRangeMin = min(pcaResult$x[,i]),
+                 displayRangeMax = max(pcaResult$x[,i]),
+                 dataType = veupathUtils::DataType(value = "NUMBER"),
+                 dataShape = veupathUtils::DataShape(value = "CONTINUOUS")
+      )
+    })
+
+    result <- new("ComputeResult")
+    result@name <- 'pca'
+    result@recordIdColumn <- recordIdColumn
+    result@ancestorIdColumns <- ancestorIdColumns
+    result@data <- dt
+    result@parameters <- paste0('recordIdColumn = ', recordIdColumn,", nPCs = ", nPCs, ', ntop = ', ntop)
+    result@computedVariableMetadata <- veupathUtils::VariableMetadataList(S4Vectors::SimpleList(variableMetadataList))
+
+    return(result)
   }
 )
