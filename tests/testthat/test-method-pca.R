@@ -60,28 +60,35 @@ test_that("The pca function can handle messy data", {
     entity.feat3 = rnorm(nSamples)
   )
 
-  fakeCollection <- new("Collection", data = fakeData, recordIdColumn = "entity.SampleID", name="test", imputeZero=T)
+  fakeCollection <- new("Collection", 
+    data = fakeData,
+    recordIdColumn = "entity.SampleID",
+    name="test",
+    imputeZero=TRUE
+  )
 
   # Add some missing values and ensure one sample gets dropped
-  fakeCollection@data[1:50, "feat1"] <- NA
-  fakeCollection@data[25:100, "feat2"] <- 0
-  fakeCollection@data[(nSamples-50):nSamples, "feat3"] <- NA
-  fakeCollection@data[26, "feat3"] <- NA
+  fakeCollection@data[1:50, "entity.feat1"] <- NA
+  fakeCollection@data[25:100, "entity.feat2"] <- 0
+  fakeCollection@data[(nSamples-50):nSamples, "entity.feat3"] <- NA
+  fakeCollection@data[26, "entity.feat3"] <- NA
 
-  output <- veupathUtils::pca(fakeCollection, nPCs = 2, ntop=5, verbose=T)
+  output <- pca(fakeCollection, nPCs = 3, ntop=5, verbose=T)
   expect_s4_class(output, "ComputeResult")
   outputData <- output@data
   expect_s3_class(outputData, "data.table")
   expect_equal(nrow(outputData), nSamples-1)
-  expect_equal(ncol(outputData), 3)
-  expect_equal(names(outputData), c("entity.SampleID", "PC1", "PC2"))
+  expect_equal(ncol(outputData), 4)
+  expect_equal(names(outputData), c("entity.SampleID", "PC1", "PC2", "PC3"))
   computedVariableMetadata <- output@computedVariableMetadata
   expect_s4_class(computedVariableMetadata, "VariableMetadataList")
-  expect_equal(length(computedVariableMetadata), 2)
+  expect_equal(length(computedVariableMetadata), 3)
   expect_s4_class(computedVariableMetadata[[1]], "VariableMetadata")
   expect_s4_class(computedVariableMetadata[[2]], "VariableMetadata")
+  expect_s4_class(computedVariableMetadata[[3]], "VariableMetadata")
   expect_equal(computedVariableMetadata[[1]]@variableSpec@variableId, "PC1")
   expect_equal(computedVariableMetadata[[2]]@variableSpec@variableId, "PC2")
+  expect_equal(computedVariableMetadata[[3]]@variableSpec@variableId, "PC3")
 
 
   # Test with not enough features

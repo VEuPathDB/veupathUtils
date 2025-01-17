@@ -21,7 +21,7 @@ setMethod(pca, "Collection",
     recordIdColumn <- collection@recordIdColumn
     ancestorIdColumns <- collection@ancestorIdColumns
     allIdColumns <- c(recordIdColumn, ancestorIdColumns)
-    
+
     # Remove id columns from the assay to get only the features.
     features <- assay[, -..allIdColumns] # features has samples as rows.
 
