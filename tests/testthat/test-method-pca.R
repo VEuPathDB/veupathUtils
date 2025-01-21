@@ -87,8 +87,11 @@ test_that("The pca function can handle messy data", {
   expect_s4_class(computedVariableMetadata[[2]], "VariableMetadata")
   expect_s4_class(computedVariableMetadata[[3]], "VariableMetadata")
   expect_equal(computedVariableMetadata[[1]]@variableSpec@variableId, "PC1")
+  expect_equal(computedVariableMetadata[[1]]@variableSpec@entityId, "entity")
   expect_equal(computedVariableMetadata[[2]]@variableSpec@variableId, "PC2")
+  expect_equal(computedVariableMetadata[[2]]@variableSpec@entityId, "entity")
   expect_equal(computedVariableMetadata[[3]]@variableSpec@variableId, "PC3")
+  expect_equal(computedVariableMetadata[[3]]@variableSpec@entityId, "entity")
 
 
   # Test with not enough features

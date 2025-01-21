@@ -21,6 +21,7 @@ setMethod(pca, "Collection",
     recordIdColumn <- collection@recordIdColumn
     ancestorIdColumns <- collection@ancestorIdColumns
     allIdColumns <- c(recordIdColumn, ancestorIdColumns)
+    entity <- veupathUtils::strSplit(recordIdColumn,".", 4, 1)
 
     # Remove id columns from the assay to get only the features.
     features <- assay[, -..allIdColumns] # features has samples as rows.
@@ -53,7 +54,7 @@ setMethod(pca, "Collection",
     variableMetadataList <- lapply(1:nPCs, function(i) {
           veupathUtils::VariableMetadata(
                  variableClass = veupathUtils::VariableClass(value = "computed"),
-                 variableSpec = veupathUtils::VariableSpec(variableId = paste0("PC",i), entityId = ''), # computed var so not assinging entity.
+                 variableSpec = veupathUtils::VariableSpec(variableId = paste0("PC",i), entityId = entity),
                  displayName = paste0("PC ",i),
                  displayRangeMin = min(pcaResult$x[,i]),
                  displayRangeMax = max(pcaResult$x[,i]),
@@ -68,7 +69,9 @@ setMethod(pca, "Collection",
     result@ancestorIdColumns <- ancestorIdColumns
     result@data <- dt
     result@parameters <- paste0('recordIdColumn = ', recordIdColumn,", nPCs = ", nPCs, ', ntop = ', ntop)
-    result@computedVariableMetadata <- veupathUtils::VariableMetadataList(S4Vectors::SimpleList(variableMetadataList))
+    result@computedVariableMetadata <- veupathUtils::VariableMetadataList(
+      S4Vectors::SimpleList(variableMetadataList)
+    )
 
     return(result)
   }
