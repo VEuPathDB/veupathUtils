@@ -59,7 +59,8 @@ setMethod(pca, "Collection",
                  displayRangeMin = min(pcaResult$x[,i]),
                  displayRangeMax = max(pcaResult$x[,i]),
                  dataType = veupathUtils::DataType(value = "NUMBER"),
-                 dataShape = veupathUtils::DataShape(value = "CONTINUOUS")
+                 dataShape = veupathUtils::DataShape(value = "CONTINUOUS"),
+                 plotReference = veupathUtils::PlotReference(value = "undefined")
       )
     })
 

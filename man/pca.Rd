@@ -16,7 +16,7 @@ pca(collection, nPCs = 10, ntop = 500, verbose = c(TRUE, FALSE))
 \item{verbose}{Boolean indicating if extra messaging should be printed.}
 }
 \value{
-A data table with the id columns and the first nPCs principal components.
+A ComputeResult object. The data slot contains a data.table with the id columns and the first nPCs principal components.
 }
 \description{
 PCA
