@@ -3,7 +3,7 @@
 
 variable_classes <- c('native', 'derived', 'computed')
 #the other option is to just let this be any character vector so long as it has only a single value..
-plot_references <- c('xAxis', 'yAxis', 'zAxis', 'overlay', 'facet1', 'facet2', 'geo', 'latitude', 'longitude')
+plot_references <- c('xAxis', 'yAxis', 'zAxis', 'overlay', 'facet1', 'facet2', 'geo', 'latitude', 'longitude', 'undefined')
 data_types <- c('NUMBER', 'STRING', 'INTEGER', 'DATE', 'LONGITUDE')
 data_shapes <- c('CONTINUOUS', 'CATEGORICAL', 'ORDINAL', 'BINARY')
 
