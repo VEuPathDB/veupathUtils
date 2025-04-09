@@ -18,14 +18,11 @@ Imports:
     Hmisc,
     microbenchmark,
     S4Vectors,
-    SpiecEasi (>= 1.1.1),
     stringi,
     purrr
 Depends:
     R (>= 2.10),
     jsonlite
-Remotes:
-    zdk123/SpiecEasi
 URL: https://github.com/VEuPathDB/veupathUtils
 BugReports: https://github.com/VEuPathDB/veupathUtils/issues
 Description: veupathUtils contains various R helper functions intended to be useful across a variety of projects, including the plot.data and microbiomeComputations packages.
