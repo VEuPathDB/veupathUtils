@@ -5,7 +5,6 @@ test_that("The pca function produces the expected output", {
   testData <- testCountDataCollection
   
   # Run pca
-  load_all()
   output <- veupathUtils::pca(testData, nPCs = 2)
   expect_s4_class(output, "ComputeResult")
   outputData <- output@data
