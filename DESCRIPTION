@@ -18,7 +18,8 @@ Imports:
     Hmisc,
     microbenchmark,
     S4Vectors,
-    SpiecEasi (>= 1.1.1),
+    SpiecEasi,
+    DESeq2,
     stringi,
     purrr
 Depends:
