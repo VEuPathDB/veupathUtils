@@ -20,6 +20,8 @@ test_that("The pca function produces the expected output", {
   expect_s4_class(computedVariableMetadata[[2]], "VariableMetadata")
   expect_equal(computedVariableMetadata[[1]]@variableSpec@variableId, "PC1")
   expect_equal(computedVariableMetadata[[2]]@variableSpec@variableId, "PC2")
+  expect_equal(computedVariableMetadata[[1]]@displayName, "PC 1 (15.53% variance)")
+  expect_equal(computedVariableMetadata[[2]]@displayName, "PC 2 (14.13% variance)")
 
   
   # Generate some fake data

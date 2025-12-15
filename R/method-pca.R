@@ -44,6 +44,7 @@ setMethod(pca, "Collection",
     rowVariances <- matrixStats::rowVars(t(as.matrix(features)))
     keepFeatures <- order(rowVariances, decreasing=TRUE)[seq_len(ntop)]
     pcaResult <- prcomp(features[, ..keepFeatures])
+    proportionOfVariance <- summary(pcaResult)$importance["Proportion of Variance", ]
 
 
     # Assemble the output ComputeResult data and variable metadata.
@@ -55,7 +56,7 @@ setMethod(pca, "Collection",
           veupathUtils::VariableMetadata(
                  variableClass = veupathUtils::VariableClass(value = "computed"),
                  variableSpec = veupathUtils::VariableSpec(variableId = paste0("PC",i), entityId = entity),
-                 displayName = paste0("PC ",i),
+                 displayName = paste0("PC ",i, " (", round(proportionOfVariance[i] * 100, 2), "% variance)"),
                  displayRangeMin = min(pcaResult$x[,i]),
                  displayRangeMax = max(pcaResult$x[,i]),
                  dataType = veupathUtils::DataType(value = "NUMBER"),
