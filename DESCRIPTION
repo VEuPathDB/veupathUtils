@@ -1,6 +1,6 @@
 Package: veupathUtils
 Title: General Helper Functions for VEuPathDB Projects
-Version: 2.7.0
+Version: 2.8.0
 Authors@R: 
     c(person(given = "Danielle",
            family = "Callan",
@@ -9,7 +9,11 @@ Authors@R:
       person(given = "Ann",
            family = "Blevins",
            role = c("aut", "cre"),
-           email = "annsize@upenn.edu"))
+           email = "annsize@upenn.edu"),
+      person(given = "Bob",
+           family = "MacCallum",
+           role = "aut",
+           email = "r.maccallum@imperial.ac.uk"))
 biocViews: 
 Imports:
     boot,
