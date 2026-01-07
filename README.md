@@ -8,11 +8,37 @@ veupathUtils is an R package which provides helper functions for solving common 
 
 ## Installation
 
+### Local installation
+
 Use the R package [remotes](https://cran.r-project.org/web/packages/remotes/index.html) to install veupathUtils. From the R command prompt:
+
 
 ```R
 remotes::install_github('VEuPathDB/veupathUtils')
 ```
+
+### Study Wrangler Docker container
+
+Mount this directory into the Study Wrangler container to ensure consistent R versioning.
+
+The paths below are examples only!
+
+```
+cd /path/to/study-wrangler
+screen -S RStudio docker run --rm -ti --name study-wrangler-dev -v $PWD:/study.wrangler -v ~/Desktop/EDA/veupathUtils:/home/rstudio/veupathUtils -e PASSWORD=password -p 8888:8787 veupathdb/study-wrangler
+
+# then in the RStudio console
+library(devtools)
+setwd("~/veupathUtils")
+
+test()
+# or
+load_all()
+# and work with the code interactively
+
+```
+
+
 
 ## Usage
 This package is primarily intended for use as a dependency in other R packages. In order to establish that depedency the developer of the 
