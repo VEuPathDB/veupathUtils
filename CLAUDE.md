@@ -36,6 +36,20 @@ Execute R commands in the container:
 docker exec study-wrangler-dev Rscript -e "setwd('/home/rstudio/veupathUtils'); library(devtools); test()"
 ```
 
+**IMPORTANT - File Ownership:** When creating files in the container (e.g., test data, generated files), always use the `--user` flag to avoid root ownership issues:
+```bash
+# Correct - creates files owned by rstudio user (UID 1000)
+docker exec --user rstudio study-wrangler-dev Rscript -e "..."
+
+# Or use UID:GID directly
+docker exec --user 1000:1000 study-wrangler-dev Rscript -e "..."
+
+# Incorrect - creates files owned by root
+docker exec study-wrangler-dev Rscript -e "..."
+```
+
+Files created without `--user` flag will be owned by `root:root` on the host, causing permission problems. The rstudio user in the container is UID 1000, GID 1000.
+
 **Interactive development** (in RStudio console within container):
 ```r
 library(devtools)

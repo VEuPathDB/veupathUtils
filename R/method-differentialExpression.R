@@ -1,6 +1,6 @@
 # a helper, to reuse and separate some logic
 cleanComparatorVariable <- function(collection, comparator, verbose = c(TRUE, FALSE)) {
-  if (!inherits(collection, 'CountDataCollection')) stop("collection must be of the CountDataCollection class.")
+  if (!inherits(collection, 'CollectionWithMetadata')) stop("collection must be of the CollectionWithMetadata class or a subclass thereof.")
   if (!inherits(comparator, 'Comparator')) stop("comparator must be of the Comparator class.")
 
   comparatorColName <- veupathUtils::getColName(comparator@variable@variableSpec)
@@ -166,31 +166,115 @@ setMethod("deseq", signature("CollectionWithMetadata", "Comparator"), function(c
   stop("Please use the CountDataCollection class with DESeq2.")
 })
 
+# ===== Limma backend for ArrayDataCollection =====
+
+setGeneric("limma",
+  function(collection, comparator, verbose = c(TRUE, FALSE)) standardGeneric("limma"),
+  signature = c("collection", "comparator")
+)
+
+setMethod("limma", signature("ArrayDataCollection", "Comparator"),
+function(collection, comparator, verbose = c(TRUE, FALSE)) {
+  recordIdColumn <- collection@recordIdColumn
+  ancestorIdColumns <- collection@ancestorIdColumns
+  allIdColumns <- c(recordIdColumn, ancestorIdColumns)
+  sampleMetadata <- getSampleMetadata(collection)
+  comparatorColName <- veupathUtils::getColName(comparator@variable@variableSpec)
+
+  # Remove id columns and any columns that are all NA
+  cleanedData <- purrr::discard(collection@data[, -..allIdColumns], function(col) {
+    all(is.na(col))
+  })
+
+  # Transpose data to get expression matrix with features as rows and samples as columns
+  # This matches limma's expected input format
+  exprs <- data.table::transpose(cleanedData)
+  rownames(exprs) <- names(cleanedData)
+  colnames(exprs) <- collection@data[[recordIdColumn]]
+
+  # Format metadata (samples are rows, variables are columns)
+  rownames(sampleMetadata) <- sampleMetadata[[recordIdColumn]]
+
+  # Check sample order matches between expression data and metadata
+  if (!identical(rownames(sampleMetadata), colnames(exprs))){
+    veupathUtils::logWithTime("Sample order differs between data and metadata. Reordering data based on the metadata sample order.", verbose)
+    exprs <- exprs[, rownames(sampleMetadata), drop=FALSE]
+  }
+
+  limma_output <- try({
+    # Create design matrix
+    # comparatorColName has been cleaned to "groupA" vs "groupB" by cleanComparatorVariable
+    design <- model.matrix(as.formula(paste0("~", comparatorColName)), data = sampleMetadata)
+
+    # Fit linear model
+    fit <- limma::lmFit(exprs, design)
+
+    # Empirical Bayes statistics
+    fit <- limma::eBayes(fit)
+
+    # Extract results for the comparison (second coefficient = groupB vs groupA)
+    # topTable with coef=2 gives results for the groupB coefficient
+    limma_results <- limma::topTable(fit, coef=2, number=Inf, sort.by="none")
+  })
+
+  if (veupathUtils::is.error(limma_output)) {
+    veupathUtils::logWithTime(paste0('Differential expression FAILED with parameters recordIdColumn=',
+                                      recordIdColumn, ', method = limma', ', verbose =', verbose), verbose)
+    stop()
+  }
+
+  # Format results to match DifferentialExpressionResult structure
+  # limma topTable returns: logFC, AveExpr, t, P.Value, adj.P.Val, B
+  # We need: effectSize, pValue, adjustedPValue, pointID
+  statistics <- data.frame(
+    effectSize = limma_results$logFC,
+    pValue = limma_results$P.Value,
+    adjustedPValue = limma_results$adj.P.Val,
+    pointID = rownames(exprs)
+  )
+
+  result <- DifferentialExpressionResult(
+    'effectSizeLabel' = 'log2(Fold Change)',
+    'statistics' = statistics
+  )
+
+  return(result)
+})
+
+# Prevent using limma with wrong data type
+setMethod("limma", signature("CountDataCollection", "Comparator"),
+function(collection, comparator, verbose = c(TRUE, FALSE)) {
+  stop("Please use the ArrayDataCollection class with limma. For count data, use DESeq method instead.")
+})
+
+# Prevent using limma with generic CollectionWithMetadata
+setMethod("limma", signature("CollectionWithMetadata", "Comparator"),
+function(collection, comparator, verbose = c(TRUE, FALSE)) {
+  stop("Please use the ArrayDataCollection class with limma.")
+})
+
 #' Differential expression
 #'
 #' This function returns the fold change and associated p value for a differential expression analysis comparing samples in two groups.
 #' 
 #' @param collection CollectionWithMetadata object
 #' @param comparator Comparator object specifying the variable and values or bins to be used in dividing samples into groups.
-#' @param method string defining the the differential abundance method. Accepted values are 'DESeq2' and 'Maaslin2'.
-#' @param pValueFloor numeric value that indicates the smallest p value that should be returned. 
+#' @param method string defining the differential expression method. Accepted values are 'DESeq' (for CountDataCollection) and 'limma' (for ArrayDataCollection).
+#' @param pValueFloor numeric value that indicates the smallest p value that should be returned.
 #' The corresponding adjusted p value floor will also be updated based on this value, and will be set to the maximum adjusted p value of all floored p values.
 #' The default value uses the P_VALUE_FLOOR=1e-200 constant defined in this package.
 #' @param verbose boolean indicating if timed logging is desired
 #' @return ComputeResult object
 #' @import data.table
-#' @import DESeq2
-#' @importFrom purrr none
-#' @importFrom purrr discard
 #' @export
 setGeneric("differentialExpression",
-  function(collection, comparator, method = c('DESeq'), pValueFloor = P_VALUE_FLOOR, verbose = c(TRUE, FALSE)) standardGeneric("differentialExpression"),
+  function(collection, comparator, method = c('DESeq', 'limma'), pValueFloor = P_VALUE_FLOOR, verbose = c(TRUE, FALSE)) standardGeneric("differentialExpression"),
   signature = c("collection", "comparator")
 )
 
 # This main function stays consistent regardless of the type of data we give to it. For example, in case we add non-counts data in the future.
 #'@export
-setMethod("differentialExpression", signature("CollectionWithMetadata", "Comparator"), function(collection, comparator, method = c('DESeq'), pValueFloor = P_VALUE_FLOOR, verbose = c(TRUE, FALSE)) {
+setMethod("differentialExpression", signature("CollectionWithMetadata", "Comparator"), function(collection, comparator, method = c('DESeq', 'limma'), pValueFloor = P_VALUE_FLOOR, verbose = c(TRUE, FALSE)) {
     cleanCollection <- cleanComparatorVariable(collection, comparator, verbose)
     recordIdColumn <- cleanCollection@recordIdColumn
     ancestorIdColumns <- cleanCollection@ancestorIdColumns
@@ -202,11 +286,13 @@ setMethod("differentialExpression", signature("CollectionWithMetadata", "Compara
     verbose <- veupathUtils::matchArg(verbose)
 
     
-    ## Compute differential abundance
+    ## Compute differential expression
     if (identical(method, 'DESeq')) {
       statistics <- deseq(cleanCollection, comparator, verbose)
+    } else if (identical(method, 'limma')) {
+      statistics <- limma(cleanCollection, comparator, verbose)
     } else {
-      stop('Unaccepted differential abundance method. Accepted methods are "DESeq".')
+      stop('Unaccepted differential expression method. Accepted methods are "DESeq" and "limma".')
     }
     veupathUtils::logWithTime(paste0('Completed method=',method,'. Formatting results.'), verbose)
 

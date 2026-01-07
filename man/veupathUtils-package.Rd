@@ -22,6 +22,7 @@ Useful links:
 Authors:
 \itemize{
   \item Danielle Callan \email{dcallan@upenn.edu}
+  \item Bob MacCallum \email{r.maccallum@imperial.ac.uk}
 }
 
 }
