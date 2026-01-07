@@ -75,11 +75,11 @@ Use a Task with subagent_type='general-purpose' to run tests and summarize resul
 ### Test Suite Status
 
 - **Runtime**: 5+ minutes
-- **Last known results**: [ FAIL 0 | WARN 33 | SKIP 0 | PASS 650 ]
+- **Last known results**: [ FAIL 0 | WARN 33 | SKIP 0 | PASS 670 ]
 - **Test files**: Located in `tests/testthat/`
 - **Largest test files**:
   - `test-class-Megastudy.R` (862 lines)
-  - `test-method-differentialExpression.R` (545 lines)
+  - `test-method-differentialExpression.R` (704 lines - includes DESeq2 and limma tests)
   - `test-correlation.R` (509 lines)
 
 ## Project Structure
@@ -106,13 +106,14 @@ veupathUtils/
 - `Bin`, `Range` - Data binning and ranges
 - `Collections`, `CollectionWithMetadata` - Data collections
 - `SampleMetadata`, `VariableMetadata` - Metadata handling
-- `CountDataCollection` - Count data (RNA-seq, etc.)
+- `CountDataCollection` - Count data (RNA-seq, etc.) for DESeq2
+- `ArrayDataCollection` - Continuous expression data (microarray, antibody array) for limma
 - `Megastudy` - Large study data aggregation
 - `Statistic`, `Comparator` - Statistical operations
 - `ComputeResult`, `CorrelationResult` - Result containers
 
 **Methods**:
-- `method-differentialExpression.R` - DESeq2-based differential expression
+- `method-differentialExpression.R` - Differential expression with DESeq2 (counts) or limma (arrays)
 - `method-correlation.R` - Correlation analysis
 - `method-pca.R` - Principal component analysis
 
@@ -128,7 +129,7 @@ veupathUtils/
 ### Key R Packages
 
 From DESCRIPTION:
-- **Bioconductor** (3.22): SummarizedExperiment, DESeq2
+- **Bioconductor** (3.22): SummarizedExperiment, DESeq2, limma
 - **Data handling**: data.table, S4Vectors, purrr
 - **Statistics**: boot, Hmisc
 - **Network**: SpiecEasi (v1.0.7)
@@ -153,7 +154,7 @@ devtools::load_all("/path/to/veupathUtils")
 
 ### Active/Recent Branches
 
-- `add-ab-array-limma` (current)
+- `add-ab-array-limma` (current - limma implementation complete)
 - `add-bioc-to-remotes`
 - `add-percent-variance-pca`
 - `noSpiecEasi`
@@ -226,10 +227,57 @@ These warnings are test-related and do not indicate problems with the package.
 ## Recent Changes
 
 - Version 2.9.0 (current)
-- Recent branches focus on:
-  - Array-based limma analysis (`add-ab-array-limma`)
+- **New Feature**: Differential expression now supports both DESeq2 and limma methods
+  - Added `ArrayDataCollection` class for continuous expression data
+  - Added `limma` method for antibody arrays and microarrays
+  - Full backwards compatibility maintained
+  - See "Differential Expression Methods" section below
+- Recent branches:
+  - ✅ Array-based limma analysis (`add-ab-array-limma`) - **COMPLETE**
   - Bioconductor remotes configuration
   - PCA percent variance calculations
+
+## Differential Expression Methods
+
+The package supports two differential expression backends:
+
+### DESeq2 (for count data)
+- **Use with**: `CountDataCollection`
+- **Data type**: Integer count data (RNA-seq, microbial abundance)
+- **Method**: `differentialExpression(..., method = 'DESeq')`
+- **Algorithm**: DESeq2 negative binomial GLM
+
+### limma (for continuous data)
+- **Use with**: `ArrayDataCollection`
+- **Data type**: Continuous expression data (microarray, antibody array)
+- **Expects**: Pre-normalized data (log-transformed, normalized)
+- **Method**: `differentialExpression(..., method = 'limma')`
+- **Algorithm**: limma empirical Bayes (lmFit + eBayes)
+
+### Example Usage
+
+```r
+# For count data (RNA-seq)
+countData <- CountDataCollection(...)
+result <- differentialExpression(countData, comparator, method = 'DESeq')
+
+# For array data (antibody arrays, microarrays)
+arrayData <- ArrayDataCollection(...)  # Pre-normalized continuous data
+result <- differentialExpression(arrayData, comparator, method = 'limma')
+```
+
+Both methods return the same `ComputeResult` structure with `DifferentialExpressionResult` statistics containing:
+- `effectSize` - log2 fold change
+- `pValue` - P-value
+- `adjustedPValue` - Adjusted p-value (Benjamini-Hochberg)
+- `pointID` - Feature identifier
+
+### Implementation Notes
+
+- All package calls use fully qualified syntax (`limma::lmFit()`, `DESeq2::DESeq()`)
+- No namespace conflicts between DESeq2 and limma
+- Test coverage: 82 differential expression tests (13 existing DESeq2, 5 new limma, plus integration tests)
+- Test data: `testArrayDataCollection` (50 samples × 100 antibodies)
 
 ## Contact / Authors
 
