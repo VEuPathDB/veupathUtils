@@ -7,7 +7,7 @@
 differentialExpression(
   collection,
   comparator,
-  method = c("DESeq"),
+  method = c("DESeq", "limma"),
   pValueFloor = P_VALUE_FLOOR,
   verbose = c(TRUE, FALSE)
 )
@@ -17,7 +17,7 @@ differentialExpression(
 
 \item{comparator}{Comparator object specifying the variable and values or bins to be used in dividing samples into groups.}
 
-\item{method}{string defining the the differential abundance method. Accepted values are 'DESeq2' and 'Maaslin2'.}
+\item{method}{string defining the differential expression method. Accepted values are 'DESeq' (for CountDataCollection) and 'limma' (for ArrayDataCollection).}
 
 \item{pValueFloor}{numeric value that indicates the smallest p value that should be returned.
 The corresponding adjusted p value floor will also be updated based on this value, and will be set to the maximum adjusted p value of all floored p values.

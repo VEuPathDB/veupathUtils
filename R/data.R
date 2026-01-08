@@ -59,3 +59,41 @@
 #' }
 #' @source <https://vectorbase.org/vectorbase/app/workspace/maps/A4nuqcm/import>
 "megastudyDataReal"
+
+#' Test Array Data for Antibody Array Analysis
+#'
+#' A simulated antibody array dataset with continuous expression values.
+#' Data includes both positive and negative values representing log-transformed
+#' normalized expression levels. This data is used for testing limma-based
+#' differential expression analysis.
+#'
+#' @format ## `testArrayData`
+#' A data.table with 50 samples and 100 antibody targets plus sample ID column:
+#' \describe{
+#'   \item{entity.SampleID}{Sample identifier}
+#'   \item{entity.antibody_*}{Continuous expression values for various antibody targets (log2-scale, mean 0, sd 2)}
+#' }
+"testArrayData"
+
+#' Test Array Data Collection
+#'
+#' An ArrayDataCollection object created from testArrayData with associated sample metadata.
+#' This object is used for testing the ArrayDataCollection class and limma-based differential
+#' expression methods.
+#'
+#' @format ## `testArrayDataCollection`
+#' An ArrayDataCollection object with:
+#' \describe{
+#'   \item{data}{50 samples x 100 antibody targets (continuous expression values)}
+#'   \item{sampleMetadata}{Includes treatment, batch, age, and sex variables}
+#'   \item{recordIdColumn}{"entity.SampleID"}
+#' }
+#'
+#' Sample metadata variables:
+#' \describe{
+#'   \item{entity.treatment}{Binary treatment variable (treatment_A, treatment_B)}
+#'   \item{entity.batch}{Batch variable (batch_1 through batch_5)}
+#'   \item{entity.age}{Continuous age variable (normal distribution, mean 45, sd 10)}
+#'   \item{entity.sex}{Binary sex variable (male, female)}
+#' }
+"testArrayDataCollection"
