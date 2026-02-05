@@ -1,6 +1,6 @@
 Package: veupathUtils
 Title: General Helper Functions for VEuPathDB Projects
-Version: 2.9.0
+Version: 2.11.0
 Authors@R: 
     c(person(given = "Danielle",
            family = "Callan",
@@ -31,10 +31,13 @@ Depends:
     R (>= 2.10),
     jsonlite
 Remotes:
-    bioc::3.22/SummarizedExperiment,
+    bioc::3.22/GenomeInfoDb,
     bioc::3.22/DESeq2,
     bioc::3.22/limma,
     zdk123/SpiecEasi@v1.0.7
+Comment: GenomeInfoDb is explicitly listed in Remotes to ensure Seqinfo (a
+    sub-dependency of SummarizedExperiment, required by DESeq2) is available
+    during package installation.
 URL: https://github.com/VEuPathDB/veupathUtils
 BugReports: https://github.com/VEuPathDB/veupathUtils/issues
 Description: veupathUtils contains various R helper functions intended to be useful across a variety of projects, including the plot.data and microbiomeComputations packages.
