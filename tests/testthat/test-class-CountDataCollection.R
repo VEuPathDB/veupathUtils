@@ -28,6 +28,26 @@ test_that('CountDataCollection validation works', {
               name='testCountData'
               ))
 
+  # Test that true integer type data is accepted (regression test for dcast issue)
+  # The existing testCountData uses numeric (double) type, but dcast produces integer type
+  df_integers <- data.table::copy(df)
+  # Convert columns to integer type (simulating dcast output)
+  for (col in names(df_integers)) {
+    if (col != 'entity.SampleID' && is.numeric(df_integers[[col]])) {
+      df_integers[[col]] <- as.integer(df_integers[[col]])
+    }
+  }
 
-  
+  # This should succeed - integer type is valid count data
+  testing_integers <- veupathUtils::CountDataCollection(
+    data = df_integers,
+    recordIdColumn = c('entity.SampleID'),
+    name = 'testCountDataIntegers'
+  )
+
+  expect_true(inherits(testing_integers, 'CountDataCollection'))
+  expect_equal(nrow(testing_integers@data), 288)
+  expect_equal(ncol(testing_integers@data), 909)
+
+
 })

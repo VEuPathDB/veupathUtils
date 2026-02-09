@@ -16,7 +16,14 @@ check_count_data_collection <- function(object) {
     numeric_data <- df[, !(names(df) %in% all_id_cols)]
     if (inherits(df, 'data.table')) numeric_data <- df[, !(names(df) %in% all_id_cols), with=F]
 
-    if (!identical(numeric_data, round(numeric_data))) {
+    # Check that all non-ID columns contain whole numbers
+    # Accept both R integer type and numeric type with integer values
+    # Uses floor() instead of round() to avoid type conversion issues
+    all_integer_like <- all(vapply(numeric_data, function(col) {
+      all(is.na(col) | (col == floor(col)))
+    }, logical(1)))
+
+    if (!all_integer_like) {
       msg <- "Count data must be integer numbers."
       errors <- c(errors, msg)
     }
