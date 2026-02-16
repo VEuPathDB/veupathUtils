@@ -61,7 +61,7 @@ setMethod(pca, "Collection",
                  displayRangeMax = max(pcaResult$x[,i]),
                  dataType = veupathUtils::DataType(value = "NUMBER"),
                  dataShape = veupathUtils::DataShape(value = "CONTINUOUS"),
-                 plotReference = veupathUtils::PlotReference(value = "undefined")
+                 plotReference = veupathUtils::PlotReference(value = c("xAxis", "yAxis", "undefined")[min(i, 3)])
       )
     })
 
