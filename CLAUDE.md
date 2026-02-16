@@ -20,12 +20,12 @@ The container setup (from README.md; note that the user will usually already hav
 cd /path/to/study-wrangler
 screen -S RStudio docker run --rm -ti --name study-wrangler-dev \
   -v $PWD:/study.wrangler \
-  -v ~/Desktop/EDA/veupathUtils:/home/rstudio/veupathUtils \
+  -v ~/work/EDA/veupathUtils:/home/rstudio/veupathUtils \
   -e PASSWORD=password -p 8888:8787 veupathdb/study-wrangler
 ```
 
 **Important paths**:
-- Host: `/home/maccallr/Desktop/EDA/veupathUtils`
+- Host: `~/work/EDA/veupathUtils`
 - Container: `/home/rstudio/veupathUtils`
 - Container is assumed to be running and accessible
 
@@ -75,7 +75,7 @@ Use a Task with subagent_type='general-purpose' to run tests and summarize resul
 ### Test Suite Status
 
 - **Runtime**: 5+ minutes
-- **Last known results**: [ FAIL 0 | WARN 33 | SKIP 0 | PASS 670 ]
+- **Last known results**: [ FAIL 0 | WARN 35 | SKIP 0 | PASS 686 ] (occasional FAIL 1 is a flaky Megastudy performance benchmark, not a functional failure)
 - **Test files**: Located in `tests/testthat/`
 - **Largest test files**:
   - `test-class-Megastudy.R` (862 lines)
@@ -154,7 +154,8 @@ devtools::load_all("/path/to/veupathUtils")
 
 ### Active/Recent Branches
 
-- `add-ab-array-limma` (current - limma implementation complete)
+- `improve-integer-checks` (current - fix CountDataCollection integer type validation)
+- `add-ab-array-limma` (limma implementation complete)
 - `add-bioc-to-remotes`
 - `add-percent-variance-pca`
 - `noSpiecEasi`
@@ -205,6 +206,77 @@ docker exec study-wrangler-dev Rscript -e "setwd('/home/rstudio/veupathUtils'); 
 library(devtools)
 load_all("~/veupathUtils")
 ```
+
+## Debugging Live Computation Issues
+
+When a bug involves data flowing from the Java EDA compute service through Rserve into veupathUtils, the most effective approach is to retrieve the actual input data from MinIO and reproduce the Java code's R operations locally.
+
+### Step 1: Trigger a Compute Job and Get the Input Data from MinIO
+
+The EDA compute service writes computation inputs to MinIO when a job is submitted. Trigger one via the web frontend:
+
+```bash
+# From ~/work/EDA/web-monorepo
+EDA_SERVICE_URL=http://localhost:8081 yarn nx start @veupathdb/genomics-site
+```
+
+Navigate to the differential expression visualisation and configure the analysis you're debugging (same gene expression variable, same comparison group definitions each time). For easiest navigation, **clear the MinIO bucket before testing** so only one job's data is present:
+
+```bash
+podman exec -it eda-minio-local mc rm --recursive --force local/eda-compute-dev/
+```
+
+**Locating and downloading the file:**
+- Web UI: http://localhost:9001
+- Username: `eda-local-user`
+- Password: value of the `eda_S3_SECRET_KEY_local` podman secret (default `local-dev-secret` for local dev — see `webservices-quadlets/README-eda-local-dev.md` Step 4)
+- Bucket: `eda-compute-dev`
+- With a near-empty bucket, browse to the one object and download it (a tab-separated file)
+
+Copy it into the container:
+
+```bash
+docker exec study-wrangler-dev mkdir -p /home/rstudio/Downloads
+docker cp ~/Downloads/differential_expression_input study-wrangler-dev:/home/rstudio/Downloads/
+```
+
+### Step 2: Write a Debug Script in study-wrangler/tmp/
+
+Scripts placed in `~/work/EDA/study-wrangler/tmp/` are accessible inside the container at `/study.wrangler/tmp/`. Edit on the host, run in the container — no copying needed:
+
+```bash
+docker exec --user rstudio study-wrangler-dev Rscript /study.wrangler/tmp/my_debug_script.R
+```
+
+### Step 3: Reproduce the Java Plugin's R Operations
+
+Find the plugin source (e.g., `../service-eda/.../DifferentialExpressionPlugin.java`) and look for `voidEval()` and `eval()` calls — these are the exact R commands issued via Rserve. Copy them into the debug script in order, using `fread()` to load the downloaded TSV as the starting data.
+
+**Template:**
+
+```r
+library(data.table)
+library(devtools)
+
+# Load veupathUtils from the mounted repo — picks up any local edits immediately
+setwd('/home/rstudio/veupathUtils')
+load_all()
+
+# Read the real input data downloaded from MinIO
+dt <- fread('/home/rstudio/Downloads/differential_expression_input')
+
+# Reproduce the Java plugin's operations (copy from DifferentialExpressionPlugin.java)
+# e.g. the dcast pivot that converts tall → wide format:
+countData <- data.table::dcast(dt, `SampleID_col` ~ `GeneID_col`,
+                               value.var = 'CountCol', fill = NA_integer_)
+
+# Now test the veupathUtils class/function with the result
+cdc <- CountDataCollection(data = countData, recordIdColumn = 'SampleID_col', name = 'debug')
+```
+
+### Step 4: Iterate with load_all()
+
+Edit source files in `R/` on the host, then re-run the script. The `load_all()` call at the top picks up all changes each run — no rebuild or reinstall needed.
 
 ## Known Issues / Warnings
 

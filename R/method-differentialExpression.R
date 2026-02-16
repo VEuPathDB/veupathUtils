@@ -9,7 +9,7 @@ cleanComparatorVariable <- function(collection, comparator, verbose = c(TRUE, FA
   sampleMetadata <- getSampleMetadata(cleanCollection)
   recordIdColumn <- cleanCollection@recordIdColumn
 
-  veupathUtils::logWithTime(paste("Received abundance table with", nrow(data), "samples and", (ncol(data)-1), "taxa."), verbose)
+  veupathUtils::logWithTime(paste("Received expression table with", nrow(data), "samples and", (ncol(data)-1), "genes."), verbose)
 
   # Subset to only include samples with metadata defined in groupA and groupB
     if (identical(comparator@variable@dataShape@value, "CONTINUOUS")) {
