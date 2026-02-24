@@ -22,8 +22,14 @@ check_collection <- function(object) {
 
     # collection data should all come from the same entity
     # using the presence of the period to indicate eda services formatted data
+    # 2026-02-24 Bob: Exclude recordIdColumn from same-entity check. With Study Wrangler,
+    # host and parasite WGCNA collections are on separate child entities sharing a parent
+    # sample entity (previously both were on a single 'Assay' entity). Cross-entity
+    # collection correlation uses the parent entity ID as recordIdColumn, so it will
+    # have a different entity prefix than the collection data columns.
     if (all(grepl(".", names(df), fixed = TRUE))) {
-        if (uniqueN(veupathUtils::strSplit(names(df)[!names(df) %in% object@ancestorIdColumns], ".", ncol=2, index=1)) > 1) {
+        nonIdColNames <- names(df)[!names(df) %in% c(allIdColumns)]
+        if (uniqueN(veupathUtils::strSplit(nonIdColNames, ".", ncol=2, index=1)) > 1) {
             msg <- paste("All columns must belong to the same entity.")
             errors <- c(errors, msg)
         }
