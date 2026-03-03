@@ -4,7 +4,13 @@
 \alias{pca}
 \title{PCA}
 \usage{
-pca(collection, nPCs = 10, ntop = 500, verbose = c(TRUE, FALSE))
+pca(
+  collection,
+  nPCs = 10,
+  ntop = 500,
+  normalize = FALSE,
+  verbose = c(TRUE, FALSE)
+)
 }
 \arguments{
 \item{collection}{A Collection object}
@@ -12,6 +18,9 @@ pca(collection, nPCs = 10, ntop = 500, verbose = c(TRUE, FALSE))
 \item{nPCs}{Number of principal components to return. Default 10}
 
 \item{ntop}{Use the top ntop genes with the highest variance for the pca computation. Mirrors the deseq2 plotPCA argument. Default 500.}
+
+\item{normalize}{Logical indicating whether to apply DESeq2-style median-of-ratios
+normalization before PCA. Default FALSE.}
 
 \item{verbose}{Boolean indicating if extra messaging should be printed.}
 }

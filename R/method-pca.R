@@ -1,21 +1,43 @@
 
+#' DESeq2-style normalization (median of ratios)
+#'
+#' Normalizes a count matrix using the median-of-ratios method from DESeq2.
+#' Uses \code{DESeq2::estimateSizeFactorsForMatrix()} to compute per-sample
+#' size factors, then divides each sample's values by its size factor.
+#'
+#' @param countMatrix A numeric matrix with features as rows and samples as columns.
+#' @return A normalized numeric matrix with the same dimensions.
+#' @export
+deseqNormalize <- function(countMatrix) {
+  sizeFactors <- tryCatch(
+    DESeq2::estimateSizeFactorsForMatrix(countMatrix),
+    error = function(e) {
+      # Fall back to "poscounts" method when all genes have at least one zero
+      DESeq2::estimateSizeFactorsForMatrix(countMatrix, type = "poscounts")
+    }
+  )
+  sweep(countMatrix, 2, sizeFactors, FUN = "/")
+}
+
 #' PCA
-#' 
+#'
 #' @param collection A Collection object
 #' @param nPCs Number of principal components to return. Default 10
 #' @param ntop Use the top ntop genes with the highest variance for the pca computation. Mirrors the deseq2 plotPCA argument. Default 500.
+#' @param normalize Logical indicating whether to apply DESeq2-style median-of-ratios
+#'   normalization before PCA. Default FALSE.
 #' @param verbose Boolean indicating if extra messaging should be printed.
 #' @return A ComputeResult object. The data slot contains a data.table with the id columns and the first nPCs principal components.
 #' @export
 setGeneric("pca",
-  function(collection, nPCs = 10, ntop = 500, verbose = c(TRUE, FALSE)) standardGeneric("pca"),
+  function(collection, nPCs = 10, ntop = 500, normalize = FALSE, verbose = c(TRUE, FALSE)) standardGeneric("pca"),
   signature = c("collection")
 )
 
 #' @export
 setMethod(pca, "Collection",
-  function(collection, nPCs = 10, ntop = 500, verbose = c(TRUE, FALSE)) {
-    
+  function(collection, nPCs = 10, ntop = 500, normalize = FALSE, verbose = c(TRUE, FALSE)) {
+
     verbose <- veupathUtils::matchArg(verbose)
     assay <- getCollectionData(collection)
     recordIdColumn <- collection@recordIdColumn
@@ -25,6 +47,15 @@ setMethod(pca, "Collection",
 
     # Remove id columns from the assay to get only the features.
     features <- assay[, -..allIdColumns] # features has samples as rows.
+
+    # Apply DESeq2-style normalization if requested.
+    if (normalize) {
+      if (verbose) message("Applying DESeq2-style median-of-ratios normalization.")
+      # deseqNormalize expects features as rows, samples as columns
+      featuresMatrix <- t(as.matrix(features))
+      featuresMatrix <- deseqNormalize(featuresMatrix)
+      features <- data.table::as.data.table(t(featuresMatrix))
+    }
 
     # Update ntop if it's too large.
     if (ntop > ncol(features)) {
@@ -39,7 +70,7 @@ setMethod(pca, "Collection",
       stop("ntop must be at least 2.")
     }
 
-    # Use prcomp to perform PCA. 
+    # Use prcomp to perform PCA.
     # The following is heavily borrowed from the deseq2 plotPCA function.
     rowVariances <- matrixStats::rowVars(t(as.matrix(features)))
     keepFeatures <- order(rowVariances, decreasing=TRUE)[seq_len(ntop)]
@@ -70,7 +101,7 @@ setMethod(pca, "Collection",
     result@recordIdColumn <- recordIdColumn
     result@ancestorIdColumns <- ancestorIdColumns
     result@data <- dt
-    result@parameters <- paste0('recordIdColumn = ', recordIdColumn,", nPCs = ", nPCs, ', ntop = ', ntop)
+    result@parameters <- paste0('recordIdColumn = ', recordIdColumn, ", nPCs = ", nPCs, ', ntop = ', ntop, ', normalize = ', normalize)
     result@computedVariableMetadata <- veupathUtils::VariableMetadataList(
       S4Vectors::SimpleList(variableMetadataList)
     )

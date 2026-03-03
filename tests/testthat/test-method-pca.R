@@ -1,5 +1,31 @@
 # Test PCA
 
+test_that("deseqNormalize applies median-of-ratios normalization", {
+  # Simple 3-gene x 3-sample count matrix
+  countMatrix <- matrix(
+    c(100, 200, 50,
+      110, 180, 55,
+       90, 220, 45),
+    nrow = 3, byrow = TRUE,
+    dimnames = list(c("g1", "g2", "g3"), c("s1", "s2", "s3"))
+  )
+
+  normalized <- veupathUtils::deseqNormalize(countMatrix)
+
+  # Output should have same dimensions and dimnames
+  expect_equal(dim(normalized), dim(countMatrix))
+  expect_equal(dimnames(normalized), dimnames(countMatrix))
+
+  # Size factors should make column medians of ratios ~1
+  # i.e. the normalized values should differ from the raw values
+  expect_false(identical(normalized, countMatrix))
+
+  # Verify against DESeq2 directly
+  sizeFactors <- DESeq2::estimateSizeFactorsForMatrix(countMatrix)
+  expected <- sweep(countMatrix, 2, sizeFactors, FUN = "/")
+  expect_equal(normalized, expected)
+})
+
 test_that("The pca function produces the expected output", {
   
   testData <- testCountDataCollection
@@ -98,4 +124,33 @@ test_that("The pca function can handle messy data", {
   # Test with not enough features
   expect_error(veupathUtils::pca(fakeCollection, nPCs = 2, ntop=1, verbose=T), "ntop must be at least 2.")
 
+})
+
+test_that("pca with normalize=TRUE applies DESeq2-style normalization", {
+
+  testData <- testCountDataCollection
+
+  # Run with and without normalization
+  outputNorm <- veupathUtils::pca(testData, nPCs = 2, normalize = TRUE)
+  outputRaw <- veupathUtils::pca(testData, nPCs = 2, normalize = FALSE)
+
+  # Both should produce valid ComputeResult objects
+  expect_s4_class(outputNorm, "ComputeResult")
+  expect_s4_class(outputRaw, "ComputeResult")
+
+  # Same structure
+  expect_equal(nrow(outputNorm@data), nrow(outputRaw@data))
+  expect_equal(ncol(outputNorm@data), ncol(outputRaw@data))
+  expect_equal(names(outputNorm@data), names(outputRaw@data))
+
+  # But different PC values (normalization should change the result)
+  expect_false(all(outputNorm@data$PC1 == outputRaw@data$PC1))
+
+  # Variance percentages should differ
+  expect_false(outputNorm@computedVariableMetadata[[1]]@displayName ==
+               outputRaw@computedVariableMetadata[[1]]@displayName)
+
+  # Parameters should record normalize = TRUE
+  expect_true(grepl("normalize = TRUE", outputNorm@parameters))
+  expect_true(grepl("normalize = FALSE", outputRaw@parameters))
 })
