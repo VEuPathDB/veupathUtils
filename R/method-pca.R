@@ -48,6 +48,13 @@ setMethod(pca, "Collection",
     # Remove id columns from the assay to get only the features.
     features <- assay[, -..allIdColumns] # features has samples as rows.
 
+    # Remove features (columns) with any missing values.
+    naCols <- colSums(is.na(features)) > 0
+    if (any(naCols)) {
+      if (verbose) message(paste0("Removing ", sum(naCols), " features with missing values."))
+      features <- features[, !naCols, with = FALSE]
+    }
+
     # Apply DESeq2-style normalization if requested.
     if (normalize) {
       if (verbose) message("Applying DESeq2-style median-of-ratios normalization.")
