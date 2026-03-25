@@ -23,20 +23,20 @@ deseqNormalize <- function(countMatrix) {
 #'
 #' @param collection A Collection object
 #' @param nPCs Number of principal components to return. Default 10
-#' @param ntop Use the top ntop genes with the highest variance for the pca computation. Mirrors the deseq2 plotPCA argument. Default 500.
+#' @param ntop Use the top ntop genes with the highest variance for the pca computation. Mirrors the deseq2 plotPCA argument. Default NA (no variance-based filtering; all features are used).
 #' @param normalize Logical indicating whether to apply DESeq2-style median-of-ratios
 #'   normalization before PCA. Default FALSE.
 #' @param verbose Boolean indicating if extra messaging should be printed.
 #' @return A ComputeResult object. The data slot contains a data.table with the id columns and the first nPCs principal components.
 #' @export
 setGeneric("pca",
-  function(collection, nPCs = 10, ntop = 500, normalize = FALSE, verbose = c(TRUE, FALSE)) standardGeneric("pca"),
+  function(collection, nPCs = 10, ntop = NA, normalize = FALSE, verbose = c(TRUE, FALSE)) standardGeneric("pca"),
   signature = c("collection")
 )
 
 #' @export
 setMethod(pca, "Collection",
-  function(collection, nPCs = 10, ntop = 500, normalize = FALSE, verbose = c(TRUE, FALSE)) {
+  function(collection, nPCs = 10, ntop = NA, normalize = FALSE, verbose = c(TRUE, FALSE)) {
 
     verbose <- veupathUtils::matchArg(verbose)
     assay <- getCollectionData(collection)
@@ -61,27 +61,32 @@ setMethod(pca, "Collection",
       # deseqNormalize expects features as rows, samples as columns
       featuresMatrix <- t(as.matrix(features))
       featuresMatrix <- deseqNormalize(featuresMatrix)
+      featuresMatrix <- log2(featuresMatrix + 1)
       features <- data.table::as.data.table(t(featuresMatrix))
-    }
-
-    # Update ntop if it's too large.
-    if (ntop > ncol(features)) {
-      if (verbose) {
-        message("ntop is larger than the number of features. Using all features.")
-      }
-      ntop <- min(ntop, ncol(features))
-    }
-
-    # Ensure ntop is at least 1.
-    if (ntop <= 1) {
-      stop("ntop must be at least 2.")
     }
 
     # Use prcomp to perform PCA.
     # The following is heavily borrowed from the deseq2 plotPCA function.
-    rowVariances <- matrixStats::rowVars(t(as.matrix(features)))
-    keepFeatures <- order(rowVariances, decreasing=TRUE)[seq_len(ntop)]
-    pcaResult <- prcomp(features[, ..keepFeatures])
+    if (!is.na(ntop)) {
+      # Update ntop if it's too large.
+      if (ntop > ncol(features)) {
+        if (verbose) {
+          message("ntop is larger than the number of features. Using all features.")
+        }
+        ntop <- ncol(features)
+      }
+
+      # Ensure ntop is at least 2.
+      if (ntop <= 1) {
+        stop("ntop must be at least 2.")
+      }
+
+      rowVariances <- matrixStats::rowVars(t(as.matrix(features)))
+      keepFeatures <- order(rowVariances, decreasing=TRUE)[seq_len(ntop)]
+      pcaResult <- prcomp(features[, ..keepFeatures], scale = !normalize)
+    } else {
+      pcaResult <- prcomp(features, scale = !normalize)
+    }
     proportionOfVariance <- summary(pcaResult)$importance["Proportion of Variance", ]
 
 
