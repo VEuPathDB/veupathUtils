@@ -76,3 +76,29 @@ test_that("Collection validation works", {
         Collection("my collection", data.frame(entity.id = 1, entity.collection_x = 1, entity.collection_y = 2, ancestor.z = 1), "entity.id", "ancestor.z")
     )))
 })
+test_that("Collection accepts member ids that contain periods", {
+    # as produced by pivoting tall gene data wide: the entity prefix is on the id columns only
+    # but each data column is 'entity.memberId', and memberId itself may contain periods.
+    # Even and odd numbers of members exercise both failure modes seen in production.
+    for (nGenes in c(4, 5)) {
+        for (suffix in c(".1", ".1.2", ".1.2.3")) {
+            geneIds <- paste0("entity.PF3D7_", seq_len(nGenes), suffix)
+            df <- data.frame(entity.id = 1:2, ancestor.y = 1:2)
+            for (g in geneIds) df[[g]] <- c(1, 2)
+            expect_no_error(
+                Collection("genes", df, "entity.id", "ancestor.y"),
+                message = paste("nGenes =", nGenes, "suffix =", suffix)
+            )
+        }
+    }
+})
+
+test_that("Collection still rejects members from different entities, even with periods in ids", {
+    df <- data.frame(entity.id = 1:2, ancestor.y = 1:2,
+                     entityA.PF3D7_1.1 = c(1, 2), entityB.PF3D7_2.1 = c(1, 2),
+                     check.names = FALSE)
+    expect_error(Collection("genes", df, "entity.id", "ancestor.y"), "same entity")
+    df2 <- data.frame(entity.id = 1:2, ancestor.y = 1:2,
+                      entityA.gene1 = c(1, 2), entityB.gene2 = c(1, 2))
+    expect_error(Collection("genes", df2, "entity.id", "ancestor.y"), "same entity")
+})

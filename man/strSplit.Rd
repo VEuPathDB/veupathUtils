@@ -7,20 +7,25 @@
 strSplit(str, pattern, ncol = 2, index = 1, fixed = TRUE)
 }
 \arguments{
-\item{str}{Character vector or list of strings to split}
+\item{str}{Character vector of strings to split}
 
 \item{pattern}{Character string or regular expression to split str on}
 
-\item{ncol}{Number of anticipated output values/ columns after splitting}
+\item{ncol}{Deprecated and ignored. Retained so existing calls keep working.}
 
-\item{index}{Number indicating index of value/ column of interest}
+\item{index}{Number indicating which part is wanted: 1 (before the first match)
+or 2 (after the first match)}
 
 \item{fixed}{Boolean indicating if \code{pattern} is a literal string (TRUE)
 or regular expression (FALSE)}
 }
 \value{
-Character vector of substrings
+Character vector of substrings, one per element of \code{str}. If a string
+contains no match, \code{index = 1} returns the whole string and \code{index = 2} returns \code{NA}.
 }
 \description{
-This function efficiently splits strings by a vectorized approach.
+This function efficiently splits each string in a vector at its first match of
+\code{pattern}, returning either the part before it (\code{index = 1}) or everything after
+it (\code{index = 2}). Any further occurrences of \code{pattern} are left in the second part,
+so \code{strSplit("entity.gene.1", ".", index = 2)} is \code{"gene.1"}.
 }

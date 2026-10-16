@@ -60,17 +60,34 @@ trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
 #' Efficient Vectorized String Split
 #'
-#' This function efficiently splits strings by a vectorized approach.
-#' @param str Character vector or list of strings to split
+#' This function efficiently splits each string in a vector at its first match of
+#' `pattern`, returning either the part before it (`index = 1`) or everything after
+#' it (`index = 2`). Any further occurrences of `pattern` are left in the second part,
+#' so `strSplit("entity.gene.1", ".", index = 2)` is `"gene.1"`.
+#' @param str Character vector of strings to split
 #' @param pattern Character string or regular expression to split str on
-#' @param ncol Number of anticipated output values/ columns after splitting
-#' @param index Number indicating index of value/ column of interest
-#' @param fixed Boolean indicating if `pattern` is a literal string (TRUE) 
+#' @param ncol Deprecated and ignored. Retained so existing calls keep working.
+#' @param index Number indicating which part is wanted: 1 (before the first match)
+#' or 2 (after the first match)
+#' @param fixed Boolean indicating if `pattern` is a literal string (TRUE)
 #' or regular expression (FALSE)
-#' @return Character vector of substrings
+#' @return Character vector of substrings, one per element of `str`. If a string
+#' contains no match, `index = 1` returns the whole string and `index = 2` returns `NA`.
 #' @export
 strSplit <- function(str, pattern, ncol = 2, index = 1, fixed = TRUE) {
-  # do we want an arg to not apply the index and return multiple cols? in a data.frame?
-  # should we return a list if we received one?
-  matrix(unlist(strsplit(str, pattern, fixed = fixed)), ncol = ncol, byrow = TRUE)[,index]
+  if (!length(index) == 1L || !index %in% c(1, 2)) {
+    stop("strSplit only splits at the first match, so index must be 1 or 2.")
+  }
+
+  str <- as.character(str)
+  firstMatch <- regexpr(pattern, str, fixed = fixed)
+  matchStart <- as.integer(firstMatch)
+  matchLength <- attr(firstMatch, "match.length")
+  hasMatch <- !is.na(matchStart) & matchStart > 0L
+
+  if (index == 1) {
+    return(ifelse(hasMatch, substr(str, 1L, matchStart - 1L), str))
+  }
+
+  ifelse(hasMatch, substring(str, matchStart + matchLength), NA_character_)
 }

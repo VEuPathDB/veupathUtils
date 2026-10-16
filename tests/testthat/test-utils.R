@@ -29,3 +29,12 @@ test_that("matchArg matches args, including booleans", {
   expect_equal(matchArg(NULL, c('a', 'b')), 'a')
   expect_equal(matchArg(c('a', 'b'), c('a', 'b')), 'a')
 })
+test_that("stripEntityIdFromColumnHeader handles variable ids containing periods", {
+  expect_equal(stripEntityIdFromColumnHeader(c("entity.id", "entity.var")), c("id", "var"))
+  expect_equal(stripEntityIdFromColumnHeader(c("entity.id", "entity.PF3D7_01.1", "entity.PF3D7_02.1")),
+               c("id", "PF3D7_01.1", "PF3D7_02.1"))
+  # an odd number of pieces overall used to trigger a matrix error
+  expect_equal(stripEntityIdFromColumnHeader(c("entity.a.b")), "a.b")
+  # columns without an entity prefix are left alone
+  expect_equal(stripEntityIdFromColumnHeader(c("plain", "entity.a.b")), c("plain", "a.b"))
+})
