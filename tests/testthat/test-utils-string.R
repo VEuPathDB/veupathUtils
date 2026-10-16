@@ -40,3 +40,22 @@ test_that("strSplit splits strings", {
 
   #expect_equal(strSplit(c('hello-world', 'foo-bar', 'a', '-', 3), "-"), c('hello', 'foo', 'a', '', '3'))
 })
+
+test_that("strSplit splits only on the first delimiter", {
+  # strings with more delimiters than expected must not be mis-shaped into a matrix
+  expect_equal(strSplit("once upon a time", " "), "once")
+  expect_equal(strSplit("once upon a time", " ", index = 2), "upon a time")
+  expect_equal(strSplit(c("once upon a time", "a b"), " "), c("once", "a"))
+  expect_equal(strSplit(c("once upon a time", "a b"), " ", index = 2), c("upon a time", "b"))
+
+  # e.g. an entity.variable id where the variable id itself contains periods
+  expect_equal(strSplit("entity.PF3D7_0100100.1", "."), "entity")
+  expect_equal(strSplit("entity.PF3D7_0100100.1", ".", index = 2), "PF3D7_0100100.1")
+  expect_equal(strSplit(c("entity.gene.1", "entity.gene.2", "entity.gene"), ".", index = 2),
+               c("gene.1", "gene.2", "gene"))
+  expect_equal(strSplit("entity.a.b.c", ".", 4, 2), "a.b.c")
+
+  # regex patterns
+  expect_equal(strSplit("a1b2c", "[0-9]", 2, 2, fixed = FALSE), "b2c")
+})
+

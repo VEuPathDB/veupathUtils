@@ -154,3 +154,17 @@ test_that("pca with normalize=TRUE applies DESeq2-style normalization", {
   expect_true(grepl("normalize = TRUE", outputNorm@parameters))
   expect_true(grepl("normalize = FALSE", outputRaw@parameters))
 })
+
+test_that("pca works when collection member ids contain periods", {
+  set.seed(1)
+  for (nGenes in c(6, 7)) {
+    geneIds <- paste0("entity.PF3D7_", seq_len(nGenes), ".1")
+    dt <- data.table::data.table(entity.SampleID = paste0("S", 1:8))
+    for (g in geneIds) dt[[g]] <- rpois(8, 50) + 1L
+    collection <- veupathUtils::CountDataCollection(name = "genes", data = dt,
+                                                    recordIdColumn = "entity.SampleID")
+    output <- veupathUtils::pca(collection, nPCs = 2, normalize = TRUE, verbose = FALSE)
+    expect_s4_class(output, "ComputeResult")
+    expect_equal(names(output@data), c("entity.SampleID", "PC1", "PC2"))
+  }
+})
